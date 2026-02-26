@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 // Proxy through our own Next.js API routes to avoid HTTPS→HTTP mixed content
 const API_BASE = "";
@@ -203,12 +204,20 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold tracking-tight">Egan Empire</h1>
           <p className="text-gray-500 text-sm">CEO Command Center | Cycle #{e.cycle_count}</p>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-gray-500">Last update: {lastUpdate}</p>
-          <p className="text-xs text-gray-500">
-            {healthyCount}/{swarmEntries.length} swarms healthy
-          </p>
-          {error && <p className="text-xs text-red-400">{error}</p>}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/proposals"
+            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+          >
+            Proposals
+          </Link>
+          <div className="text-right">
+            <p className="text-xs text-gray-500">Last update: {lastUpdate}</p>
+            <p className="text-xs text-gray-500">
+              {healthyCount}/{swarmEntries.length} swarms healthy
+            </p>
+            {error && <p className="text-xs text-red-400">{error}</p>}
+          </div>
         </div>
       </header>
 
