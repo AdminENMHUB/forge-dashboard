@@ -25,6 +25,8 @@ interface EmpireData {
   combined_portfolio_value: number;
   combined_mrr: number;
   combined_arr: number;
+  stripe_mrr: number;
+  web3_mrr: number;
   peak_daily_pnl: number;
   peak_portfolio: number;
   cycle_count: number;
@@ -206,8 +208,20 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-3">
           <Link
+            href="/financials"
+            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium transition-colors"
+          >
+            Financials
+          </Link>
+          <Link
+            href="/web3"
+            className="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition-colors"
+          >
+            Web3
+          </Link>
+          <Link
             href="/proposals"
-            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors"
           >
             Proposals
           </Link>
@@ -240,7 +254,7 @@ export default function Dashboard() {
         <MetricCard
           label="MRR"
           value={formatUSD(e.combined_mrr)}
-          subtext={`ARR: ${formatUSD(e.combined_arr)}`}
+          subtext={`Stripe: ${formatUSD(e.stripe_mrr || 0)} · Crypto: ${formatUSD(e.web3_mrr || 0)} · ARR: ${formatUSD(e.combined_arr)}`}
         />
       </div>
 
