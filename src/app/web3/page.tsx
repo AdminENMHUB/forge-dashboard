@@ -15,6 +15,18 @@ interface Web3Data {
     eth: number;
     total_usd: number;
   };
+  polygon?: {
+    address: string;
+    network: string;
+    usdc_e_balance: number;
+    open_position_value: number;
+    total_value: number;
+    total_pnl: number;
+    daily_pnl: number;
+    open_positions: number;
+    win_rate: number;
+    source: string;
+  };
   aave: {
     deposited: number;
     current_balance: number;
@@ -125,6 +137,8 @@ export default function Web3Page() {
   }
 
   const w = data;
+  const polyValue = w.polygon?.total_value ?? 0;
+  const totalWeb3Value = w.wallet.total_usd + polyValue;
 
   return (
     <div className="min-h-screen p-6 max-w-7xl mx-auto">
@@ -144,13 +158,26 @@ export default function Web3Page() {
             <p className="text-gray-500 text-sm">
               {w.wallet.network} &middot;{" "}
               <a
-                href={`https://polygonscan.com/address/${w.wallet.address}`}
+                href={`https://basescan.org/address/${w.wallet.address}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-purple-400 hover:text-purple-300 font-mono"
               >
                 {w.wallet.address.slice(0, 8)}...{w.wallet.address.slice(-6)}
               </a>
+              {w.polygon && (
+                <>
+                  {" "}&middot; Polygon &middot;{" "}
+                  <a
+                    href={`https://polygonscan.com/address/${w.polygon.address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple-400 hover:text-purple-300 font-mono"
+                  >
+                    {w.polygon.address.slice(0, 8)}...{w.polygon.address.slice(-6)}
+                  </a>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -176,16 +203,24 @@ export default function Web3Page() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <MetricCard
-          label="Portfolio Value"
-          value={formatUSD(w.wallet.total_usd)}
-          subtext={`USDC: ${formatUSD(w.wallet.usdc)}`}
+          label="Total Web3 Value"
+          value={formatUSD(totalWeb3Value)}
+          subtext={`Base: ${formatUSD(w.wallet.total_usd)} · Polygon: ${formatUSD(polyValue)}`}
           accent="text-emerald-400"
         />
         <MetricCard
-          label="Total Yield"
-          value={formatUSD(w.aave.yield_earned)}
-          subtext={`APY: ${w.aave.apy_pct.toFixed(2)}%`}
-          accent="text-blue-400"
+          label="Polygon P&L"
+          value={
+            (w.polygon?.total_pnl ?? 0) >= 0
+              ? `+${formatUSD(w.polygon?.total_pnl ?? 0)}`
+              : formatUSD(w.polygon?.total_pnl ?? 0)
+          }
+          subtext={`Today: ${(w.polygon?.daily_pnl ?? 0) >= 0 ? "+" : ""}${formatUSD(w.polygon?.daily_pnl ?? 0)}`}
+          accent={
+            (w.polygon?.total_pnl ?? 0) >= 0
+              ? "text-emerald-400"
+              : "text-red-400"
+          }
         />
         <MetricCard
           label="Subscribers"
@@ -200,11 +235,16 @@ export default function Web3Page() {
         />
       </div>
 
-      {/* Two-column: Wallet + AAVE */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        {/* Wallet Balance */}
+      {/* Three-column: Base Wallet + Polygon Wallet + AAVE */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {/* Base Wallet Balance */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <h2 className="font-semibold text-lg mb-4">Wallet Balance</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-lg">Base Wallet</h2>
+            <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+              BASE
+            </span>
+          </div>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -237,11 +277,66 @@ export default function Web3Page() {
           </div>
         </div>
 
+        {/* Polygon Wallet (EchoSwarm / Polymarket) */}
+        {w.polygon && (
+          <div className="bg-gray-900 border border-purple-500/30 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-lg">Polygon Wallet</h2>
+              <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                USDC.e
+              </span>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center text-sm">
+                    $
+                  </span>
+                  <span className="font-medium">USDC.e (Cash)</span>
+                </div>
+                <span className="font-mono text-lg">
+                  {formatUSD(w.polygon.usdc_e_balance)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 bg-amber-500/20 rounded-full flex items-center justify-center text-sm">
+                    P
+                  </span>
+                  <span className="font-medium">Open Positions</span>
+                </div>
+                <span className="font-mono text-lg">
+                  {formatUSD(w.polygon.open_position_value)}
+                  <span className="text-xs text-gray-500 ml-1">({w.polygon.open_positions})</span>
+                </span>
+              </div>
+              <div className="border-t border-gray-800 pt-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Total Value</span>
+                  <span className="font-mono font-semibold text-emerald-400">
+                    {formatUSD(w.polygon.total_value)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm mt-1">
+                  <span className="text-gray-400">Win Rate</span>
+                  <span className="font-mono">
+                    {(w.polygon.win_rate * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 mt-2">{w.polygon.source}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* AAVE Position */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <h2 className="font-semibold text-lg mb-4">
-            Aave DeFi Position
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-lg">Aave DeFi</h2>
+            <span className="px-2 py-0.5 text-xs rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+              YIELD
+            </span>
+          </div>
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-400">Deposited</span>
@@ -319,7 +414,7 @@ export default function Web3Page() {
                 >
                   <div>
                     <a
-                      href={`https://polygonscan.com/address/${sub.full_address}`}
+                      href={`https://basescan.org/address/${sub.full_address}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="font-mono text-sm text-purple-400 hover:text-purple-300"
@@ -407,7 +502,7 @@ export default function Web3Page() {
 
       {/* Footer */}
       <footer className="mt-12 pt-6 border-t border-gray-800 text-center text-xs text-gray-600">
-        Web3 Department | Polygon Network | Auto-refreshes every 60s
+        Web3 Department | Base + Polygon Networks | Auto-refreshes every 60s
       </footer>
     </div>
   );
