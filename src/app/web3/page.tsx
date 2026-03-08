@@ -38,6 +38,9 @@ interface Web3Data {
     dry_run: number;
     live: number;
     recent: Array<Record<string, unknown>>;
+    contract_address?: string;
+    opensea_url?: string;
+    basescan_contract?: string;
   };
   subscribers: {
     active: Array<{
@@ -59,6 +62,11 @@ interface Web3Data {
   signals: {
     total_delivered: number;
     total_usdc_received: number;
+  };
+  gas_costs?: {
+    total_eth: number;
+    total_usd_est: number;
+    daily: Record<string, Record<string, number>>;
   };
   transactions: Array<Record<string, unknown>>;
 }
@@ -184,9 +192,15 @@ export default function Web3Page() {
         <div className="flex items-center gap-3">
           <Link
             href="/financials"
-            className="px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors"
+            className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium transition-colors"
           >
             Financials
+          </Link>
+          <Link
+            href="/assets"
+            className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg text-sm font-medium transition-colors"
+          >
+            Assets
           </Link>
           <div className="text-right">
             <p className="text-xs text-gray-500">Updated: {lastUpdate}</p>
@@ -364,11 +378,50 @@ export default function Web3Page() {
         </div>
       </div>
 
+      {/* Gas Cost Tracking */}
+      {w.gas_costs && (w.gas_costs.total_eth > 0 || w.gas_costs.total_usd_est > 0) && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-lg">Gas Costs</h2>
+            <span className="px-2 py-0.5 text-xs rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">
+              ON-CHAIN
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-xs text-gray-500">Total Gas (ETH)</p>
+              <p className="font-mono text-lg">{w.gas_costs.total_eth.toFixed(6)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Total Gas (USD)</p>
+              <p className="font-mono text-lg text-orange-400">{formatUSD(w.gas_costs.total_usd_est)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Avg per TX</p>
+              <p className="font-mono text-lg">
+                {w.gas_costs.total_eth > 0
+                  ? `${(w.gas_costs.total_usd_est / Math.max(Object.keys(w.gas_costs.daily).length, 1)).toFixed(2)}/day`
+                  : "-"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Days Tracked</p>
+              <p className="font-mono text-lg">{Object.keys(w.gas_costs.daily).length}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Two-column: NFTs + Subscribers */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         {/* NFT Inventory */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <h2 className="font-semibold text-lg mb-4">NFT Inventory</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-lg">NFT Inventory</h2>
+            <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              ERC-1155
+            </span>
+          </div>
           <div className="grid grid-cols-3 gap-4 text-center mb-4">
             <div>
               <p className="text-2xl font-bold">{w.nfts.total_minted}</p>
@@ -387,11 +440,36 @@ export default function Web3Page() {
               <p className="text-xs text-gray-500">Dry Run</p>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-3">
+          <div className="border-t border-gray-800 pt-3 space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-400">Signals Delivered</span>
               <span className="font-mono">{w.signals.total_delivered}</span>
             </div>
+            {w.nfts.contract_address && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Contract</span>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={w.nfts.basescan_contract || `https://basescan.org/address/${w.nfts.contract_address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-xs text-blue-400 hover:text-blue-300"
+                  >
+                    {w.nfts.contract_address.slice(0, 8)}...{w.nfts.contract_address.slice(-6)}
+                  </a>
+                  {w.nfts.opensea_url && (
+                    <a
+                      href={w.nfts.opensea_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-purple-400 hover:text-purple-300"
+                    >
+                      OpenSea &rarr;
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

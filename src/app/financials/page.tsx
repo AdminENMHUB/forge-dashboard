@@ -22,8 +22,14 @@ interface FinancialsData {
       total_pnl: number;
       portfolio_value: number;
       mrr: number;
+      unrealized_pnl?: number;
+      realized_pnl?: number;
     }
   >;
+  gas_costs?: {
+    total_usd: number;
+    daily: Record<string, Record<string, number>>;
+  };
   saas_products: Array<{
     name: string;
     mrr: number;
@@ -184,6 +190,12 @@ export default function FinancialsPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link
+            href="/assets"
+            className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg text-sm font-medium transition-colors"
+          >
+            Assets
+          </Link>
+          <Link
             href="/web3"
             className="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition-colors"
           >
@@ -197,7 +209,7 @@ export default function FinancialsPage() {
       </header>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <MetricCard
           label="Portfolio Value"
           value={formatUSD(fin.combined.portfolio_value)}
@@ -225,6 +237,12 @@ export default function FinancialsPage() {
           value={formatUSD(todayCost)}
           subtext={`${todayCalls} calls today`}
           accent="text-orange-400"
+        />
+        <MetricCard
+          label="On-Chain Gas"
+          value={formatUSD(fin.gas_costs?.total_usd ?? 0)}
+          subtext="Cumulative gas spend"
+          accent="text-red-400"
         />
       </div>
 
@@ -332,6 +350,7 @@ export default function FinancialsPage() {
                 <th className="text-right py-2 px-3">Portfolio</th>
                 <th className="text-right py-2 px-3">Daily P&L</th>
                 <th className="text-right py-2 px-3">Total P&L</th>
+                <th className="text-right py-2 px-3">Unrealized</th>
                 <th className="text-right py-2 px-3">MRR</th>
                 <th className="text-right py-2 px-3">API Cost/day</th>
               </tr>
@@ -357,6 +376,13 @@ export default function FinancialsPage() {
                     </td>
                     <td className="py-2 px-3 text-right">
                       <PnlText value={swarm.total_pnl} />
+                    </td>
+                    <td className="py-2 px-3 text-right font-mono">
+                      {(swarm.unrealized_pnl ?? 0) !== 0 ? (
+                        <PnlText value={swarm.unrealized_pnl ?? 0} />
+                      ) : (
+                        <span className="text-gray-600">-</span>
+                      )}
                     </td>
                     <td className="py-2 px-3 text-right font-mono">
                       {swarm.mrr > 0 ? (
@@ -385,6 +411,9 @@ export default function FinancialsPage() {
                 </td>
                 <td className="py-2 px-3 text-right">
                   <PnlText value={fin.combined.total_pnl} />
+                </td>
+                <td className="py-2 px-3 text-right">
+                  <PnlText value={swarmEntries.reduce((sum, [, s]) => sum + (s.unrealized_pnl ?? 0), 0)} />
                 </td>
                 <td className="py-2 px-3 text-right font-mono text-blue-400">
                   {formatUSD(fin.combined.mrr)}
