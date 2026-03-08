@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Egan Empire | CEO Dashboard",
-  description: "Real-time oversight of the Egan Empire multi-agentic framework",
+  title: "EganForge | CEO Dashboard",
+  description: "Real-time oversight of the EganForge multi-agentic framework",
 };
 
 export default function RootLayout({

@@ -307,7 +307,7 @@ export default function ProposalsPage() {
 
       {/* Footer */}
       <footer className="mt-8 pt-4 border-t border-gray-800 text-center text-xs text-gray-600">
-        Egan Empire | CEO Approval Flow | Auto-refreshes every 15s
+        EganForge | CEO Approval Flow | Auto-refreshes every 15s
       </footer>
     </div>
   );

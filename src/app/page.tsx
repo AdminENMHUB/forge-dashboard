@@ -195,7 +195,7 @@ export default function Dashboard() {
       {/* Header */}
       <header className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Egan Empire</h1>
+          <h1 className="text-3xl font-bold tracking-tight">EganForge</h1>
           <p className="text-gray-500 text-sm">CEO Command Center | Cycle #{e.cycle_count}</p>
         </div>
         <div className="flex items-center gap-3">
@@ -204,6 +204,12 @@ export default function Dashboard() {
             className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium transition-colors"
           >
             Financials
+          </Link>
+          <Link
+            href="/assets"
+            className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg text-sm font-medium transition-colors"
+          >
+            Assets
           </Link>
           <Link
             href="/web3"
@@ -337,7 +343,7 @@ export default function Dashboard() {
 
       {/* Footer */}
       <footer className="mt-12 pt-6 border-t border-gray-800 text-center text-xs text-gray-600">
-        Egan Empire v1.0 | CEO: Josh Egan | Powered by Claude Opus, GPT-4o, Grok-3, Gemini | Auto-refreshes every 30s
+        EganForge v2.0 | CEO: Josh Egan | Powered by Claude Opus, GPT-4o, Grok-3, Gemini | Auto-refreshes every 30s
       </footer>
     </div>
   );
