@@ -28,11 +28,7 @@ const TOOLTIP_STYLE = {
 const AXIS_TICK = { fontSize: 10, fill: "#6b7280" };
 
 /** 30-day P&L area chart — green above zero, red below */
-export function PnlAreaChart({
-  data,
-}: {
-  data: Array<{ date: string; pnl: number }>;
-}) {
+export function PnlAreaChart({ data }: { data: Array<{ date: string; pnl: number }> }) {
   return (
     <ResponsiveContainer width="100%" height={200}>
       <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
@@ -43,16 +39,9 @@ export function PnlAreaChart({
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-        <XAxis
-          dataKey="date"
-          tick={AXIS_TICK}
-          tickFormatter={(v) => v.slice(5)}
-        />
+        <XAxis dataKey="date" tick={AXIS_TICK} tickFormatter={(v) => v.slice(5)} />
         <YAxis tick={AXIS_TICK} tickFormatter={(v) => `$${v}`} />
-        <Tooltip
-          {...TOOLTIP_STYLE}
-          formatter={(v) => [`$${Number(v).toFixed(2)}`, "P&L"]}
-        />
+        <Tooltip {...TOOLTIP_STYLE} formatter={(v) => [`$${Number(v).toFixed(2)}`, "P&L"]} />
         <Area
           type="monotone"
           dataKey="pnl"
@@ -78,18 +67,8 @@ export function SwarmCostChart({
         <XAxis dataKey="name" tick={AXIS_TICK} />
         <YAxis tick={AXIS_TICK} tickFormatter={(v) => `$${v}`} />
         <Tooltip {...TOOLTIP_STYLE} />
-        <Bar
-          dataKey="revenue"
-          fill="#10b981"
-          name="Revenue"
-          radius={[3, 3, 0, 0]}
-        />
-        <Bar
-          dataKey="cost"
-          fill="#ef4444"
-          name="API Cost"
-          radius={[3, 3, 0, 0]}
-        />
+        <Bar dataKey="revenue" fill="#10b981" name="Revenue" radius={[3, 3, 0, 0]} />
+        <Bar dataKey="cost" fill="#ef4444" name="API Cost" radius={[3, 3, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -98,11 +77,7 @@ export function SwarmCostChart({
 const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 /** Cost breakdown donut chart by provider/swarm */
-export function CostDonutChart({
-  data,
-}: {
-  data: Array<{ name: string; value: number }>;
-}) {
+export function CostDonutChart({ data }: { data: Array<{ name: string; value: number }> }) {
   return (
     <ResponsiveContainer width="100%" height={200}>
       <PieChart>
@@ -120,10 +95,7 @@ export function CostDonutChart({
             <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
           ))}
         </Pie>
-        <Tooltip
-          {...TOOLTIP_STYLE}
-          formatter={(v) => [`$${Number(v).toFixed(2)}`, "Cost"]}
-        />
+        <Tooltip {...TOOLTIP_STYLE} formatter={(v) => [`$${Number(v).toFixed(2)}`, "Cost"]} />
       </PieChart>
     </ResponsiveContainer>
   );

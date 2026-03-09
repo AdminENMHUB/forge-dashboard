@@ -14,16 +14,13 @@ export async function POST(request: Request) {
       const errData = await res.json().catch(() => ({}));
       return NextResponse.json(
         { error: errData.detail || `Upstream returned ${res.status}` },
-        { status: res.status }
+        { status: res.status },
       );
     }
     const data = await res.json();
     return NextResponse.json(data);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json(
-      { error: `Failed to reach empire API: ${msg}` },
-      { status: 502 }
-    );
+    return NextResponse.json({ error: `Failed to reach empire API: ${msg}` }, { status: 502 });
   }
 }

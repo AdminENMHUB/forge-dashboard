@@ -13,16 +13,13 @@ export async function GET(request: Request) {
     if (!res.ok) {
       return NextResponse.json(
         { error: `Upstream API returned ${res.status}` },
-        { status: res.status }
+        { status: res.status },
       );
     }
     const data = await res.json();
     return NextResponse.json(data);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json(
-      { error: `Failed to reach empire API: ${msg}` },
-      { status: 502 }
-    );
+    return NextResponse.json({ error: `Failed to reach empire API: ${msg}` }, { status: 502 });
   }
 }

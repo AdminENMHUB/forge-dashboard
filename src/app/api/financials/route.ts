@@ -10,15 +10,12 @@ export async function GET() {
     if (!res.ok) {
       return NextResponse.json(
         { error: `Upstream API returned ${res.status}` },
-        { status: res.status }
+        { status: res.status },
       );
     }
     return NextResponse.json(await res.json());
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json(
-      { error: `Failed to reach empire API: ${msg}` },
-      { status: 502 }
-    );
+    return NextResponse.json({ error: `Failed to reach empire API: ${msg}` }, { status: 502 });
   }
 }

@@ -8,18 +8,12 @@ export async function GET() {
       next: { revalidate: 5 },
     });
     if (!res.ok) {
-      return NextResponse.json(
-        { status: "error", upstream: res.status },
-        { status: 502 }
-      );
+      return NextResponse.json({ status: "error", upstream: res.status }, { status: 502 });
     }
     const data = await res.json();
     return NextResponse.json(data);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
-    return NextResponse.json(
-      { status: "error", message: msg },
-      { status: 502 }
-    );
+    return NextResponse.json({ status: "error", message: msg }, { status: 502 });
   }
 }

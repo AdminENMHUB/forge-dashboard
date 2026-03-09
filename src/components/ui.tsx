@@ -12,12 +12,10 @@ export function MetricCard({
   accent?: string;
 }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-      <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-        {label}
-      </p>
+    <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+      <p className="mb-1 text-xs tracking-wider text-gray-500 uppercase">{label}</p>
       <p className={`text-2xl font-bold ${accent || ""}`}>{value}</p>
-      {subtext && <p className="text-xs text-gray-500 mt-1">{subtext}</p>}
+      {subtext && <p className="mt-1 text-xs text-gray-500">{subtext}</p>}
     </div>
   );
 }
