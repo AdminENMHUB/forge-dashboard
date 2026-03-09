@@ -1,9 +1,11 @@
 # CLAUDE.md — forge-dashboard
 
 ## What This Is
+
 Next.js 16 web dashboard for the Egan Forge empire. Shows real-time status of all swarms, P&L, proposals, and system health. Deployed on Vercel.
 
 ## Stack
+
 - **Framework**: Next.js 16 (App Router)
 - **UI**: Tailwind CSS v4 + custom components
 - **Charts**: Recharts
@@ -11,6 +13,7 @@ Next.js 16 web dashboard for the Egan Forge empire. Shows real-time status of al
 - **Port**: 3001 (local dev)
 
 ## Structure
+
 ```
 src/app/
 ├── page.tsx              ← Main dashboard (swarm status overview)
@@ -25,6 +28,7 @@ src/app/
 ```
 
 ## Dev Commands
+
 ```bash
 npm run dev                     # Start dev server (port 3001)
 npm run build                   # Production build
@@ -35,6 +39,7 @@ npx tsc --noEmit                # Type check
 ```
 
 ## Key Rules
+
 - **Next.js 16**: `params` is a Promise — must use `async function` + `await params` in page components
 - **Tailwind v4**: Uses `@import "tailwindcss"` syntax, NOT `@tailwind` directives
 - **Tailwind v4**: `@apply` with custom classes requires those classes defined in tailwind config
