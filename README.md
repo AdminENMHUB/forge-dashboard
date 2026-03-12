@@ -36,9 +36,13 @@ All pages are client-side (`"use client"`) with polling-based data via `useApiPo
 
 ## Environment
 
+Create `.env.local`:
+
 ```
-NEXT_PUBLIC_API_URL=http://89.167.82.184:8080
+HETZNER_API_URL=http://89.167.82.184:8080
 ```
+
+**Required** — the app will throw a clear error at request time if this is missing.
 
 ## Development
 
