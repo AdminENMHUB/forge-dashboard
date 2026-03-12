@@ -1,5 +1,7 @@
 "use client";
 
+import { formatUSD } from "@/lib/formatters";
+
 export function MetricCard({
   label,
   value,
@@ -18,4 +20,29 @@ export function MetricCard({
       {subtext && <p className="mt-1 text-xs text-gray-500">{subtext}</p>}
     </div>
   );
+}
+
+export function StatusBadge({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    healthy: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    halted: "bg-red-500/20 text-red-400 border-red-500/30",
+    degraded: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    offline: "bg-red-500/20 text-red-400 border-red-500/30",
+    expired: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+    unknown: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+  };
+  return (
+    <span
+      className={`rounded-full border px-2 py-0.5 text-xs font-medium ${colors[status] || colors.unknown}`}
+    >
+      {status.toUpperCase()}
+    </span>
+  );
+}
+
+export function PnlText({ value }: { value: number }) {
+  if (value > 0) return <span className="font-semibold text-emerald-400">+{formatUSD(value)}</span>;
+  if (value < 0) return <span className="font-semibold text-red-400">{formatUSD(value)}</span>;
+  return <span className="text-gray-400">{formatUSD(value)}</span>;
 }

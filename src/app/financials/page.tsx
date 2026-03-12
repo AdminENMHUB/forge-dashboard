@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useApiPoller } from "@/lib/hooks";
 import { formatUSD } from "@/lib/formatters";
 import { PnlAreaChart, SwarmCostChart, CostDonutChart } from "@/components/charts";
-import { MetricCard } from "@/components/ui";
+import { MetricCard, PnlText } from "@/components/ui";
 
 interface FinancialsData {
   daily_pnl_history: Record<string, number>;
@@ -52,12 +52,6 @@ interface CostsData {
     alert?: string | null;
   };
   error?: string;
-}
-
-function PnlText({ value }: { value: number }) {
-  if (value > 0) return <span className="font-semibold text-emerald-400">+{formatUSD(value)}</span>;
-  if (value < 0) return <span className="font-semibold text-red-400">{formatUSD(value)}</span>;
-  return <span className="text-gray-400">{formatUSD(value)}</span>;
 }
 
 export default function FinancialsPage() {

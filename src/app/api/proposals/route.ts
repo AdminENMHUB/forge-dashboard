@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-
-const HETZNER_API = process.env.HETZNER_API_URL || "http://89.167.82.184:8080";
+import { HETZNER_API } from "@/lib/api-config";
 
 export async function GET(request: Request) {
   try {
