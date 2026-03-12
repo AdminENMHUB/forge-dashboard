@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { HETZNER_API } from "@/lib/api-config";
+import { getHetznerApi } from "@/lib/api-config";
 
 export async function GET() {
   try {
-    const res = await fetch(`${HETZNER_API}/api/costs`, {
+    const res = await fetch(`${getHetznerApi()}/api/costs`, {
       next: { revalidate: 60 },
     });
     if (!res.ok) {
