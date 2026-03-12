@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { timeAgo } from "@/lib/formatters";
 
 interface Proposal {
   id: string;
@@ -51,18 +52,6 @@ const statusColor: Record<string, string> = {
   completed: "bg-gray-500/20 text-gray-400",
   deferred: "bg-yellow-500/20 text-yellow-400",
 };
-
-function timeAgo(timestamp: string): string {
-  const now = Date.now();
-  const then = new Date(timestamp).getTime();
-  const diffMin = Math.floor((now - then) / 60000);
-  if (diffMin < 1) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay}d ago`;
-}
 
 function ProposalCard({
   proposal,
@@ -232,7 +221,11 @@ export default function ProposalsPage() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed top-4 right-4 left-4 z-50 animate-pulse rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white shadow-lg sm:left-auto sm:w-80">
+        <div
+          role="alert"
+          aria-live="polite"
+          className="fixed top-4 right-4 left-4 z-50 animate-pulse rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white shadow-lg sm:left-auto sm:w-80"
+        >
           {toast}
         </div>
       )}

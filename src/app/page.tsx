@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useApiPoller } from "@/lib/hooks";
 import { formatUSD, formatPct } from "@/lib/formatters";
-
-// Proxy through our own Next.js API routes to avoid HTTPS→HTTP mixed content
-const API_BASE = "";
+import { MetricCard, StatusBadge, PnlText, type SwarmStatus } from "@/components/ui";
 
 interface SwarmData {
-  status: string;
+  status: SwarmStatus;
   daily_pnl: number;
   total_pnl: number;
   portfolio_value: number;
@@ -55,55 +53,7 @@ interface StatusResponse {
   };
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    healthy: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    halted: "bg-red-500/20 text-red-400 border-red-500/30",
-    degraded: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    unknown: "bg-gray-500/20 text-gray-400 border-gray-500/30",
-  };
-  return (
-    <span
-      className={`rounded-full border px-2 py-0.5 text-xs font-medium ${colors[status] || colors.unknown}`}
-    >
-      {status.toUpperCase()}
-    </span>
-  );
-}
-
-function PnlText({ value }: { value: number }) {
-  if (value > 0) return <span className="font-semibold text-emerald-400">+{formatUSD(value)}</span>;
-  if (value < 0) return <span className="font-semibold text-red-400">{formatUSD(value)}</span>;
-  return <span className="text-gray-400">{formatUSD(value)}</span>;
-}
-
-function MetricCard({
-  label,
-  value,
-  subtext,
-}: {
-  label: string;
-  value: React.ReactNode;
-  subtext?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-      <p className="mb-1 text-xs tracking-wider text-gray-500 uppercase">{label}</p>
-      <p className="text-2xl font-bold">{value}</p>
-      {subtext && <p className="mt-1 text-xs text-gray-500">{subtext}</p>}
-    </div>
-  );
-}
-
 function SwarmCard({ name, data }: { name: string; data: SwarmData }) {
-  const icon: Record<string, string> = {
-    EganTradeBot: "chart-line",
-    EchoSwarm: "crystal-ball",
-    EganSaasFactory: "rocket",
-    EganWeb3Swarm: "cube",
-    EganGrowthEngine: "trending-up",
-  };
-
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900 p-5 transition-colors hover:border-gray-700">
       <div className="mb-4 flex items-center justify-between">
@@ -149,28 +99,10 @@ function SwarmCard({ name, data }: { name: string; data: SwarmData }) {
 }
 
 export default function Dashboard() {
-  const [data, setData] = useState<StatusResponse | null>(null);
-  const [error, setError] = useState<string>("");
-  const [lastUpdate, setLastUpdate] = useState<string>("");
-
-  const fetchData = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/status`);
-      if (!res.ok) throw new Error(`API returned ${res.status}`);
-      const json = await res.json();
-      setData(json);
-      setError("");
-      setLastUpdate(new Date().toLocaleTimeString());
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to fetch");
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30000); // refresh every 30s
-    return () => clearInterval(interval);
-  }, []);
+  const { data, error, loading, lastUpdate, refresh } = useApiPoller<StatusResponse>(
+    "/api/status",
+    30000,
+  );
 
   if (error && !data) {
     return (
@@ -179,7 +111,7 @@ export default function Dashboard() {
           <h1 className="mb-2 text-2xl font-bold">Connection Error</h1>
           <p className="text-gray-400">{error}</p>
           <button
-            onClick={fetchData}
+            onClick={refresh}
             className="mt-4 rounded-lg bg-blue-600 px-4 py-2 hover:bg-blue-700"
           >
             Retry
@@ -189,12 +121,32 @@ export default function Dashboard() {
     );
   }
 
+  if (loading && !data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center" role="status" aria-live="polite">
+          <div
+            className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"
+            aria-hidden="true"
+          />
+          <p className="text-gray-400">Loading Empire Status...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!data) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-          <p className="text-gray-400">Loading Empire Status...</p>
+          <h1 className="mb-2 text-2xl font-bold">No Data Available</h1>
+          <p className="text-gray-400">Unable to load dashboard data.</p>
+          <button
+            onClick={refresh}
+            className="mt-4 rounded-lg bg-blue-600 px-4 py-2 hover:bg-blue-700"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

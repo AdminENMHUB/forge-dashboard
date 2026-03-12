@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-
-const HETZNER_API = process.env.HETZNER_API_URL || "http://89.167.82.184:8080";
+import { getHetznerApi } from "@/lib/api-config";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "proposed";
 
-    const res = await fetch(`${HETZNER_API}/api/proposals?status=${status}`, {
+    const res = await fetch(`${getHetznerApi()}/api/proposals?status=${status}`, {
       next: { revalidate: 5 },
     });
     if (!res.ok) {

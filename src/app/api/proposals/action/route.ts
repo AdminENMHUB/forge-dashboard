@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-
-const HETZNER_API = process.env.HETZNER_API_URL || "http://89.167.82.184:8080";
+import { getHetznerApi } from "@/lib/api-config";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const res = await fetch(`${HETZNER_API}/api/proposals/action`, {
+    const res = await fetch(`${getHetznerApi()}/api/proposals/action`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

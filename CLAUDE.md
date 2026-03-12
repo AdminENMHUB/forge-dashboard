@@ -27,8 +27,9 @@ src/
 │   └── globals.css           ← Tailwind imports + dark mode CSS variables
 ├── components/
 │   ├── charts.tsx            ← PnlAreaChart, SwarmCostChart, CostDonutChart
-│   └── ui.tsx                ← MetricCard (reusable KPI card)
+│   └── ui.tsx                ← MetricCard, StatusBadge, PnlText (shared UI components)
 └── lib/
+    ├── api-config.ts         ← getHetznerApi() — validated VPS base URL (server-side only)
     ├── hooks.ts              ← useApiPoller(url, intervalMs) — generic polling hook
     └── formatters.ts         ← formatUSD(), formatPct(), timeAgo(), truncateAddress()
 ```
@@ -50,10 +51,10 @@ src/
 ## Environment Variables (.env.local)
 
 ```
-NEXT_PUBLIC_API_URL=http://89.167.82.184:8080
+HETZNER_API_URL=http://89.167.82.184:8080
 ```
 
-API routes also hardcode fallback: `process.env.HETZNER_API_URL || "http://89.167.82.184:8080"`
+**Required**: `HETZNER_API_URL` must be set — API routes call `getHetznerApi()` from `lib/api-config.ts` which throws at request time if missing (no hardcoded fallback).
 
 ## Dev Commands
 

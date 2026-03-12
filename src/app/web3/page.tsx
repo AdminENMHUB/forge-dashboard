@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useApiPoller } from "@/lib/hooks";
 import { formatUSD, timeAgo } from "@/lib/formatters";
-import { MetricCard } from "@/components/ui";
+import { MetricCard, StatusBadge } from "@/components/ui";
 
 interface Web3Data {
   available: boolean;
@@ -69,23 +69,6 @@ interface Web3Data {
     daily: Record<string, Record<string, number>>;
   };
   transactions: Array<Record<string, unknown>>;
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    healthy: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    degraded: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    offline: "bg-red-500/20 text-red-400 border-red-500/30",
-    expired: "bg-gray-500/20 text-gray-400 border-gray-500/30",
-  };
-  return (
-    <span
-      className={`rounded-full border px-2 py-0.5 text-xs font-medium ${colors[status] || colors.offline}`}
-    >
-      {status.toUpperCase()}
-    </span>
-  );
 }
 
 export default function Web3Page() {
