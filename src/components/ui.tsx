@@ -22,19 +22,29 @@ export function MetricCard({
   );
 }
 
-export function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    healthy: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    halted: "bg-red-500/20 text-red-400 border-red-500/30",
-    degraded: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    offline: "bg-red-500/20 text-red-400 border-red-500/30",
-    expired: "bg-gray-500/20 text-gray-400 border-gray-500/30",
-    unknown: "bg-gray-500/20 text-gray-400 border-gray-500/30",
-  };
+export type SwarmStatus =
+  | "healthy"
+  | "active"
+  | "halted"
+  | "degraded"
+  | "offline"
+  | "expired"
+  | "unknown";
+
+const statusColors: Record<SwarmStatus, string> = {
+  healthy: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+  halted: "bg-red-500/20 text-red-400 border-red-500/30",
+  degraded: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  offline: "bg-red-500/20 text-red-400 border-red-500/30",
+  expired: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+  unknown: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+};
+
+export function StatusBadge({ status }: { status: SwarmStatus }) {
   return (
     <span
-      className={`rounded-full border px-2 py-0.5 text-xs font-medium ${colors[status] || colors.unknown}`}
+      className={`rounded-full border px-2 py-0.5 text-xs font-medium ${statusColors[status] || statusColors.unknown}`}
     >
       {status.toUpperCase()}
     </span>

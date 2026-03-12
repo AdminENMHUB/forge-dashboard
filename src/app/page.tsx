@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useApiPoller } from "@/lib/hooks";
 import { formatUSD, formatPct } from "@/lib/formatters";
-import { MetricCard, StatusBadge, PnlText } from "@/components/ui";
+import { MetricCard, StatusBadge, PnlText, type SwarmStatus } from "@/components/ui";
 
 interface SwarmData {
-  status: string;
+  status: SwarmStatus;
   daily_pnl: number;
   total_pnl: number;
   portfolio_value: number;
@@ -124,11 +124,10 @@ export default function Dashboard() {
   if (loading && !data) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
+        <div className="text-center" role="status" aria-live="polite">
           <div
             className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"
-            role="status"
-            aria-label="Loading"
+            aria-hidden="true"
           />
           <p className="text-gray-400">Loading Empire Status...</p>
         </div>
@@ -136,7 +135,22 @@ export default function Dashboard() {
     );
   }
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="mb-2 text-2xl font-bold">No Data Available</h1>
+          <p className="text-gray-400">Unable to load dashboard data.</p>
+          <button
+            onClick={refresh}
+            className="mt-4 rounded-lg bg-blue-600 px-4 py-2 hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const e = data.empire;
   const swarmEntries = Object.entries(data.swarms);
