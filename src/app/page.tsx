@@ -221,7 +221,7 @@ export default function Dashboard() {
         <MetricCard
           label="MRR"
           value={formatUSD(e.combined_mrr)}
-          subtext={`Stripe: ${formatUSD(e.stripe_mrr || 0)} · Crypto: ${formatUSD(e.web3_mrr || 0)} · ARR: ${formatUSD(e.combined_arr)}`}
+          subtext={`Stripe: ${formatUSD(e.stripe_mrr || 0)} Â· Crypto: ${formatUSD(e.web3_mrr || 0)} Â· ARR: ${formatUSD(e.combined_arr)}`}
         />
       </div>
 
@@ -292,6 +292,42 @@ export default function Dashboard() {
             <p className="text-gray-500">Total Products</p>
           </div>
         </div>
+
+        {/* Product Quick Links */}
+        <div className="border-t border-gray-800 pt-4">
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Live Products</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {[
+              { name: "CaptionCraft", url: "https://captioncraft.eganforge.com", icon: "CC", bg: "#F59E0B" },
+              { name: "MailMint AI", url: "https://mailmint.eganforge.com", icon: "MM", bg: "#818CF8" },
+              { name: "MeetSnap AI", url: "https://meetsnap.eganforge.com", icon: "MS", bg: "#34D399" },
+              { name: "WriteMap AI", url: "https://writemap.eganforge.com", icon: "WM", bg: "#3B82F6" },
+              { name: "LegalMind AI", url: "https://legalmind.eganforge.com", icon: "LM", bg: "#8B5CF6" },
+              { name: "OutlineAI", url: "https://outlineai.eganforge.com", icon: "OA", bg: "#06B6D4" },
+              { name: "IdeaSpark AI", url: "https://ideaspark.eganforge.com", icon: "IS", bg: "#F59E0B" },
+              { name: "PostCraft AI", url: "https://postcraft.eganforge.com", icon: "PC", bg: "#EF4444" },
+              { name: "PromptLab", url: "https://promptlab.eganforge.com", icon: "PL", bg: "#10B981" },
+              { name: "TicketSort AI", url: "https://ticketsort.eganforge.com", icon: "TS", bg: "#F472B6" },
+              { name: "PriceSpy AI", url: "https://pricespy.eganforge.com", icon: "PS", bg: "#14B8A6" },
+            ].map((p) => (
+              <a
+                key={p.name}
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-lg border border-gray-800 p-2 transition-colors hover:border-gray-600 hover:bg-gray-800/50"
+              >
+                <span
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[9px] font-bold text-black"
+                  style={{ background: p.bg }}
+                >
+                  {p.icon}
+                </span>
+                <span className="text-xs font-medium truncate">{p.name}</span>
+              </a>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Swarm Cards */}
@@ -321,7 +357,7 @@ export default function Dashboard() {
 
       {/* Footer */}
       <footer className="mt-12 border-t border-gray-800 pt-6 text-center text-xs text-gray-600">
-        EganForge v2.0 | CEO: Josh Egan | Powered by Claude Opus, GPT-4o, Grok-3, Gemini |
+        EganForge v2.0 | CEO: Josh Egan | Powered by Claude Opus, GPT-4o, Grok 4, Gemini |
         Auto-refreshes every 30s
       </footer>
     </div>
