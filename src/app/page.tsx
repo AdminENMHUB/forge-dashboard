@@ -439,6 +439,114 @@ function SaasFactoryCard({
   );
 }
 
+function Web3SwarmCard({ swarm }: { swarm: SwarmData }) {
+  return (
+    <div
+      className={`rounded-xl border border-l-4 border-gray-800 ${borderColor(swarm.status)} bg-gray-900/80 p-5 backdrop-blur-sm`}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Web3 &amp; DeFi</h3>
+        <StatusBadge status={swarm.status} />
+      </div>
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <p className="text-gray-500">MRR</p>
+          <p className="font-medium text-blue-400">{formatUSD(swarm.mrr)}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Portfolio</p>
+          <p className="font-medium">{formatUSD(swarm.portfolio_value)}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Total Revenue</p>
+          <PnlValue value={swarm.total_pnl} />
+        </div>
+        <div>
+          <p className="text-gray-500">Subscribers</p>
+          <p className="font-medium">{swarm.open_positions}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Signals Sent</p>
+          <p className="font-medium">{swarm.trades_today}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Daily P&amp;L</p>
+          <PnlValue value={swarm.daily_pnl} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GrowthEngineCard({ swarm }: { swarm: SwarmData }) {
+  const isStale = swarm.trades_today === 0 && swarm.total_pnl === 0;
+  const effectiveStatus = isStale ? "degraded" : swarm.status;
+  return (
+    <div
+      className={`rounded-xl border border-l-4 border-gray-800 ${borderColor(effectiveStatus)} bg-gray-900/80 p-5 backdrop-blur-sm`}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Marketing &amp; Growth</h3>
+        <StatusBadge status={effectiveStatus} />
+      </div>
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <p className="text-gray-500">X Posts</p>
+          <p className="font-medium">{swarm.trades_today}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Dir. Submissions</p>
+          <p className="font-medium">{swarm.open_positions}</p>
+        </div>
+        <div className="col-span-2">
+          <p className="text-gray-500">Last Active</p>
+          <p className="text-xs font-medium">
+            {swarm.sampled_at ? timeAgo(swarm.sampled_at) : "\u2014"}
+          </p>
+        </div>
+      </div>
+      {isStale && (
+        <div className="mt-3 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-2">
+          <p className="text-xs text-amber-400">
+            Growth engine appears stale — no recent marketing activity
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BinanceArbCard({ swarm }: { swarm: SwarmData }) {
+  return (
+    <div
+      className={`rounded-xl border border-l-4 border-gray-800 ${borderColor(swarm.status)} bg-gray-900/80 p-5 backdrop-blur-sm`}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Binance</h3>
+        <StatusBadge status={swarm.status} />
+      </div>
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <p className="text-gray-500">Portfolio</p>
+          <p className="font-medium">{formatUSD(swarm.portfolio_value)}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Cash %</p>
+          <p className="font-medium">{formatPct(swarm.win_rate || 0)}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Positions</p>
+          <p className="font-medium">{swarm.open_positions}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Daily P&amp;L</p>
+          <PnlValue value={swarm.daily_pnl} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Section: Revenue Chart
 // ---------------------------------------------------------------------------
@@ -710,6 +818,9 @@ export default function Dashboard() {
   const tradeBotSwarm = data.swarms["EganTradeBot"] || data.swarms["TradeBot"];
   const echoSwarm = data.swarms["EchoSwarm"];
   const saasSwarm = data.swarms["EganSaasFactory"] || data.swarms["SaasFactory"];
+  const web3Swarm = data.swarms["EganWeb3Swarm"];
+  const growthSwarm = data.swarms["EganGrowthEngine"];
+  const binanceSwarm = data.swarms["BinanceArb"];
 
   // Chart data and events from financials endpoint
   const chartData = financials?.daily_pnl_history || [];
@@ -766,11 +877,18 @@ export default function Dashboard() {
         <RevenueProgressBar empire={e} />
       </div>
 
-      {/* 2. Swarm Cards (3 columns) */}
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+      {/* 2. Revenue Swarm Cards (top row — money makers) */}
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
         {tradeBotSwarm && <TradeBotCard swarm={tradeBotSwarm} tradebot={data.tradebot} />}
         {echoSwarm && <EchoSwarmCard swarm={echoSwarm} />}
+        {web3Swarm && <Web3SwarmCard swarm={web3Swarm} />}
+      </div>
+
+      {/* 3. Operations Swarm Cards (bottom row — support systems) */}
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <SaasFactoryCard swarm={saasSwarm} saas={data.saas} />
+        {growthSwarm && <GrowthEngineCard swarm={growthSwarm} />}
+        {binanceSwarm && <BinanceArbCard swarm={binanceSwarm} />}
       </div>
 
       {/* 3. Revenue Chart + 4. Activity Feed */}
