@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useApiPoller } from "@/lib/hooks";
+import { DashboardNav } from "@/components/nav";
 import { formatUSD, timeAgo } from "@/lib/formatters";
 import { MetricCard, StatusBadge } from "@/components/ui";
 
@@ -105,11 +105,9 @@ export default function Web3Page() {
   if (!data?.available) {
     return (
       <div className="mx-auto min-h-screen max-w-7xl p-6">
-        <header className="mb-8 flex items-center gap-4">
-          <Link href="/" className="text-gray-400 transition-colors hover:text-white">
-            &larr; Dashboard
-          </Link>
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Web3 Department</h1>
+          <DashboardNav />
         </header>
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-8 text-center">
           <p className="text-lg text-gray-400">Web3 Swarm is currently offline</p>
@@ -126,59 +124,39 @@ export default function Web3Page() {
   return (
     <div className="mx-auto min-h-screen max-w-7xl p-6">
       {/* Header */}
-      <header className="mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-gray-400 transition-colors hover:text-white">
-            &larr; Dashboard
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Web3 Department</h1>
-            <p className="text-sm text-gray-500">
-              {w.wallet.network} &middot;{" "}
-              <a
-                href={`https://basescan.org/address/${w.wallet.address}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono text-purple-400 hover:text-purple-300"
-              >
-                {w.wallet.address.slice(0, 8)}...{w.wallet.address.slice(-6)}
-              </a>
-              {w.polygon && (
-                <>
-                  {" "}
-                  &middot; Polygon &middot;{" "}
-                  <a
-                    href={`https://polygonscan.com/address/${w.polygon.address}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-mono text-purple-400 hover:text-purple-300"
-                  >
-                    {w.polygon.address.slice(0, 8)}...{w.polygon.address.slice(-6)}
-                  </a>
-                </>
-              )}
-            </p>
-          </div>
+      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Web3 Department</h1>
+          <p className="text-sm text-gray-500">
+            {w.wallet.network} &middot;{" "}
+            <a
+              href={`https://basescan.org/address/${w.wallet.address}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-purple-400 hover:text-purple-300"
+            >
+              {w.wallet.address.slice(0, 8)}...{w.wallet.address.slice(-6)}
+            </a>
+            {w.polygon && (
+              <>
+                {" "}
+                &middot; Polygon &middot;{" "}
+                <a
+                  href={`https://polygonscan.com/address/${w.polygon.address}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-purple-400 hover:text-purple-300"
+                >
+                  {w.polygon.address.slice(0, 8)}...{w.polygon.address.slice(-6)}
+                </a>
+              </>
+            )}
+            <span className="mx-2 text-gray-700">|</span>
+            <span>{lastUpdate}</span>
+            {error && <span className="ml-2 text-xs text-red-400">({error})</span>}
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/financials"
-            className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium transition-colors hover:bg-emerald-700"
-          >
-            Financials
-          </Link>
-          <Link
-            href="/assets"
-            className="rounded-lg bg-cyan-600 px-3 py-2 text-sm font-medium transition-colors hover:bg-cyan-700"
-          >
-            Assets
-          </Link>
-          <div className="text-right">
-            <p className="text-xs text-gray-500">Updated: {lastUpdate}</p>
-            {w.sampled_at && <p className="text-xs text-gray-500">Data: {timeAgo(w.sampled_at)}</p>}
-            {error && <p className="text-xs text-red-400">{error}</p>}
-          </div>
-        </div>
+        <DashboardNav />
       </header>
 
       {/* KPI Cards */}

@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useApiPoller } from "@/lib/hooks";
+import { DashboardNav } from "@/components/nav";
 import { formatUSD } from "@/lib/formatters";
 import { PnlAreaChart, SwarmCostChart, CostDonutChart } from "@/components/charts";
 import { MetricCard, PnlText } from "@/components/ui";
@@ -155,34 +155,17 @@ export default function FinancialsPage() {
   return (
     <div className="mx-auto min-h-screen max-w-7xl p-6">
       {/* Header */}
-      <header className="mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-gray-400 transition-colors hover:text-white">
-            &larr; Dashboard
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Financials</h1>
-            <p className="text-sm text-gray-500">P&L, Revenue, Costs &amp; ROI Analysis</p>
-          </div>
+      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Financials</h1>
+          <p className="text-sm text-gray-500">
+            P&amp;L, Revenue, Costs &amp; ROI Analysis
+            <span className="mx-2 text-gray-700">|</span>
+            <span>{lastUpdate}</span>
+            {finError && <span className="ml-2 text-xs text-red-400">({finError})</span>}
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/assets"
-            className="rounded-lg bg-cyan-600 px-3 py-2 text-sm font-medium transition-colors hover:bg-cyan-700"
-          >
-            Assets
-          </Link>
-          <Link
-            href="/web3"
-            className="rounded-lg bg-purple-600 px-3 py-2 text-sm font-medium transition-colors hover:bg-purple-700"
-          >
-            Web3
-          </Link>
-          <div className="text-right">
-            <p className="text-xs text-gray-500">Updated: {lastUpdate}</p>
-            {finError && <p className="text-xs text-red-400">{finError}</p>}
-          </div>
-        </div>
+        <DashboardNav />
       </header>
 
       {/* KPI Cards */}

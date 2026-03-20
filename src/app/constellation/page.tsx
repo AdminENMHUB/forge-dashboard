@@ -540,6 +540,7 @@ class ConstellationEngine {
     cancelAnimationFrame(this.animId);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private update(_dt: number) {
     this.particles.forEach((p) => {
       const from = this.nodes.find((n) => n.id === p.fromId);
@@ -1228,8 +1229,11 @@ export default function ConstellationPage() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 15000);
+    const doFetch = () => {
+      fetchData();
+    };
+    doFetch();
+    const interval = setInterval(doFetch, 15000);
     return () => clearInterval(interval);
   }, [fetchData]);
 

@@ -95,7 +95,11 @@ export function ChartSkeleton() {
       <Skeleton className="mb-4 h-5 w-40" />
       <div className="flex items-end gap-1" style={{ height: 200 }}>
         {Array.from({ length: 30 }).map((_, i) => (
-          <Skeleton key={i} className="flex-1" style={{ height: `${20 + Math.random() * 80}%` }} />
+          <Skeleton
+            key={i}
+            className="flex-1"
+            style={{ height: `${20 + ((i * 37 + 13) % 80)}%` }}
+          />
         ))}
       </div>
     </div>
