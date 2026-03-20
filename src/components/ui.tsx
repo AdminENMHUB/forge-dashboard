@@ -88,14 +88,28 @@ export function SwarmCardSkeleton() {
   );
 }
 
+// Pre-computed stable heights for the chart skeleton bars (avoids impure render calls).
+// The formula spreads 30 bars across the 20–99% range using a linear congruential step
+// (multiplier=37, offset=13) to produce visually varied heights without randomness.
+const CHART_SKELETON_HEIGHT_MULTIPLIER = 37;
+const CHART_SKELETON_HEIGHT_OFFSET = 13;
+const CHART_SKELETON_HEIGHT_RANGE = 80; // heights span [20, 20+80) %
+const CHART_SKELETON_HEIGHTS = Array.from(
+  { length: 30 },
+  (_, i) =>
+    20 +
+    ((i * CHART_SKELETON_HEIGHT_MULTIPLIER + CHART_SKELETON_HEIGHT_OFFSET) %
+      CHART_SKELETON_HEIGHT_RANGE),
+);
+
 /** Skeleton for the revenue chart area */
 export function ChartSkeleton() {
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
       <Skeleton className="mb-4 h-5 w-40" />
       <div className="flex items-end gap-1" style={{ height: 200 }}>
-        {Array.from({ length: 30 }).map((_, i) => (
-          <Skeleton key={i} className="flex-1" style={{ height: `${20 + Math.random() * 80}%` }} />
+        {CHART_SKELETON_HEIGHTS.map((h, i) => (
+          <Skeleton key={i} className="flex-1" style={{ height: `${h}%` }} />
         ))}
       </div>
     </div>

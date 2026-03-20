@@ -529,7 +529,7 @@ class ConstellationEngine {
       const dt = (now - last) / 1000;
       last = now;
       this.time += dt;
-      this.update(dt);
+      this.update();
       this.render();
       this.animId = requestAnimationFrame(loop);
     };
@@ -540,7 +540,7 @@ class ConstellationEngine {
     cancelAnimationFrame(this.animId);
   }
 
-  private update(_dt: number) {
+  private update() {
     this.particles.forEach((p) => {
       const from = this.nodes.find((n) => n.id === p.fromId);
       const to = this.nodes.find((n) => n.id === p.toId);
@@ -1228,8 +1228,12 @@ export default function ConstellationPage() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 15000);
+    // fetchData is async — setState calls happen after awaited operations, not synchronously
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchData();
+    const interval = setInterval(() => {
+      void fetchData();
+    }, 15000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
