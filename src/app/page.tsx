@@ -866,6 +866,12 @@ export default function Dashboard() {
           >
             Proposals
           </Link>
+          <Link
+            href="/constellation"
+            className="rounded-lg border border-cyan-800/50 bg-cyan-950/30 px-3 py-2 text-xs font-medium text-cyan-400 transition-colors hover:bg-cyan-900/40 hover:text-cyan-300"
+          >
+            Constellation
+          </Link>
         </nav>
       </header>
 
