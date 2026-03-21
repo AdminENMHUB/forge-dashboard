@@ -454,7 +454,9 @@ class ConstellationEngine {
       if (dept.serviceKey && health?.services) {
         const svc = health.services[dept.serviceKey];
         if (svc) {
-          if (svc.status !== "active" && svc.status !== "running") {
+          const svcOk =
+            svc.status === "active" || svc.status === "running" || svc.status === "healthy";
+          if (!svcOk) {
             node.status = "error";
           } else if (node.status === "unknown") {
             node.status = "active";
@@ -467,11 +469,12 @@ class ConstellationEngine {
       if (dept.id === "predictions" && health?.docker) {
         const scout = health.docker["echo-scout"];
         if (scout) {
-          if (
-            scout.status !== "running" &&
-            scout.status !== "Up" &&
-            !String(scout.status).startsWith("Up")
-          ) {
+          const dockerOk =
+            scout.status === "running" ||
+            scout.status === "healthy" ||
+            scout.status === "Up" ||
+            String(scout.status).startsWith("Up");
+          if (!dockerOk) {
             node.status = "error";
           } else if (node.status === "unknown") {
             node.status = "active";
@@ -486,7 +489,10 @@ class ConstellationEngine {
         health?.services?.["egan-master"]
       ) {
         const svc = health.services["egan-master"];
-        node.status = svc.status === "active" || svc.status === "running" ? "active" : "error";
+        node.status =
+          svc.status === "active" || svc.status === "running" || svc.status === "healthy"
+            ? "active"
+            : "error";
       }
 
       // TradeBot extras
