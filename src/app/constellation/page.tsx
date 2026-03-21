@@ -1396,6 +1396,9 @@ function DetailPanel({
             </div>
           </div>
         )}
+
+        {/* Activity transcript */}
+        <ActivityTranscript node={node} />
       </div>
 
       {/* Footer */}
@@ -1405,6 +1408,98 @@ function DetailPanel({
       >
         EGAN FORGE CONSTELLATION v2.0 — LIVE ACTIVITY
       </div>
+    </div>
+  );
+}
+
+// ── Swarm name mapping for API queries ─────────────────────────────────────
+
+const DEPT_TO_SWARM: Record<string, string> = {
+  oversight: "EganMasterSwarm",
+  trading: "EganTradeBot",
+  predictions: "EchoSwarm",
+  signals: "EganWeb3Swarm",
+  products: "EganSaasFactory",
+};
+
+const EVENT_COLORS: Record<string, string> = {
+  llm_call: "#8B5CF6",
+  report: "#06B6D4",
+  decision: "#FFB800",
+  outcome: "#10B981",
+  cost: "#F59E0B",
+  error: "#FF3344",
+  heartbeat: "#334155",
+};
+
+function ActivityTranscript({ node }: { node: CNode }) {
+  const [events, setEvents] = useState<
+    { ts: string; source: string; type: string; detail: string; category: string }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  const swarmFilter =
+    node.type === "center" ? "" : DEPT_TO_SWARM[node.departmentId || node.id] || "";
+
+  useEffect(() => {
+    setLoading(true);
+    const params = new URLSearchParams({ swarm: swarmFilter, limit: "15" });
+    fetch(`/api/activity?${params}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setEvents(d.events || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [swarmFilter]);
+
+  return (
+    <div className="border-t pt-3" style={{ borderColor: `${node.color}15` }}>
+      <div className="mb-2 font-bold tracking-wider" style={{ color: node.color }}>
+        ACTIVITY LOG
+      </div>
+      {loading ? (
+        <div className="py-4 text-center" style={{ color: C.textDim }}>
+          Loading transcript...
+        </div>
+      ) : events.length === 0 ? (
+        <div className="py-4 text-center" style={{ color: C.textDim }}>
+          No recent activity
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {events.map((ev, i) => (
+            <div key={i} className="rounded px-2 py-1.5" style={{ background: `${node.color}06` }}>
+              <div className="flex items-center gap-2">
+                <div
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ background: EVENT_COLORS[ev.type] || C.textDim }}
+                />
+                <span
+                  className="shrink-0 rounded px-1 py-0.5 text-[9px] font-semibold uppercase"
+                  style={{
+                    color: EVENT_COLORS[ev.type] || C.textDim,
+                    background: `${EVENT_COLORS[ev.type] || C.textDim}15`,
+                  }}
+                >
+                  {ev.type}
+                </span>
+                <span className="text-[9px]" style={{ color: C.textDim }}>
+                  {ev.ts?.slice(11) || ""}
+                </span>
+              </div>
+              <div className="mt-0.5 text-[10px] leading-tight" style={{ color: C.text }}>
+                {ev.detail}
+              </div>
+              {ev.source && (
+                <div className="mt-0.5 text-[9px]" style={{ color: C.textDim }}>
+                  {ev.source}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

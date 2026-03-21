@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { getHetznerApi } from "@/lib/api-config";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const res = await fetch(`${getHetznerApi()}/api/activity`, {
+    const { searchParams } = new URL(request.url);
+    const swarm = searchParams.get("swarm") || "";
+    const agent = searchParams.get("agent") || "";
+    const limit = searchParams.get("limit") || "20";
+
+    const params = new URLSearchParams({ swarm, agent, limit });
+    const res = await fetch(`${getHetznerApi()}/api/activity?${params}`, {
       next: { revalidate: 10 },
     });
     if (!res.ok) {
