@@ -53,6 +53,7 @@ interface Particle {
   size: number;
   color: string;
   reverse: boolean;
+  real: boolean; // true = triggered by actual activity, false = ambient
 }
 
 interface Connection {
@@ -400,22 +401,24 @@ class ConstellationEngine {
     this.rebuildParticles();
   }
 
+  // Previous poll values for delta detection
+  private prevStatus: StatusResponse | null = null;
+
   private rebuildParticles() {
+    // One ambient heartbeat per active department connection
     this.particles = [];
     this.connections.forEach((conn) => {
-      const isTrunk = conn.fromId === "center";
-      const count = isTrunk ? 3 : 1;
-      for (let i = 0; i < count; i++) {
-        this.particles.push({
-          fromId: conn.fromId,
-          toId: conn.toId,
-          progress: Math.random(),
-          speed: 0.0003 + Math.random() * 0.0007,
-          size: isTrunk ? 2.5 : 1.8,
-          color: conn.color,
-          reverse: Math.random() > 0.9,
-        });
-      }
+      if (conn.fromId !== "center") return; // only trunk connections
+      this.particles.push({
+        fromId: conn.fromId,
+        toId: conn.toId,
+        progress: Math.random(),
+        speed: 0.0002,
+        size: 1.5,
+        color: conn.color,
+        reverse: false,
+        real: false,
+      });
     });
   }
 
@@ -556,15 +559,116 @@ class ConstellationEngine {
     cancelAnimationFrame(this.animId);
   }
 
+  // Spawn a particle burst on a specific connection
+  private spawnActivityPulse(fromId: string, toId: string, color: string, count: number = 2) {
+    for (let i = 0; i < count; i++) {
+      this.particles.push({
+        fromId,
+        toId,
+        progress: i * 0.15, // stagger
+        speed: 0.003 + Math.random() * 0.002,
+        size: 3,
+        color,
+        reverse: false,
+        real: true,
+      });
+    }
+  }
+
+  // Detect activity deltas and spawn particles
+  detectActivity(status: StatusResponse | null) {
+    if (!status || !this.prevStatus) {
+      this.prevStatus = status;
+      return;
+    }
+    const prev = this.prevStatus;
+
+    // Master cycle completed → pulse center → all departments
+    if (status.empire.cycle_count !== prev.empire.cycle_count) {
+      DEPARTMENTS.forEach((d) => {
+        this.spawnActivityPulse("center", d.id, C.accent, 1);
+      });
+    }
+
+    // TradeBot activity
+    const pt = prev.tradebot;
+    const ct = status.tradebot;
+    if (ct && pt) {
+      if (ct.trade_count_today !== pt.trade_count_today) {
+        this.spawnActivityPulse("center", "trading", "#10B981", 3);
+        // Pulse to individual trading agents
+        this.spawnActivityPulse("trading", "trading.execution", "#10B981", 2);
+        this.spawnActivityPulse("trading", "trading.risk_manager", "#10B981", 1);
+      }
+      if (ct.daily_pnl_today !== pt.daily_pnl_today) {
+        // PnL changed → report flowing back
+        this.spawnActivityPulse("trading", "center", "#10B981", 1);
+      }
+    }
+
+    // EchoSwarm activity
+    const pe = prev.swarms?.EchoSwarm;
+    const ce = status.swarms?.EchoSwarm;
+    if (ce && pe) {
+      if (ce.trades_today !== pe.trades_today) {
+        this.spawnActivityPulse("center", "predictions", "#8B5CF6", 3);
+        this.spawnActivityPulse("predictions", "predictions.momentum", "#8B5CF6", 1);
+      }
+      if (ce.total_pnl !== pe.total_pnl) {
+        this.spawnActivityPulse("predictions", "center", "#8B5CF6", 1);
+      }
+    }
+
+    // Web3Swarm activity (signals delivered = trades_today in API)
+    const pw = prev.swarms?.EganWeb3Swarm;
+    const cw = status.swarms?.EganWeb3Swarm;
+    if (cw && pw) {
+      if (cw.trades_today !== pw.trades_today) {
+        this.spawnActivityPulse("center", "signals", "#FFB800", 2);
+        this.spawnActivityPulse("signals", "signals.signal_terminal", "#FFB800", 2);
+        this.spawnActivityPulse("signals", "signals.wallet_monitor", "#FFB800", 1);
+      }
+    }
+
+    // SaaS Factory activity
+    const ps = prev.saas;
+    const cs = status.saas;
+    if (cs && ps) {
+      if (cs.opportunity_queue !== ps.opportunity_queue || cs.live_products !== ps.live_products) {
+        this.spawnActivityPulse("center", "products", "#3B82F6", 2);
+        this.spawnActivityPulse("products", "products.builder", "#3B82F6", 1);
+      }
+      if (cs.total_mrr !== ps.total_mrr) {
+        this.spawnActivityPulse("products", "center", "#3B82F6", 2);
+      }
+    }
+
+    // Any swarm status change
+    for (const [name, swarm] of Object.entries(status.swarms || {})) {
+      const prevSwarm = prev.swarms?.[name];
+      if (prevSwarm && swarm.status !== prevSwarm.status) {
+        // Status change → health_monitor activity
+        this.spawnActivityPulse("center", "oversight", C.accent, 2);
+        this.spawnActivityPulse("oversight", "oversight.health_monitor", C.accent, 1);
+      }
+    }
+
+    this.prevStatus = status;
+  }
+
   private update() {
+    // Remove completed particles (real ones that finished their journey)
+    this.particles = this.particles.filter((p) => {
+      if (p.real && p.progress >= 1) return false;
+      return true;
+    });
+
     this.particles.forEach((p) => {
-      const to = this.nodes.find((n) => n.id === p.toId);
-      if (!to) return;
-      // Gentle drift — active connections slightly faster
-      const speedMult = to.status === "active" || to.status === "healthy" ? 1.2 : 0.4;
-      p.progress += (p.reverse ? -p.speed : p.speed) * speedMult * 16;
-      if (p.progress > 1) p.progress -= 1;
-      if (p.progress < 0) p.progress += 1;
+      const speedMult = p.real ? 1.0 : 0.5;
+      p.progress += p.speed * speedMult * 16;
+      // Real particles complete their journey and get removed
+      // Ambient particles loop (but we have none now)
+      if (!p.real && p.progress > 1) p.progress -= 1;
     });
   }
 
@@ -689,26 +793,40 @@ class ConstellationEngine {
       const from = this.nodes.find((n) => n.id === p.fromId);
       const to = this.nodes.find((n) => n.id === p.toId);
       if (!from || !to) return;
-
-      // Don't draw particles for disabled connections
-      if (to.status === "disabled") return;
+      if (to.status === "disabled" && !p.real) return;
 
       const x = from.x + (to.x - from.x) * p.progress;
       const y = from.y + (to.y - from.y) * p.progress;
+      const color = p.real ? p.color : STATUS_COLOR[to.status] || p.color;
 
-      const statusColor = STATUS_COLOR[to.status] || p.color;
-
-      // Glow
-      ctx.beginPath();
-      ctx.arc(x, y, p.size * 3, 0, Math.PI * 2);
-      ctx.fillStyle = `${statusColor}18`;
-      ctx.fill();
-
-      // Core
-      ctx.beginPath();
-      ctx.arc(x, y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = `${statusColor}BB`;
-      ctx.fill();
+      if (p.real) {
+        // Real activity: bright, large, with trail
+        const trailLen = 0.08;
+        for (let t = 0; t < 4; t++) {
+          const tp = p.progress - t * trailLen * 0.25;
+          if (tp < 0) continue;
+          const tx = from.x + (to.x - from.x) * tp;
+          const ty = from.y + (to.y - from.y) * tp;
+          const alpha = 1 - t * 0.25;
+          ctx.beginPath();
+          ctx.arc(tx, ty, p.size * (1 - t * 0.15), 0, Math.PI * 2);
+          ctx.fillStyle = `${color}${Math.round(alpha * 200)
+            .toString(16)
+            .padStart(2, "0")}`;
+          ctx.fill();
+        }
+        // Bright glow around lead particle
+        ctx.beginPath();
+        ctx.arc(x, y, p.size * 4, 0, Math.PI * 2);
+        ctx.fillStyle = `${color}22`;
+        ctx.fill();
+      } else {
+        // Ambient: subtle dot
+        ctx.beginPath();
+        ctx.arc(x, y, p.size * 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = `${color}66`;
+        ctx.fill();
+      }
     });
   }
 
@@ -1285,7 +1403,7 @@ function DetailPanel({
         className="border-t px-4 py-2 text-[10px]"
         style={{ borderColor: C.panelBorder, color: C.textDim }}
       >
-        EGAN FORGE CONSTELLATION v1.0
+        EGAN FORGE CONSTELLATION v2.0 — LIVE ACTIVITY
       </div>
     </div>
   );
@@ -1342,6 +1460,7 @@ export default function ConstellationPage() {
 
       if (engineRef.current) {
         engineRef.current.updateData(status, health);
+        engineRef.current.detectActivity(status);
         setAllNodes([...engineRef.current.nodes]);
       }
 
