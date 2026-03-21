@@ -1399,14 +1399,14 @@ function DetailPanel({
 
         {/* Activity transcript */}
         <ActivityTranscript node={node} />
-      </div>
 
-      {/* Footer */}
-      <div
-        className="border-t px-4 py-2 text-[10px]"
-        style={{ borderColor: C.panelBorder, color: C.textDim }}
-      >
-        EGAN FORGE CONSTELLATION v2.0 — LIVE ACTIVITY
+        {/* Footer */}
+        <div
+          className="border-t pt-2 text-center text-[10px]"
+          style={{ borderColor: C.panelBorder, color: C.textDim }}
+        >
+          EGAN FORGE CONSTELLATION v2.0
+        </div>
       </div>
     </div>
   );
