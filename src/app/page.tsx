@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import Link from "next/link";
 import { formatUSD, formatPct, timeAgo } from "@/lib/formatters";
+import { DashboardNav } from "@/components/nav";
 import { PnlAreaChart } from "@/components/charts";
 import {
   MetricCardSkeleton,
@@ -841,38 +841,7 @@ export default function Dashboard() {
             {error && <span className="ml-2 text-xs text-red-400">({error})</span>}
           </p>
         </div>
-        <nav className="flex items-center gap-2">
-          <Link
-            href="/financials"
-            className="rounded-lg bg-gray-800 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-          >
-            Financials
-          </Link>
-          <Link
-            href="/assets"
-            className="rounded-lg bg-gray-800 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-          >
-            Assets
-          </Link>
-          <Link
-            href="/web3"
-            className="rounded-lg bg-gray-800 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-          >
-            Web3
-          </Link>
-          <Link
-            href="/proposals"
-            className="rounded-lg bg-gray-800 px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-          >
-            Proposals
-          </Link>
-          <Link
-            href="/constellation"
-            className="rounded-lg border border-cyan-800/50 bg-cyan-950/30 px-3 py-2 text-xs font-medium text-cyan-400 transition-colors hover:bg-cyan-900/40 hover:text-cyan-300"
-          >
-            Constellation
-          </Link>
-        </nav>
+        <DashboardNav />
       </header>
 
       {/* 1. Hero Stats Bar */}

@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useApiPoller } from "@/lib/hooks";
+import { DashboardNav } from "@/components/nav";
 import { formatUSD, timeAgo, truncateAddress } from "@/lib/formatters";
 import { MetricCard } from "@/components/ui";
 
@@ -326,11 +326,9 @@ export default function AssetsPage() {
   if (!data?.available) {
     return (
       <div className="mx-auto min-h-screen max-w-7xl p-6">
-        <header className="mb-8 flex items-center gap-4">
-          <Link href="/" className="text-gray-400 transition-colors hover:text-white">
-            &larr; Dashboard
-          </Link>
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Assets</h1>
+          <DashboardNav />
         </header>
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-8 text-center">
           <p className="text-lg text-gray-400">Asset registry not yet populated</p>
@@ -348,40 +346,18 @@ export default function AssetsPage() {
   return (
     <div className="mx-auto min-h-screen max-w-7xl p-6">
       {/* Header */}
-      <header className="mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-gray-400 transition-colors hover:text-white">
-            &larr; Dashboard
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Assets</h1>
-            <p className="text-sm text-gray-500">
-              Unified view across {wallets.length} wallets &middot;{" "}
-              {Object.keys(data.chain_totals).length} chains
-            </p>
-          </div>
+      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Assets</h1>
+          <p className="text-sm text-gray-500">
+            Unified view across {wallets.length} wallets &middot;{" "}
+            {Object.keys(data.chain_totals).length} chains
+            <span className="mx-2 text-gray-700">|</span>
+            <span>{lastUpdate}</span>
+            {error && <span className="ml-2 text-xs text-red-400">({error})</span>}
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/financials"
-            className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium transition-colors hover:bg-emerald-700"
-          >
-            Financials
-          </Link>
-          <Link
-            href="/web3"
-            className="rounded-lg bg-purple-600 px-3 py-2 text-sm font-medium transition-colors hover:bg-purple-700"
-          >
-            Web3
-          </Link>
-          <div className="text-right">
-            <p className="text-xs text-gray-500">Updated: {lastUpdate}</p>
-            {data.last_updated && (
-              <p className="text-xs text-gray-500">Data: {timeAgo(data.last_updated)}</p>
-            )}
-            {error && <p className="text-xs text-red-400">{error}</p>}
-          </div>
-        </div>
+        <DashboardNav />
       </header>
 
       {/* KPI Cards */}

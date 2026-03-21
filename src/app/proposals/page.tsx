@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import { timeAgo } from "@/lib/formatters";
+import { DashboardNav } from "@/components/nav";
 
 interface Proposal {
   id: string;
@@ -203,20 +203,20 @@ export default function ProposalsPage() {
   return (
     <div className="mx-auto min-h-screen max-w-3xl p-4 sm:p-6">
       {/* Header */}
-      <header className="mb-6 flex items-center justify-between">
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <Link href="/" className="mb-1 block text-xs text-gray-500 hover:text-gray-300">
-            &larr; Dashboard
-          </Link>
           <h1 className="text-2xl font-bold tracking-tight">CEO Proposals</h1>
           <p className="text-sm text-gray-500">Review and action improvement proposals</p>
         </div>
-        <button
-          onClick={fetchProposals}
-          className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs hover:bg-gray-700"
-        >
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchProposals}
+            className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs hover:bg-gray-700"
+          >
+            Refresh
+          </button>
+          <DashboardNav />
+        </div>
       </header>
 
       {/* Toast */}
