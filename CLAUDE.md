@@ -36,17 +36,18 @@ src/
 
 ## API Routes (proxy to VPS)
 
-| Route                   | VPS Endpoint                 | Cache | Purpose                         |
-| ----------------------- | ---------------------------- | ----- | ------------------------------- |
-| `/api/health`           | `/api/health`                | 5s    | System health                   |
-| `/api/status`           | `/api/status`                | 10s   | Swarm + empire overview         |
-| `/api/financials`       | `/api/financials`            | 30s   | P&L, MRR, per-swarm metrics     |
-| `/api/assets`           | `/api/assets`                | 30s   | Wallet balances, DeFi positions |
-| `/api/costs`            | `/api/costs`                 | 60s   | API costs, budget tracking      |
-| `/api/web3`             | `/api/web3`                  | 30s   | On-chain assets, gas            |
-| `/api/proposals`        | `/api/proposals`             | 5s    | AI optimization proposals       |
-| `/api/proposals/action` | POST `/api/proposals/action` | —     | Approve/reject/defer            |
-| `/api/telegram/webhook` | POST `/api/telegram/webhook` | —     | Telegram forwarder              |
+| Route                   | VPS Endpoint                 | Cache | Purpose                                                      |
+| ----------------------- | ---------------------------- | ----- | ------------------------------------------------------------ |
+| `/api/health`           | `/api/health`                | 5s    | System health                                                |
+| `/api/status`           | `/api/status`                | 10s   | Swarm + empire overview                                      |
+| `/api/financials`       | `/api/financials`            | 30s   | P&L, MRR, per-swarm metrics                                  |
+| `/api/assets`           | `/api/assets`                | 30s   | Wallet balances, DeFi positions                              |
+| `/api/costs`            | `/api/costs`                 | 60s   | API costs, budget tracking                                   |
+| `/api/web3`             | `/api/web3`                  | 30s   | On-chain assets, gas                                         |
+| `/api/proposals`        | `/api/proposals`             | 5s    | AI optimization proposals                                    |
+| `/api/proposals/action` | POST `/api/proposals/action` | —     | Approve/reject/defer                                         |
+| `/api/scorecard`        | `/api/scorecard`             | 30s   | Signal win rates + treasury (CORS-enabled for eganforge.com) |
+| `/api/telegram/webhook` | POST `/api/telegram/webhook` | —     | Telegram forwarder                                           |
 
 ## Environment Variables (.env.local)
 
@@ -90,3 +91,23 @@ npx tsc --noEmit                # Type check
 - Hardcode VPS IP in client-side code (use env vars or API routes)
 - Remove ISR caching from API routes (prevents VPS overload)
 - Use SSR for dashboard pages (all data is dynamic, polling-based)
+
+## Cross-repo integration (eganforge-site)
+
+The **eganforge-site** (`AdminENMHUB/eganforge-site`, deployed at `eganforge.com`) is a companion
+public marketing/product site that surfaces live trading-signal stats on its `/signals` and
+`/signals/track-record` pages.
+
+**Problem**: Those pages currently call the private VPS IP directly from the browser
+(`http://89.167.82.184:8080/api/scorecard`), which exposes the IP publicly and will break
+on HTTP→HTTPS mixed-content restrictions.
+
+**Solution**: Point eganforge-site to the `/api/scorecard` proxy on this dashboard instead:
+
+```
+https://egan-empire-dashboard.vercel.app/api/scorecard
+```
+
+The `/api/scorecard` route handles CORS dynamically, allowing both `https://eganforge.com` and
+`https://www.eganforge.com` to call it cross-origin without exposing the VPS address. An
+`OPTIONS` preflight handler is included so browsers send the real request without errors.
