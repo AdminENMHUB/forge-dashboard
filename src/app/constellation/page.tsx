@@ -244,8 +244,8 @@ function calculateLayout(w: number, h: number): { nodes: CNode[]; connections: C
   const cx = w / 2;
   const cy = h / 2;
   const scale = Math.min(w, h);
-  const deptR = scale * 0.26;
-  const agentR = scale * 0.13;
+  const deptR = scale * 0.28;
+  const agentR = scale * 0.16;
 
   const nodes: CNode[] = [];
   const connections: Connection[] = [];
@@ -287,7 +287,7 @@ function calculateLayout(w: number, h: number): { nodes: CNode[]; connections: C
 
     const outAngle = Math.atan2(dy - cy, dx - cx);
     const count = dept.agents.length;
-    const spread = Math.min(Math.PI * 0.8, count * 0.32);
+    const spread = Math.min(Math.PI * 1.1, count * 0.42);
     const start = outAngle - spread / 2;
 
     dept.agents.forEach((agent, ai) => {
@@ -335,6 +335,16 @@ class ConstellationEngine {
   private animId = 0;
   private mouseX = 0;
   private mouseY = 0;
+
+  // Zoom/pan state
+  private zoom = 1;
+  private panX = 0;
+  private panY = 0;
+  private isDragging = false;
+  private dragStartX = 0;
+  private dragStartY = 0;
+  private panStartX = 0;
+  private panStartY = 0;
 
   nodes: CNode[] = [];
   connections: Connection[] = [];
@@ -394,16 +404,16 @@ class ConstellationEngine {
     this.particles = [];
     this.connections.forEach((conn) => {
       const isTrunk = conn.fromId === "center";
-      const count = isTrunk ? 6 : 3;
+      const count = isTrunk ? 3 : 1;
       for (let i = 0; i < count; i++) {
         this.particles.push({
           fromId: conn.fromId,
           toId: conn.toId,
           progress: Math.random(),
-          speed: 0.001 + Math.random() * 0.003,
-          size: isTrunk ? 2.5 : 1.5,
+          speed: 0.0003 + Math.random() * 0.0007,
+          size: isTrunk ? 2.5 : 1.8,
           color: conn.color,
-          reverse: Math.random() > 0.85,
+          reverse: Math.random() > 0.9,
         });
       }
     });
@@ -548,13 +558,11 @@ class ConstellationEngine {
 
   private update() {
     this.particles.forEach((p) => {
-      const from = this.nodes.find((n) => n.id === p.fromId);
       const to = this.nodes.find((n) => n.id === p.toId);
-      if (!from || !to) return;
-      // Speed up particles for active connections
-      const toNode = to;
-      const speedMult = toNode.status === "active" || toNode.status === "healthy" ? 1.5 : 0.5;
-      p.progress += (p.reverse ? -p.speed : p.speed) * speedMult * 60;
+      if (!to) return;
+      // Gentle drift — active connections slightly faster
+      const speedMult = to.status === "active" || to.status === "healthy" ? 1.2 : 0.4;
+      p.progress += (p.reverse ? -p.speed : p.speed) * speedMult * 16;
       if (p.progress > 1) p.progress -= 1;
       if (p.progress < 0) p.progress += 1;
     });
@@ -562,7 +570,7 @@ class ConstellationEngine {
 
   private render() {
     const { ctx, w, h } = this;
-    // Background
+    // Background (drawn in screen space, not world space)
     ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, w, h);
 
@@ -574,11 +582,19 @@ class ConstellationEngine {
     ctx.fillRect(0, 0, w, h);
 
     this.drawStars();
+
+    // Apply zoom/pan transform for world-space elements
+    ctx.save();
+    ctx.translate(this.panX, this.panY);
+    ctx.scale(this.zoom, this.zoom);
+
     this.drawGrid();
     this.drawRadarSweep();
     this.drawConnections();
     this.drawParticles();
     this.drawNodes();
+
+    ctx.restore();
   }
 
   private drawStars() {
@@ -799,8 +815,13 @@ class ConstellationEngine {
     });
   }
 
-  hitTest(x: number, y: number): CNode | null {
-    // Check in reverse order (top-drawn nodes first)
+  // Convert screen coordinates to world coordinates
+  private screenToWorld(sx: number, sy: number): [number, number] {
+    return [(sx - this.panX) / this.zoom, (sy - this.panY) / this.zoom];
+  }
+
+  hitTest(sx: number, sy: number): CNode | null {
+    const [wx, wy] = this.screenToWorld(sx, sy);
     const ordered = [
       ...this.nodes.filter((n) => n.type === "center"),
       ...this.nodes.filter((n) => n.type === "department"),
@@ -808,10 +829,10 @@ class ConstellationEngine {
     ].reverse();
 
     for (const node of ordered) {
-      const dx = node.x - x;
-      const dy = node.y - y;
+      const dx = node.x - wx;
+      const dy = node.y - wy;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const hitR = Math.max(node.radius + 10, 14);
+      const hitR = Math.max(node.radius + 12, 16) / this.zoom;
       if (dist < hitR) return node;
     }
     return null;
@@ -820,18 +841,53 @@ class ConstellationEngine {
   handleMouseMove(x: number, y: number) {
     this.mouseX = x;
     this.mouseY = y;
+
+    if (this.isDragging) {
+      this.panX = this.panStartX + (x - this.dragStartX);
+      this.panY = this.panStartY + (y - this.dragStartY);
+      this.canvas.style.cursor = "grabbing";
+      return;
+    }
+
     const node = this.hitTest(x, y);
     if (node !== this.hoveredNode) {
       this.hoveredNode = node;
       this.onHover(node, x, y);
     }
-    this.canvas.style.cursor = node ? "pointer" : "default";
+    this.canvas.style.cursor = node ? "pointer" : "grab";
+  }
+
+  handleMouseDown(x: number, y: number) {
+    const node = this.hitTest(x, y);
+    if (node) return; // Don't start drag on nodes
+    this.isDragging = true;
+    this.dragStartX = x;
+    this.dragStartY = y;
+    this.panStartX = this.panX;
+    this.panStartY = this.panY;
+  }
+
+  handleMouseUp() {
+    this.isDragging = false;
   }
 
   handleClick(x: number, y: number) {
+    if (this.isDragging) return;
     const node = this.hitTest(x, y);
     this.selectedNode = node;
     this.onSelect(node);
+  }
+
+  handleWheel(x: number, y: number, deltaY: number) {
+    const zoomFactor = deltaY > 0 ? 0.92 : 1.08;
+    const newZoom = Math.max(0.3, Math.min(5, this.zoom * zoomFactor));
+
+    // Zoom toward cursor position
+    const wx = (x - this.panX) / this.zoom;
+    const wy = (y - this.panY) / this.zoom;
+    this.zoom = newZoom;
+    this.panX = x - wx * this.zoom;
+    this.panY = y - wy * this.zoom;
   }
 }
 
@@ -1092,6 +1148,69 @@ function DetailPanel({
           </>
         )}
 
+        {/* Error diagnostics */}
+        {(node.status === "error" || node.status === "halted") && (
+          <div
+            className="rounded-lg border p-3"
+            style={{
+              borderColor: `${C.error}33`,
+              background: `${C.error}08`,
+            }}
+          >
+            <div className="mb-2 font-bold tracking-wider" style={{ color: C.error }}>
+              DIAGNOSTICS
+            </div>
+            <div className="space-y-2 text-[11px]">
+              <div style={{ color: C.text }}>
+                {node.metrics.haltReason
+                  ? `Halt reason: ${node.metrics.haltReason}`
+                  : node.status === "halted"
+                    ? "Circuit breaker tripped — trading paused"
+                    : "Service reporting unhealthy or unreachable"}
+              </div>
+              <div style={{ color: C.textDim }}>
+                {isDept && node.subtitle
+                  ? `Check: ssh root@89.167.82.184 'systemctl status ${
+                      DEPARTMENTS.find((d) => d.id === node.id)?.serviceKey || "egan-master"
+                    }'`
+                  : "Check parent department for service details"}
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  className="rounded border px-2 py-1 text-[10px] transition-colors hover:bg-gray-800"
+                  style={{ borderColor: `${C.error}44`, color: C.error }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `ssh root@89.167.82.184 'systemctl restart ${
+                        DEPARTMENTS.find((d) => d.id === node.id)?.serviceKey ||
+                        DEPARTMENTS.find((d) => d.id === node.departmentId)?.serviceKey ||
+                        "egan-master"
+                      }'`,
+                    );
+                  }}
+                >
+                  COPY RESTART CMD
+                </button>
+                <button
+                  className="rounded border px-2 py-1 text-[10px] transition-colors hover:bg-gray-800"
+                  style={{ borderColor: `${C.accent}44`, color: C.accent }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `ssh root@89.167.82.184 'journalctl -u ${
+                        DEPARTMENTS.find((d) => d.id === node.id)?.serviceKey ||
+                        DEPARTMENTS.find((d) => d.id === node.departmentId)?.serviceKey ||
+                        "egan-master"
+                      } -n 50'`,
+                    );
+                  }}
+                >
+                  COPY LOGS CMD
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Child agents for departments */}
         {isDept && childAgents.length > 0 && (
           <div className="border-t pt-3" style={{ borderColor: `${node.color}15` }}>
@@ -1268,8 +1387,18 @@ export default function ConstellationPage() {
 
     const onMove = (e: MouseEvent) => engine.handleMouseMove(e.clientX, e.clientY);
     const onClick = (e: MouseEvent) => engine.handleClick(e.clientX, e.clientY);
+    const onDown = (e: MouseEvent) => engine.handleMouseDown(e.clientX, e.clientY);
+    const onUp = () => engine.handleMouseUp();
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      engine.handleWheel(e.clientX, e.clientY, e.deltaY);
+    };
     canvas.addEventListener("mousemove", onMove);
     canvas.addEventListener("click", onClick);
+    canvas.addEventListener("mousedown", onDown);
+    canvas.addEventListener("mouseup", onUp);
+    canvas.addEventListener("mouseleave", onUp);
+    canvas.addEventListener("wheel", onWheel, { passive: false });
 
     engine.start();
 
@@ -1278,6 +1407,10 @@ export default function ConstellationPage() {
       window.removeEventListener("resize", handleResize);
       canvas.removeEventListener("mousemove", onMove);
       canvas.removeEventListener("click", onClick);
+      canvas.removeEventListener("mousedown", onDown);
+      canvas.removeEventListener("mouseup", onUp);
+      canvas.removeEventListener("mouseleave", onUp);
+      canvas.removeEventListener("wheel", onWheel);
     };
   }, []);
 
