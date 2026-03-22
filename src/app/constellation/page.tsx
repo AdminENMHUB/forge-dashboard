@@ -1442,15 +1442,22 @@ function ActivityTranscript({ node }: { node: CNode }) {
     node.type === "center" ? "" : DEPT_TO_SWARM[node.departmentId || node.id] || "";
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
     const params = new URLSearchParams({ swarm: swarmFilter, limit: "15" });
     fetch(`/api/activity?${params}`)
       .then((r) => r.json())
       .then((d) => {
-        setEvents(d.events || []);
-        setLoading(false);
+        if (!cancelled) {
+          setEvents(d.events || []);
+          setLoading(false);
+        }
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [swarmFilter]);
 
   return (
