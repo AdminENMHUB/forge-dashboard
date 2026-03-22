@@ -6,11 +6,13 @@ import { usePathname } from "next/navigation";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
   { href: "/financials", label: "Financials" },
+  { href: "/agents", label: "Agents", accent: true },
+  { href: "/revenue", label: "Revenue", accent: true },
+  { href: "/executive-log", label: "Exec Log", accent: true },
   { href: "/assets", label: "Assets" },
   { href: "/web3", label: "Web3" },
   { href: "/proposals", label: "Proposals" },
   { href: "/activity", label: "Activity" },
-  { href: "/constellation", label: "Constellation", accent: true },
 ];
 
 export function DashboardNav() {
