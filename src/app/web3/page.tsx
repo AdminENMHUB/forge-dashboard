@@ -1,7 +1,7 @@
 "use client";
 
 import { useApiPoller } from "@/lib/hooks";
-import { DashboardNav } from "@/components/nav";
+import { PageShell } from "@/components/nav";
 import { formatUSD, timeAgo } from "@/lib/formatters";
 import { MetricCard, StatusBadge } from "@/components/ui";
 
@@ -79,7 +79,7 @@ export default function Web3Page() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <h1 className="mb-2 text-2xl font-bold">Connection Error</h1>
-          <p className="text-gray-400">{error}</p>
+          <p className="text-[var(--text-secondary)]">{error}</p>
           <button
             onClick={refresh}
             className="mt-4 rounded-lg bg-purple-600 px-4 py-2 hover:bg-purple-700"
@@ -96,7 +96,7 @@ export default function Web3Page() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
-          <p className="text-gray-400">Loading Web3 Status...</p>
+          <p className="text-[var(--text-secondary)]">Loading Web3 Status...</p>
         </div>
       </div>
     );
@@ -104,16 +104,14 @@ export default function Web3Page() {
 
   if (!data?.available) {
     return (
-      <div className="mx-auto min-h-screen max-w-7xl p-6">
-        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Web3 Department</h1>
-          <DashboardNav />
-        </header>
-        <div className="rounded-xl border border-gray-800 bg-gray-900 p-8 text-center">
-          <p className="text-lg text-gray-400">Web3 Swarm is currently offline</p>
-          <p className="mt-2 text-sm text-gray-500">web3_state.json not available on VPS</p>
+      <PageShell title="Web3 & DeFi" subtitle="Base + Polygon wallets, AAVE yield, NFTs">
+        <div className="glass rounded-xl border border-[var(--border-dim)] p-8 text-center">
+          <p className="text-lg text-[var(--text-secondary)]">Web3 Swarm is currently offline</p>
+          <p className="mt-2 text-sm text-[var(--text-tertiary)]">
+            web3_state.json not available on VPS
+          </p>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
@@ -121,43 +119,43 @@ export default function Web3Page() {
   const polyValue = w.polygon?.total_value ?? 0;
   const totalWeb3Value = w.wallet.total_usd + polyValue;
 
+  const subtitleContent = (
+    <>
+      {w.wallet.network} &middot;{" "}
+      <a
+        href={`https://basescan.org/address/${w.wallet.address}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-mono text-purple-400 hover:text-purple-300"
+      >
+        {w.wallet.address.slice(0, 8)}...{w.wallet.address.slice(-6)}
+      </a>
+      {w.polygon && (
+        <>
+          {" "}
+          &middot; Polygon &middot;{" "}
+          <a
+            href={`https://polygonscan.com/address/${w.polygon.address}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-purple-400 hover:text-purple-300"
+          >
+            {w.polygon.address.slice(0, 8)}...{w.polygon.address.slice(-6)}
+          </a>
+        </>
+      )}
+    </>
+  );
+
   return (
-    <div className="mx-auto min-h-screen max-w-7xl p-6">
-      {/* Header */}
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Web3 Department</h1>
-          <p className="text-sm text-gray-500">
-            {w.wallet.network} &middot;{" "}
-            <a
-              href={`https://basescan.org/address/${w.wallet.address}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-purple-400 hover:text-purple-300"
-            >
-              {w.wallet.address.slice(0, 8)}...{w.wallet.address.slice(-6)}
-            </a>
-            {w.polygon && (
-              <>
-                {" "}
-                &middot; Polygon &middot;{" "}
-                <a
-                  href={`https://polygonscan.com/address/${w.polygon.address}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-mono text-purple-400 hover:text-purple-300"
-                >
-                  {w.polygon.address.slice(0, 8)}...{w.polygon.address.slice(-6)}
-                </a>
-              </>
-            )}
-            <span className="mx-2 text-gray-700">|</span>
-            <span>{lastUpdate}</span>
-            {error && <span className="ml-2 text-xs text-red-400">({error})</span>}
-          </p>
-        </div>
-        <DashboardNav />
-      </header>
+    <PageShell
+      title="Web3 & DeFi"
+      subtitle="Base + Polygon wallets, AAVE yield, NFTs"
+      lastUpdate={lastUpdate}
+      error={error}
+    >
+      {/* Wallet addresses */}
+      <p className="-mt-4 mb-6 text-sm text-[var(--text-tertiary)]">{subtitleContent}</p>
 
       {/* KPI Cards */}
       <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -193,7 +191,7 @@ export default function Web3Page() {
       {/* Three-column: Base Wallet + Polygon Wallet + AAVE */}
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Base Wallet Balance */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+        <div className="glass rounded-xl border border-[var(--border-dim)] p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Base Wallet</h2>
             <span className="rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-xs text-blue-400">
@@ -219,8 +217,8 @@ export default function Web3Page() {
               </div>
               <span className="font-mono text-lg">{w.wallet.eth.toFixed(6)}</span>
             </div>
-            <div className="flex justify-between border-t border-gray-800 pt-3">
-              <span className="text-gray-400">Total Received</span>
+            <div className="flex justify-between border-t border-[var(--border-dim)] pt-3">
+              <span className="text-[var(--text-secondary)]">Total Received</span>
               <span className="font-mono text-emerald-400">
                 {formatUSD(w.signals.total_usdc_received)}
               </span>
@@ -230,7 +228,7 @@ export default function Web3Page() {
 
         {/* Polygon Wallet (EchoSwarm / Polymarket) */}
         {w.polygon && (
-          <div className="rounded-xl border border-purple-500/30 bg-gray-900 p-5">
+          <div className="glass rounded-xl border border-purple-500/30 p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Polygon Wallet</h2>
               <span className="rounded-full border border-purple-500/30 bg-purple-500/20 px-2 py-0.5 text-xs text-purple-400">
@@ -256,28 +254,30 @@ export default function Web3Page() {
                 </div>
                 <span className="font-mono text-lg">
                   {formatUSD(w.polygon.open_position_value)}
-                  <span className="ml-1 text-xs text-gray-500">({w.polygon.open_positions})</span>
+                  <span className="ml-1 text-xs text-[var(--text-tertiary)]">
+                    ({w.polygon.open_positions})
+                  </span>
                 </span>
               </div>
-              <div className="border-t border-gray-800 pt-3">
+              <div className="border-t border-[var(--border-dim)] pt-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Total Value</span>
+                  <span className="text-[var(--text-secondary)]">Total Value</span>
                   <span className="font-mono font-semibold text-emerald-400">
                     {formatUSD(w.polygon.total_value)}
                   </span>
                 </div>
                 <div className="mt-1 flex justify-between text-sm">
-                  <span className="text-gray-400">Win Rate</span>
+                  <span className="text-[var(--text-secondary)]">Win Rate</span>
                   <span className="font-mono">{(w.polygon.win_rate * 100).toFixed(1)}%</span>
                 </div>
-                <p className="mt-2 text-xs text-gray-600">{w.polygon.source}</p>
+                <p className="mt-2 text-xs text-[var(--text-muted)]">{w.polygon.source}</p>
               </div>
             </div>
           </div>
         )}
 
         {/* AAVE Position */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+        <div className="glass rounded-xl border border-[var(--border-dim)] p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Aave DeFi</h2>
             <span className="rounded-full border border-cyan-500/30 bg-cyan-500/20 px-2 py-0.5 text-xs text-cyan-400">
@@ -286,19 +286,19 @@ export default function Web3Page() {
           </div>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-400">Deposited</span>
+              <span className="text-[var(--text-secondary)]">Deposited</span>
               <span className="font-mono">{formatUSD(w.aave.deposited)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Current Balance</span>
+              <span className="text-[var(--text-secondary)]">Current Balance</span>
               <span className="font-mono">{formatUSD(w.aave.current_balance)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Yield Earned</span>
+              <span className="text-[var(--text-secondary)]">Yield Earned</span>
               <span className="font-mono text-emerald-400">+{formatUSD(w.aave.yield_earned)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Current APY</span>
+              <span className="text-[var(--text-secondary)]">Current APY</span>
               <span className="font-mono text-blue-400">{w.aave.apy_pct.toFixed(2)}%</span>
             </div>
           </div>
@@ -307,7 +307,7 @@ export default function Web3Page() {
 
       {/* Gas Cost Tracking */}
       {w.gas_costs && (w.gas_costs.total_eth > 0 || w.gas_costs.total_usd_est > 0) && (
-        <div className="mb-8 rounded-xl border border-gray-800 bg-gray-900 p-5">
+        <div className="glass mb-8 rounded-xl border border-[var(--border-dim)] p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Gas Costs</h2>
             <span className="rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-xs text-orange-400">
@@ -316,17 +316,17 @@ export default function Web3Page() {
           </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div>
-              <p className="text-xs text-gray-500">Total Gas (ETH)</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Total Gas (ETH)</p>
               <p className="font-mono text-lg">{w.gas_costs.total_eth.toFixed(6)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Total Gas (USD)</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Total Gas (USD)</p>
               <p className="font-mono text-lg text-orange-400">
                 {formatUSD(w.gas_costs.total_usd_est)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Avg per TX</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Avg per TX</p>
               <p className="font-mono text-lg">
                 {w.gas_costs.total_eth > 0
                   ? `${(w.gas_costs.total_usd_est / Math.max(Object.keys(w.gas_costs.daily).length, 1)).toFixed(2)}/day`
@@ -334,7 +334,7 @@ export default function Web3Page() {
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Days Tracked</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Days Tracked</p>
               <p className="font-mono text-lg">{Object.keys(w.gas_costs.daily).length}</p>
             </div>
           </div>
@@ -344,7 +344,7 @@ export default function Web3Page() {
       {/* Two-column: NFTs + Subscribers */}
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* NFT Inventory */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+        <div className="glass rounded-xl border border-[var(--border-dim)] p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">NFT Inventory</h2>
             <span className="rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-400">
@@ -354,25 +354,25 @@ export default function Web3Page() {
           <div className="mb-4 grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold">{w.nfts.total_minted}</p>
-              <p className="text-xs text-gray-500">Total Minted</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Total Minted</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-emerald-400">{w.nfts.live}</p>
-              <p className="text-xs text-gray-500">Live</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Live</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-500">{w.nfts.dry_run}</p>
-              <p className="text-xs text-gray-500">Dry Run</p>
+              <p className="text-2xl font-bold text-[var(--text-tertiary)]">{w.nfts.dry_run}</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Dry Run</p>
             </div>
           </div>
-          <div className="space-y-2 border-t border-gray-800 pt-3">
+          <div className="space-y-2 border-t border-[var(--border-dim)] pt-3">
             <div className="flex justify-between">
-              <span className="text-gray-400">Signals Delivered</span>
+              <span className="text-[var(--text-secondary)]">Signals Delivered</span>
               <span className="font-mono">{w.signals.total_delivered}</span>
             </div>
             {w.nfts.contract_address && (
               <div className="flex items-center justify-between">
-                <span className="text-gray-400">Contract</span>
+                <span className="text-[var(--text-secondary)]">Contract</span>
                 <div className="flex items-center gap-2">
                   <a
                     href={
@@ -402,13 +402,15 @@ export default function Web3Page() {
         </div>
 
         {/* Active Subscribers */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+        <div className="glass rounded-xl border border-[var(--border-dim)] p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">On-Chain Subscribers</h2>
-            <span className="text-xs text-gray-500">{w.subscribers.count} active</span>
+            <span className="text-xs text-[var(--text-tertiary)]">
+              {w.subscribers.count} active
+            </span>
           </div>
           {w.subscribers.active.length === 0 ? (
-            <p className="text-sm text-gray-500">No active subscribers</p>
+            <p className="text-sm text-[var(--text-tertiary)]">No active subscribers</p>
           ) : (
             <div className="space-y-2">
               {w.subscribers.active.map((sub, i) => (
@@ -425,24 +427,28 @@ export default function Web3Page() {
                     >
                       {sub.address}
                     </a>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[var(--text-tertiary)]">
                       Expires: {new Date(sub.expiry).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="text-right">
                     <StatusBadge status="active" />
-                    <p className="mt-1 text-xs text-gray-500">${w.subscribers.price_per_sub}/mo</p>
+                    <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                      ${w.subscribers.price_per_sub}/mo
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
           )}
           {w.subscribers.expired.length > 0 && (
-            <div className="mt-4 border-t border-gray-800 pt-3">
-              <p className="mb-2 text-xs text-gray-500">Recently Expired</p>
+            <div className="mt-4 border-t border-[var(--border-dim)] pt-3">
+              <p className="mb-2 text-xs text-[var(--text-tertiary)]">Recently Expired</p>
               {w.subscribers.expired.map((sub, i) => (
                 <div key={i} className="flex items-center justify-between py-1 text-sm">
-                  <span className="font-mono text-xs text-gray-500">{sub.address}</span>
+                  <span className="font-mono text-xs text-[var(--text-tertiary)]">
+                    {sub.address}
+                  </span>
                   <StatusBadge status="expired" />
                 </div>
               ))}
@@ -453,7 +459,7 @@ export default function Web3Page() {
 
       {/* Transaction Log */}
       {w.transactions.length > 0 && (
-        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+        <div className="glass rounded-xl border border-[var(--border-dim)] p-5">
           <h2 className="mb-4 text-lg font-semibold">Recent Transactions</h2>
           <div className="max-h-64 space-y-2 overflow-y-auto">
             {w.transactions
@@ -465,7 +471,7 @@ export default function Web3Page() {
                   className="flex items-center justify-between rounded-lg bg-gray-800/30 px-3 py-2 text-sm"
                 >
                   <div>
-                    <span className="text-gray-400">
+                    <span className="text-[var(--text-secondary)]">
                       {(tx.type as string) || (tx.action as string) || "tx"}
                     </span>
                     {typeof tx.hash === "string" && (
@@ -484,7 +490,7 @@ export default function Web3Page() {
                       <span className="font-mono text-emerald-400">{formatUSD(tx.amount)}</span>
                     )}
                     {typeof tx.timestamp === "string" && (
-                      <p className="text-xs text-gray-500">{timeAgo(tx.timestamp)}</p>
+                      <p className="text-xs text-[var(--text-tertiary)]">{timeAgo(tx.timestamp)}</p>
                     )}
                   </div>
                 </div>
@@ -494,9 +500,9 @@ export default function Web3Page() {
       )}
 
       {/* Footer */}
-      <footer className="mt-12 border-t border-gray-800 pt-6 text-center text-xs text-gray-600">
+      <footer className="mt-12 border-t border-[var(--border-dim)] pt-6 text-center text-xs text-[var(--text-muted)]">
         Web3 Department | Base + Polygon Networks | Auto-refreshes every 60s
       </footer>
-    </div>
+    </PageShell>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import Link from "next/link";
 import { formatUSD } from "@/lib/formatters";
+import { DashboardSidebar, DashboardNav } from "@/components/nav";
 
 // ============================================================================
 // TYPES
@@ -1121,7 +1121,7 @@ function DetailPanel({
         </div>
         <button
           onClick={onClose}
-          className="rounded px-2 py-1 text-gray-500 transition-colors hover:bg-gray-800 hover:text-gray-300"
+          className="rounded px-2 py-1 text-[var(--text-tertiary)] transition-colors hover:bg-white/[0.04] hover:text-[var(--text-primary)]"
         >
           ESC
         </button>
@@ -1295,7 +1295,7 @@ function DetailPanel({
               </div>
               <div className="flex gap-2 pt-1">
                 <button
-                  className="rounded border px-2 py-1 text-[10px] transition-colors hover:bg-gray-800"
+                  className="rounded border border-[var(--border-dim)] px-2 py-1 text-[10px] transition-colors hover:bg-white/[0.04]"
                   style={{ borderColor: `${C.error}44`, color: C.error }}
                   onClick={() => {
                     navigator.clipboard.writeText(
@@ -1310,7 +1310,7 @@ function DetailPanel({
                   COPY RESTART CMD
                 </button>
                 <button
-                  className="rounded border px-2 py-1 text-[10px] transition-colors hover:bg-gray-800"
+                  className="rounded border border-[var(--border-dim)] px-2 py-1 text-[10px] transition-colors hover:bg-white/[0.04]"
                   style={{ borderColor: `${C.accent}44`, color: C.accent }}
                   onClick={() => {
                     navigator.clipboard.writeText(
@@ -1600,19 +1600,22 @@ export default function ConstellationPage() {
     };
 
     const handleResize = () => {
-      engine.resize(window.innerWidth, window.innerHeight);
+      // On desktop (lg+), account for sidebar width (224px = w-56)
+      const sidebarWidth = window.innerWidth >= 1024 ? 224 : 0;
+      const canvasWidth = window.innerWidth - sidebarWidth;
+      engine.resize(canvasWidth, window.innerHeight);
       setAllNodes([...engine.nodes]);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
 
-    const onMove = (e: MouseEvent) => engine.handleMouseMove(e.clientX, e.clientY);
-    const onClick = (e: MouseEvent) => engine.handleClick(e.clientX, e.clientY);
-    const onDown = (e: MouseEvent) => engine.handleMouseDown(e.clientX, e.clientY);
+    const onMove = (e: MouseEvent) => engine.handleMouseMove(e.offsetX, e.offsetY);
+    const onClick = (e: MouseEvent) => engine.handleClick(e.offsetX, e.offsetY);
+    const onDown = (e: MouseEvent) => engine.handleMouseDown(e.offsetX, e.offsetY);
     const onUp = () => engine.handleMouseUp();
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      engine.handleWheel(e.clientX, e.clientY, e.deltaY);
+      engine.handleWheel(e.offsetX, e.offsetY, e.deltaY);
     };
     canvas.addEventListener("mousemove", onMove);
     canvas.addEventListener("click", onClick);
@@ -1670,128 +1673,130 @@ export default function ConstellationPage() {
   );
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden" style={{ background: C.bg }}>
-      <canvas ref={canvasRef} className="absolute inset-0" />
+    <>
+      {/* Sidebar nav (desktop) */}
+      <DashboardSidebar />
 
-      {/* ── HUD TOP BAR ────────────────────────────────────── */}
-      <div className="pointer-events-none absolute top-0 right-0 left-0 z-10">
-        <div className="flex items-center justify-between px-5 pt-4">
-          {/* Left: nav + title */}
-          <div className="pointer-events-auto flex items-center gap-4">
-            <Link
-              href="/"
-              className="rounded border px-2.5 py-1 font-mono text-[10px] tracking-wider transition-colors"
-              style={{
-                borderColor: `${C.accent}33`,
-                color: C.textDim,
-              }}
-            >
-              DASHBOARD
-            </Link>
-            <h1
-              className="font-mono text-sm font-bold tracking-[0.25em]"
-              style={{ color: C.accent }}
-            >
-              CONSTELLATION
-            </h1>
-          </div>
+      {/* Full-bleed constellation area offset by sidebar */}
+      <div className="relative h-screen overflow-hidden lg:pl-56" style={{ background: C.bg }}>
+        <canvas ref={canvasRef} className="absolute inset-0" />
 
-          {/* Right: connection + time */}
-          <div className="pointer-events-auto flex items-center gap-4 font-mono text-[10px]">
-            <div className="flex items-center gap-2">
-              <div
-                className="h-1.5 w-1.5 rounded-full"
-                style={{
-                  background: connected ? C.healthy : C.error,
-                  boxShadow: `0 0 6px ${connected ? C.healthy : C.error}88`,
-                }}
-              />
-              <span style={{ color: connected ? C.healthy : C.error }}>
-                {connected ? "LIVE" : "OFFLINE"}
+        {/* ── HUD TOP BAR ────────────────────────────────────── */}
+        <div className="pointer-events-none absolute top-0 right-0 left-0 z-10">
+          <div className="flex items-center justify-between px-5 pt-4">
+            {/* Left: title + mobile nav */}
+            <div className="pointer-events-auto flex items-center gap-4">
+              <h1
+                className="font-mono text-sm font-bold tracking-[0.25em]"
+                style={{ color: C.accent }}
+              >
+                CONSTELLATION
+              </h1>
+              <span className="hidden text-xs text-[var(--text-tertiary)] sm:inline">
+                Live network topology
               </span>
             </div>
-            {lastUpdate && <span style={{ color: C.textDim }}>{lastUpdate}</span>}
+
+            {/* Right: connection + time */}
+            <div className="pointer-events-auto flex items-center gap-4 font-mono text-[10px]">
+              <div className="flex items-center gap-2">
+                <div
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{
+                    background: connected ? C.healthy : C.error,
+                    boxShadow: `0 0 6px ${connected ? C.healthy : C.error}88`,
+                  }}
+                />
+                <span style={{ color: connected ? C.healthy : C.error }}>
+                  {connected ? "LIVE" : "OFFLINE"}
+                </span>
+              </div>
+              {lastUpdate && <span style={{ color: C.textDim }}>{lastUpdate}</span>}
+            </div>
+          </div>
+
+          {/* Mobile nav row */}
+          <div className="pointer-events-auto mt-2 px-5 lg:hidden">
+            <DashboardNav />
           </div>
         </div>
-      </div>
 
-      {/* ── HUD STATUS PILLS ────────────────────────────────── */}
-      <div className="pointer-events-none absolute top-12 right-0 left-0 z-10 flex justify-center">
-        <div
-          className="flex items-center gap-3 rounded-full border px-4 py-1.5 font-mono text-[10px] backdrop-blur-sm"
-          style={{
-            background: `${C.bg}CC`,
-            borderColor: C.panelBorder,
-          }}
-        >
-          <StatusPill count={statusCounts.ok} label="ACTIVE" color={C.healthy} />
-          <StatusPill count={statusCounts.err} label="ERROR" color={C.error} />
-          <StatusPill count={statusCounts.warn} label="DEGRADED" color={C.degraded} />
-          <StatusPill count={statusCounts.off} label="DISABLED" color={C.disabled} />
-          {statusCounts.unknown > 0 && (
-            <StatusPill count={statusCounts.unknown} label="PENDING" color={C.textDim} />
-          )}
+        {/* ── HUD STATUS PILLS ────────────────────────────────── */}
+        <div className="pointer-events-none absolute top-12 right-0 left-0 z-10 flex justify-center lg:top-12">
+          <div
+            className="glass flex items-center gap-3 rounded-full border border-[var(--border-dim)] px-4 py-1.5 font-mono text-[10px]"
+            style={{
+              background: `${C.bg}CC`,
+            }}
+          >
+            <StatusPill count={statusCounts.ok} label="ACTIVE" color={C.healthy} />
+            <StatusPill count={statusCounts.err} label="ERROR" color={C.error} />
+            <StatusPill count={statusCounts.warn} label="DEGRADED" color={C.degraded} />
+            <StatusPill count={statusCounts.off} label="DISABLED" color={C.disabled} />
+            {statusCounts.unknown > 0 && (
+              <StatusPill count={statusCounts.unknown} label="PENDING" color={C.textDim} />
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* ── HUD BOTTOM BAR ────────────────────────────────── */}
-      <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-10">
-        <div
-          className="flex items-center justify-center gap-8 border-t px-6 py-3 font-mono text-xs backdrop-blur-md"
-          style={{
-            background: `${C.bg}DD`,
-            borderColor: C.panelBorder,
-          }}
-        >
-          {statusData?.empire ? (
-            <>
-              <HudMetric
-                label="DAILY P&L"
-                value={formatUSD(statusData.empire.combined_daily_pnl)}
-                color={statusData.empire.combined_daily_pnl >= 0 ? C.healthy : C.error}
-              />
-              <HudMetric
-                label="PORTFOLIO"
-                value={formatUSD(statusData.empire.combined_portfolio_value)}
-                color={C.text}
-              />
-              <HudMetric
-                label="MRR"
-                value={formatUSD(statusData.empire.combined_mrr)}
-                color={C.revenue}
-              />
-              <HudMetric
-                label="NODES"
-                value={`${allNodes.filter((n) => n.type !== "center").length}`}
-                color={C.accent}
-              />
-              <HudMetric
-                label="CYCLES"
-                value={String(statusData.empire.cycle_count || "—")}
-                color={C.textDim}
-              />
-            </>
-          ) : (
-            <span style={{ color: C.textDim }}>AWAITING TELEMETRY...</span>
-          )}
+        {/* ── HUD BOTTOM BAR ────────────────────────────────── */}
+        <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-10">
+          <div
+            className="glass flex items-center justify-center gap-8 border-t border-[var(--border-dim)] px-6 py-3 font-mono text-xs"
+            style={{
+              background: `${C.bg}DD`,
+            }}
+          >
+            {statusData?.empire ? (
+              <>
+                <HudMetric
+                  label="DAILY P&L"
+                  value={formatUSD(statusData.empire.combined_daily_pnl)}
+                  color={statusData.empire.combined_daily_pnl >= 0 ? C.healthy : C.error}
+                />
+                <HudMetric
+                  label="PORTFOLIO"
+                  value={formatUSD(statusData.empire.combined_portfolio_value)}
+                  color={C.text}
+                />
+                <HudMetric
+                  label="MRR"
+                  value={formatUSD(statusData.empire.combined_mrr)}
+                  color={C.revenue}
+                />
+                <HudMetric
+                  label="NODES"
+                  value={`${allNodes.filter((n) => n.type !== "center").length}`}
+                  color={C.accent}
+                />
+                <HudMetric
+                  label="CYCLES"
+                  value={String(statusData.empire.cycle_count || "—")}
+                  color={C.textDim}
+                />
+              </>
+            ) : (
+              <span style={{ color: C.textDim }}>AWAITING TELEMETRY...</span>
+            )}
+          </div>
         </div>
+
+        {/* ── TOOLTIP ────────────────────────────────────────── */}
+        {tooltip && !selectedNode && <Tooltip node={tooltip.node} x={tooltip.x} y={tooltip.y} />}
+
+        {/* ── DETAIL PANEL ───────────────────────────────────── */}
+        {selectedNode && (
+          <DetailPanel
+            node={selectedNode}
+            nodes={allNodes}
+            onClose={() => {
+              setSelectedNode(null);
+              if (engineRef.current) engineRef.current.selectedNode = null;
+            }}
+          />
+        )}
       </div>
-
-      {/* ── TOOLTIP ────────────────────────────────────────── */}
-      {tooltip && !selectedNode && <Tooltip node={tooltip.node} x={tooltip.x} y={tooltip.y} />}
-
-      {/* ── DETAIL PANEL ───────────────────────────────────── */}
-      {selectedNode && (
-        <DetailPanel
-          node={selectedNode}
-          nodes={allNodes}
-          onClose={() => {
-            setSelectedNode(null);
-            if (engineRef.current) engineRef.current.selectedNode = null;
-          }}
-        />
-      )}
-    </div>
+    </>
   );
 }
 

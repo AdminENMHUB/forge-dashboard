@@ -2,51 +2,87 @@
 
 import { formatUSD } from "@/lib/formatters";
 
-/** Status badge with color coding */
+/* ═══════════════════════════════════════════════════════════════════
+   STATUS BADGE — glassmorphic pill with color coding
+   ═══════════════════════════════════════════════════════════════════ */
+
 export function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    healthy: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    halted: "bg-red-500/20 text-red-400 border-red-500/30",
-    degraded: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-    unknown: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+  const styles: Record<string, string> = {
+    healthy:
+      "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.08)]",
+    running:
+      "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.08)]",
+    online:
+      "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.08)]",
+    halted: "bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_8px_rgba(239,68,68,0.08)]",
+    stopped: "bg-red-500/10 text-red-400 border-red-500/20",
+    degraded:
+      "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.08)]",
+    unknown: "bg-gray-500/10 text-gray-400 border-gray-500/20",
   };
   return (
     <span
-      className={`rounded-full border px-2 py-0.5 text-xs font-medium ${colors[status] || colors.unknown}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ${styles[status] || styles.unknown}`}
     >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${
+          status === "healthy" || status === "running" || status === "online"
+            ? "pulse-dot bg-emerald-400"
+            : status === "halted" || status === "stopped"
+              ? "bg-red-400"
+              : status === "degraded"
+                ? "bg-amber-400"
+                : "bg-gray-400"
+        }`}
+      />
       {status.toUpperCase()}
     </span>
   );
 }
 
-/** P&L value with green/red/gray coloring */
+/* ═══════════════════════════════════════════════════════════════════
+   P&L TEXT — green/red/gray with +/- sign
+   ═══════════════════════════════════════════════════════════════════ */
+
 export function PnlText({ value }: { value: number }) {
   if (value > 0) return <span className="font-semibold text-emerald-400">+{formatUSD(value)}</span>;
   if (value < 0) return <span className="font-semibold text-red-400">{formatUSD(value)}</span>;
-  return <span className="text-gray-400">{formatUSD(value)}</span>;
+  return <span className="text-[var(--text-tertiary)]">{formatUSD(value)}</span>;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   METRIC CARD — glassmorphic KPI card with optional glow
+   ═══════════════════════════════════════════════════════════════════ */
 
 export function MetricCard({
   label,
   value,
   subtext,
   accent,
+  glow,
 }: {
   label: string;
   value: React.ReactNode;
   subtext?: string;
   accent?: string;
+  glow?: "cyan" | "emerald" | "blue" | "red" | "purple" | "amber";
 }) {
+  const glowClass = glow ? `glow-${glow}` : "";
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-      <p className="mb-1 text-xs tracking-wider text-gray-500 uppercase">{label}</p>
-      <p className={`text-2xl font-bold ${accent || ""}`}>{value}</p>
-      {subtext && <p className="mt-1 text-xs text-gray-500">{subtext}</p>}
+    <div className={`glass rounded-xl p-4 ${glowClass}`}>
+      <p className="mb-1.5 text-[11px] font-semibold tracking-[0.1em] text-[var(--text-tertiary)] uppercase">
+        {label}
+      </p>
+      <p className={`text-2xl font-bold tracking-tight ${accent || "text-white"}`}>{value}</p>
+      {subtext && <p className="mt-1.5 text-[11px] text-[var(--text-tertiary)]">{subtext}</p>}
     </div>
   );
 }
 
-/** Animated skeleton placeholder for loading states */
+/* ═══════════════════════════════════════════════════════════════════
+   SKELETON COMPONENTS — shimmer loading states
+   ═══════════════════════════════════════════════════════════════════ */
+
 export function Skeleton({
   className = "",
   style,
@@ -54,24 +90,33 @@ export function Skeleton({
   className?: string;
   style?: React.CSSProperties;
 }) {
-  return <div className={`animate-pulse rounded-md bg-gray-800 ${className}`} style={style} />;
+  return (
+    <div
+      className={`rounded-md bg-white/[0.04] ${className}`}
+      style={{
+        ...style,
+        backgroundImage:
+          "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)",
+        backgroundSize: "200% 100%",
+        animation: "shimmer 2s ease-in-out infinite",
+      }}
+    />
+  );
 }
 
-/** Full skeleton card matching MetricCard dimensions */
 export function MetricCardSkeleton() {
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+    <div className="glass rounded-xl p-4">
       <Skeleton className="mb-2 h-3 w-20" />
-      <Skeleton className="mb-1 h-7 w-28" />
+      <Skeleton className="mb-1.5 h-7 w-28" />
       <Skeleton className="h-3 w-36" />
     </div>
   );
 }
 
-/** Skeleton for swarm cards */
 export function SwarmCardSkeleton() {
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+    <div className="glass rounded-xl p-5">
       <div className="mb-4 flex items-center justify-between">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-5 w-16 rounded-full" />
@@ -88,38 +133,25 @@ export function SwarmCardSkeleton() {
   );
 }
 
-// Pre-computed stable heights for the chart skeleton bars (avoids impure render calls).
-// The formula spreads 30 bars across the 20–99% range using a linear congruential step
-// (multiplier=37, offset=13) to produce visually varied heights without randomness.
-const CHART_SKELETON_HEIGHT_MULTIPLIER = 37;
-const CHART_SKELETON_HEIGHT_OFFSET = 13;
-const CHART_SKELETON_HEIGHT_RANGE = 80; // heights span [20, 20+80) %
-const CHART_SKELETON_HEIGHTS = Array.from(
-  { length: 30 },
-  (_, i) =>
-    20 +
-    ((i * CHART_SKELETON_HEIGHT_MULTIPLIER + CHART_SKELETON_HEIGHT_OFFSET) %
-      CHART_SKELETON_HEIGHT_RANGE),
-);
+// Pre-computed stable heights for chart skeleton bars
+const CHART_SKELETON_HEIGHTS = Array.from({ length: 30 }, (_, i) => 20 + ((i * 37 + 13) % 80));
 
-/** Skeleton for the revenue chart area */
 export function ChartSkeleton() {
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+    <div className="glass rounded-xl p-5">
       <Skeleton className="mb-4 h-5 w-40" />
       <div className="flex items-end gap-1" style={{ height: 200 }}>
         {CHART_SKELETON_HEIGHTS.map((h, i) => (
-          <Skeleton key={i} className="flex-1" style={{ height: `${h}%` }} />
+          <Skeleton key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%` }} />
         ))}
       </div>
     </div>
   );
 }
 
-/** Skeleton for activity feed items */
 export function ActivityFeedSkeleton() {
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+    <div className="glass rounded-xl p-5">
       <Skeleton className="mb-4 h-5 w-32" />
       <div className="space-y-3">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -134,19 +166,52 @@ export function ActivityFeedSkeleton() {
   );
 }
 
-/** Skeleton for the SaaS products grid */
 export function SaasGridSkeleton() {
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+    <div className="glass rounded-xl p-5">
       <Skeleton className="mb-4 h-5 w-32" />
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {Array.from({ length: 13 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-2 rounded-lg border border-gray-800 p-2">
+          <div
+            key={i}
+            className="flex items-center gap-2 rounded-lg border border-[var(--border-dim)] p-2"
+          >
             <Skeleton className="h-7 w-7 shrink-0 rounded-md" />
             <Skeleton className="h-4 flex-1" />
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SECTION CARD — glass container for dashboard sections
+   ═══════════════════════════════════════════════════════════════════ */
+
+export function SectionCard({
+  title,
+  subtitle,
+  glow,
+  className = "",
+  children,
+}: {
+  title?: string;
+  subtitle?: string;
+  glow?: "cyan" | "emerald" | "blue" | "red" | "purple" | "amber";
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const glowClass = glow ? `glow-${glow}` : "";
+  return (
+    <div className={`glass rounded-xl p-5 ${glowClass} ${className}`}>
+      {title && (
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-white">{title}</h2>
+          {subtitle && <span className="text-[11px] text-[var(--text-tertiary)]">{subtitle}</span>}
+        </div>
+      )}
+      {children}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { timeAgo } from "@/lib/formatters";
-import { DashboardNav } from "@/components/nav";
+import { PageShell } from "@/components/nav";
 
 interface Proposal {
   id: string;
@@ -66,7 +66,7 @@ function ProposalCard({
   const isLoading = loading === proposal.id;
 
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-4 sm:p-5">
+    <div className="glass rounded-xl border border-[var(--border-dim)] p-4 sm:p-5">
       {/* Header */}
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -89,17 +89,19 @@ function ProposalCard({
             </span>
           )}
         </div>
-        <span className="text-xs whitespace-nowrap text-gray-500">
+        <span className="text-xs whitespace-nowrap text-[var(--text-tertiary)]">
           {timeAgo(proposal.timestamp)}
         </span>
       </div>
 
       {/* Title & Description */}
       <h3 className="mb-1 text-base font-semibold">{proposal.title}</h3>
-      <p className="mb-3 line-clamp-3 text-sm text-gray-400">{proposal.description}</p>
+      <p className="mb-3 line-clamp-3 text-sm text-[var(--text-secondary)]">
+        {proposal.description}
+      </p>
 
       {/* Meta */}
-      <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+      <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--text-tertiary)]">
         <span>Target: {proposal.target_swarm}</span>
         <span>Effort: {proposal.estimated_effort}</span>
         <span>Impact: {proposal.expected_impact.slice(0, 80)}</span>
@@ -107,7 +109,9 @@ function ProposalCard({
 
       {/* Resolution notes */}
       {proposal.resolution_notes && (
-        <p className="mb-3 text-xs text-gray-500 italic">{proposal.resolution_notes}</p>
+        <p className="mb-3 text-xs text-[var(--text-tertiary)] italic">
+          {proposal.resolution_notes}
+        </p>
       )}
 
       {/* Action buttons */}
@@ -116,14 +120,14 @@ function ProposalCard({
           <button
             onClick={() => onAction(proposal.id, "approve")}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-emerald-600 px-3 py-2.5 text-sm font-medium transition-colors hover:bg-emerald-700 active:scale-95 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-emerald-500/20 px-3 py-2.5 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/30 active:scale-95 disabled:opacity-50"
           >
             {isLoading ? "..." : "\u2705 Approve"}
           </button>
           <button
             onClick={() => onAction(proposal.id, "reject")}
             disabled={isLoading}
-            className="flex-1 rounded-lg bg-red-600/80 px-3 py-2.5 text-sm font-medium transition-colors hover:bg-red-700 active:scale-95 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-red-500/20 px-3 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/30 active:scale-95 disabled:opacity-50"
           >
             {isLoading ? "..." : "\u274C Reject"}
           </button>
@@ -201,104 +205,101 @@ export default function ProposalsPage() {
   ];
 
   return (
-    <div className="mx-auto min-h-screen max-w-3xl p-4 sm:p-6">
-      {/* Header */}
-      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">CEO Proposals</h1>
-          <p className="text-sm text-gray-500">Review and action improvement proposals</p>
-        </div>
-        <div className="flex items-center gap-2">
+    <PageShell title="Proposals" subtitle="AI optimization proposals for CEO approval">
+      <div className="mx-auto max-w-3xl">
+        {/* Refresh button */}
+        <div className="mb-4 flex justify-end">
           <button
             onClick={fetchProposals}
-            className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs hover:bg-gray-700"
+            className="rounded-lg bg-cyan-500/20 px-3 py-1.5 text-xs text-cyan-400 transition-colors hover:bg-cyan-500/30"
           >
             Refresh
           </button>
-          <DashboardNav />
         </div>
-      </header>
 
-      {/* Toast */}
-      {toast && (
-        <div
-          role="alert"
-          aria-live="polite"
-          className="fixed top-4 right-4 left-4 z-50 animate-pulse rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white shadow-lg sm:left-auto sm:w-80"
-        >
-          {toast}
-        </div>
-      )}
-
-      {/* Error */}
-      {error && (
-        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
-          {error}
-        </div>
-      )}
-
-      {/* Filter tabs */}
-      <div className="-mx-1 mb-4 flex gap-1.5 overflow-x-auto px-1 pb-2">
-        {filterButtons.map((btn) => (
-          <button
-            key={btn.key}
-            onClick={() => setFilter(btn.key)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
-              filter === btn.key
-                ? "bg-blue-600 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-            }`}
+        {/* Toast */}
+        {toast && (
+          <div
+            role="alert"
+            aria-live="polite"
+            className="fixed top-4 right-4 left-4 z-50 animate-pulse rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white shadow-lg sm:left-auto sm:w-80"
           >
-            {btn.label}
-            {btn.count != null && btn.count > 0 && (
-              <span className="ml-1.5 rounded-full bg-black/20 px-1.5 py-0.5 text-[10px]">
-                {btn.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Stats bar */}
-      {stats && (
-        <div className="mb-6 grid grid-cols-3 gap-2">
-          <div className="rounded-lg border border-gray-800 bg-gray-900 p-3 text-center">
-            <p className="text-xl font-bold text-blue-400">{stats.proposed}</p>
-            <p className="text-xs text-gray-500">Pending</p>
+            {toast}
           </div>
-          <div className="rounded-lg border border-gray-800 bg-gray-900 p-3 text-center">
-            <p className="text-xl font-bold text-emerald-400">{stats.approved + stats.completed}</p>
-            <p className="text-xs text-gray-500">Approved/Done</p>
-          </div>
-          <div className="rounded-lg border border-gray-800 bg-gray-900 p-3 text-center">
-            <p className="text-xl font-bold">{stats.total}</p>
-            <p className="text-xs text-gray-500">All Time</p>
-          </div>
-        </div>
-      )}
-
-      {/* Proposals list */}
-      <div className="space-y-3">
-        {proposals.length === 0 ? (
-          <div className="py-12 text-center text-gray-500">
-            <p className="mb-1 text-lg">No {filter === "all" ? "" : filter} proposals</p>
-            <p className="text-sm">
-              {filter === "proposed"
-                ? "The improvement engine will generate proposals during its next cycle."
-                : "Try a different filter to see proposals."}
-            </p>
-          </div>
-        ) : (
-          proposals.map((p) => (
-            <ProposalCard key={p.id} proposal={p} onAction={handleAction} loading={loading} />
-          ))
         )}
-      </div>
 
-      {/* Footer */}
-      <footer className="mt-8 border-t border-gray-800 pt-4 text-center text-xs text-gray-600">
-        EganForge | CEO Approval Flow | Auto-refreshes every 15s
-      </footer>
-    </div>
+        {/* Error */}
+        {error && (
+          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+            {error}
+          </div>
+        )}
+
+        {/* Filter tabs */}
+        <div className="-mx-1 mb-4 flex gap-1.5 overflow-x-auto px-1 pb-2">
+          {filterButtons.map((btn) => (
+            <button
+              key={btn.key}
+              onClick={() => setFilter(btn.key)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
+                filter === btn.key
+                  ? "bg-cyan-500/20 text-cyan-400"
+                  : "bg-gray-800 text-[var(--text-secondary)] hover:bg-gray-700"
+              }`}
+            >
+              {btn.label}
+              {btn.count != null && btn.count > 0 && (
+                <span className="ml-1.5 rounded-full bg-black/20 px-1.5 py-0.5 text-[10px]">
+                  {btn.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Stats bar */}
+        {stats && (
+          <div className="mb-6 grid grid-cols-3 gap-2">
+            <div className="glass rounded-lg border border-[var(--border-dim)] p-3 text-center">
+              <p className="text-xl font-bold text-blue-400">{stats.proposed}</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Pending</p>
+            </div>
+            <div className="glass rounded-lg border border-[var(--border-dim)] p-3 text-center">
+              <p className="text-xl font-bold text-emerald-400">
+                {stats.approved + stats.completed}
+              </p>
+              <p className="text-xs text-[var(--text-tertiary)]">Approved/Done</p>
+            </div>
+            <div className="glass rounded-lg border border-[var(--border-dim)] p-3 text-center">
+              <p className="text-xl font-bold">{stats.total}</p>
+              <p className="text-xs text-[var(--text-tertiary)]">All Time</p>
+            </div>
+          </div>
+        )}
+
+        {/* Proposals list */}
+        <div className="space-y-3">
+          {proposals.length === 0 ? (
+            <div className="py-12 text-center text-[var(--text-tertiary)]">
+              <p className="mb-1 text-lg">No {filter === "all" ? "" : filter} proposals</p>
+              <p className="text-sm">
+                {filter === "proposed"
+                  ? "The improvement engine will generate proposals during its next cycle."
+                  : "Try a different filter to see proposals."}
+              </p>
+            </div>
+          ) : (
+            proposals.map((p) => (
+              <ProposalCard key={p.id} proposal={p} onAction={handleAction} loading={loading} />
+            ))
+          )}
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-8 border-t border-[var(--border-dim)] pt-4 text-center text-xs text-[var(--text-muted)]">
+          EganForge | CEO Approval Flow | Auto-refreshes every 15s
+        </footer>
+      </div>
+    </PageShell>
   );
 }

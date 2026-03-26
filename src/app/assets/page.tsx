@@ -1,7 +1,7 @@
 "use client";
 
 import { useApiPoller } from "@/lib/hooks";
-import { DashboardNav } from "@/components/nav";
+import { PageShell } from "@/components/nav";
 import { formatUSD, timeAgo, truncateAddress } from "@/lib/formatters";
 import { MetricCard } from "@/components/ui";
 
@@ -97,7 +97,7 @@ function WalletCard({ wallet }: { wallet: WalletData }) {
   const hasTrades = wallet.trade_positions > 0;
 
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-5 transition-colors hover:border-gray-700">
+    <div className="glass rounded-xl border border-[var(--border-dim)] p-5 transition-colors hover:border-gray-700">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">{wallet.label}</h3>
@@ -106,12 +106,12 @@ function WalletCard({ wallet }: { wallet: WalletData }) {
               href={wallet.explorer_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono text-xs text-gray-500 transition-colors hover:text-purple-400"
+              className="font-mono text-xs text-[var(--text-tertiary)] transition-colors hover:text-purple-400"
             >
               {truncateAddress(wallet.address)}
             </a>
           ) : (
-            <span className="text-xs text-gray-500">Centralized Exchange</span>
+            <span className="text-xs text-[var(--text-tertiary)]">Centralized Exchange</span>
           )}
         </div>
         <ChainBadge chain={wallet.chain} />
@@ -120,48 +120,50 @@ function WalletCard({ wallet }: { wallet: WalletData }) {
       <div className="space-y-2 text-sm">
         {wallet.stablecoins > 0 && (
           <div className="flex justify-between">
-            <span className="text-gray-400">Stablecoins</span>
+            <span className="text-[var(--text-secondary)]">Stablecoins</span>
             <span className="font-mono text-emerald-400">{formatUSD(wallet.stablecoins)}</span>
           </div>
         )}
         {wallet.native_token > 0 && (
           <div className="flex justify-between">
-            <span className="text-gray-400">
+            <span className="text-[var(--text-secondary)]">
               {wallet.chain === "base" ? "ETH" : wallet.chain === "polygon" ? "MATIC" : "Native"}
             </span>
             <span className="font-mono">
               {wallet.native_token.toFixed(6)}
-              <span className="ml-1 text-gray-500">({formatUSD(wallet.native_token_usd)})</span>
+              <span className="ml-1 text-[var(--text-tertiary)]">
+                ({formatUSD(wallet.native_token_usd)})
+              </span>
             </span>
           </div>
         )}
         {hasDefi && (
           <div className="flex justify-between">
-            <span className="text-gray-400">DeFi Positions</span>
+            <span className="text-[var(--text-secondary)]">DeFi Positions</span>
             <span className="font-mono text-cyan-400">{formatUSD(wallet.defi_positions)}</span>
           </div>
         )}
         {hasTrades && (
           <div className="flex justify-between">
-            <span className="text-gray-400">Trade Positions</span>
+            <span className="text-[var(--text-secondary)]">Trade Positions</span>
             <span className="font-mono text-amber-400">{formatUSD(wallet.trade_positions)}</span>
           </div>
         )}
         {wallet.nft_count > 0 && (
           <div className="flex justify-between">
-            <span className="text-gray-400">NFTs</span>
+            <span className="text-[var(--text-secondary)]">NFTs</span>
             <span className="font-mono">{wallet.nft_count}</span>
           </div>
         )}
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-gray-800 pt-3">
-        <span className="text-sm text-gray-400">Total</span>
+      <div className="mt-3 flex items-center justify-between border-t border-[var(--border-dim)] pt-3">
+        <span className="text-sm text-[var(--text-secondary)]">Total</span>
         <span className="font-mono text-lg font-semibold">{formatUSD(wallet.total_usd)}</span>
       </div>
 
       {wallet.last_updated && (
-        <p className="mt-2 text-xs text-gray-600">{timeAgo(wallet.last_updated)}</p>
+        <p className="mt-2 text-xs text-[var(--text-muted)]">{timeAgo(wallet.last_updated)}</p>
       )}
     </div>
   );
@@ -177,7 +179,7 @@ function AllocationBar({ totals }: { totals: AssetsData["totals"] }) {
   ].filter((s) => s.value > 0);
 
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+    <div className="glass rounded-xl border border-[var(--border-dim)] p-5">
       <h2 className="mb-4 text-lg font-semibold">Asset Allocation</h2>
       <div className="mb-4 flex h-4 w-full overflow-hidden rounded-full">
         {segments.map((seg) => (
@@ -194,7 +196,7 @@ function AllocationBar({ totals }: { totals: AssetsData["totals"] }) {
           <div key={seg.label} className="flex items-center gap-2">
             <div className={`h-3 w-3 rounded-full ${seg.color}`} />
             <div>
-              <p className="text-xs text-gray-400">{seg.label}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{seg.label}</p>
               <p className="font-mono text-sm">
                 {formatUSD(seg.value)} ({((seg.value / total) * 100).toFixed(1)}%)
               </p>
@@ -211,7 +213,7 @@ function ChainDistribution({ chainTotals }: { chainTotals: Record<string, number
   const total = entries.reduce((sum, [, v]) => sum + v, 0) || 1;
 
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+    <div className="glass rounded-xl border border-[var(--border-dim)] p-5">
       <h2 className="mb-4 text-lg font-semibold">Chain Distribution</h2>
       <div className="space-y-3">
         {entries.map(([chain, value]) => {
@@ -251,15 +253,17 @@ function ChainDistribution({ chainTotals }: { chainTotals: Record<string, number
 function FundFlowTimeline({ flows }: { flows: FundFlow[] }) {
   if (!flows || flows.length === 0) {
     return (
-      <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+      <div className="glass rounded-xl border border-[var(--border-dim)] p-5">
         <h2 className="mb-4 text-lg font-semibold">Recent Fund Flows</h2>
-        <p className="py-4 text-center text-sm text-gray-500">No fund flows recorded yet</p>
+        <p className="py-4 text-center text-sm text-[var(--text-tertiary)]">
+          No fund flows recorded yet
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+    <div className="glass rounded-xl border border-[var(--border-dim)] p-5">
       <h2 className="mb-4 text-lg font-semibold">Recent Fund Flows</h2>
       <div className="max-h-64 space-y-2 overflow-y-auto">
         {flows.map((flow, i) => (
@@ -269,18 +273,20 @@ function FundFlowTimeline({ flows }: { flows: FundFlow[] }) {
           >
             <div className="flex items-center gap-2">
               <span
-                className={`text-xs font-medium uppercase ${FLOW_TYPE_COLORS[flow.flow_type] || "text-gray-400"}`}
+                className={`text-xs font-medium uppercase ${FLOW_TYPE_COLORS[flow.flow_type] || "text-[var(--text-secondary)]"}`}
               >
                 {flow.flow_type}
               </span>
-              <span className="text-gray-400">
+              <span className="text-[var(--text-secondary)]">
                 {flow.from_wallet.split(":")[0]} &rarr; {flow.to_wallet.split(":")[0]}
               </span>
             </div>
             <div className="text-right">
               <span className="font-mono text-emerald-400">{formatUSD(flow.amount_usd)}</span>
-              <span className="ml-2 text-xs text-gray-600">{flow.asset}</span>
-              {flow.timestamp && <p className="text-xs text-gray-600">{timeAgo(flow.timestamp)}</p>}
+              <span className="ml-2 text-xs text-[var(--text-muted)]">{flow.asset}</span>
+              {flow.timestamp && (
+                <p className="text-xs text-[var(--text-muted)]">{timeAgo(flow.timestamp)}</p>
+              )}
             </div>
           </div>
         ))}
@@ -300,7 +306,7 @@ export default function AssetsPage() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <h1 className="mb-2 text-2xl font-bold">Connection Error</h1>
-          <p className="text-gray-400">{error}</p>
+          <p className="text-[var(--text-secondary)]">{error}</p>
           <button
             onClick={refresh}
             className="mt-4 rounded-lg bg-blue-600 px-4 py-2 hover:bg-blue-700"
@@ -317,7 +323,7 @@ export default function AssetsPage() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-          <p className="text-gray-400">Loading Asset Registry...</p>
+          <p className="text-[var(--text-secondary)]">Loading Asset Registry...</p>
         </div>
       </div>
     );
@@ -325,18 +331,14 @@ export default function AssetsPage() {
 
   if (!data?.available) {
     return (
-      <div className="mx-auto min-h-screen max-w-7xl p-6">
-        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Assets</h1>
-          <DashboardNav />
-        </header>
-        <div className="rounded-xl border border-gray-800 bg-gray-900 p-8 text-center">
-          <p className="text-lg text-gray-400">Asset registry not yet populated</p>
-          <p className="mt-2 text-sm text-gray-500">
+      <PageShell title="Assets" subtitle="Multi-chain wallet view, allocation bars">
+        <div className="glass rounded-xl border border-[var(--border-dim)] p-8 text-center">
+          <p className="text-lg text-[var(--text-secondary)]">Asset registry not yet populated</p>
+          <p className="mt-2 text-sm text-[var(--text-tertiary)]">
             {data?.error || "Waiting for next overseer cycle"}
           </p>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
@@ -344,21 +346,15 @@ export default function AssetsPage() {
   const totalGas = data.gas.total_gas_usd;
 
   return (
-    <div className="mx-auto min-h-screen max-w-7xl p-6">
-      {/* Header */}
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Assets</h1>
-          <p className="text-sm text-gray-500">
-            Unified view across {wallets.length} wallets &middot;{" "}
-            {Object.keys(data.chain_totals).length} chains
-            <span className="mx-2 text-gray-700">|</span>
-            <span>{lastUpdate}</span>
-            {error && <span className="ml-2 text-xs text-red-400">({error})</span>}
-          </p>
-        </div>
-        <DashboardNav />
-      </header>
+    <PageShell title="Assets" subtitle="Multi-chain wallet view, allocation bars">
+      {/* Subheader info */}
+      <p className="-mt-4 mb-6 text-sm text-[var(--text-tertiary)]">
+        Unified view across {wallets.length} wallets &middot;{" "}
+        {Object.keys(data.chain_totals).length} chains
+        <span className="mx-2 text-gray-700">|</span>
+        <span>{lastUpdate}</span>
+        {error && <span className="ml-2 text-xs text-red-400">({error})</span>}
+      </p>
 
       {/* KPI Cards */}
       <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-5">
@@ -408,9 +404,9 @@ export default function AssetsPage() {
       <FundFlowTimeline flows={data.recent_flows} />
 
       {/* Footer */}
-      <footer className="mt-12 border-t border-gray-800 pt-6 text-center text-xs text-gray-600">
+      <footer className="mt-12 border-t border-[var(--border-dim)] pt-6 text-center text-xs text-[var(--text-muted)]">
         Asset Registry | Base + Polygon + Coinbase | Zero LLM cost | Auto-refreshes every 60s
       </footer>
-    </div>
+    </PageShell>
   );
 }

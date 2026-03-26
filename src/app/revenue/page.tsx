@@ -1,7 +1,7 @@
 "use client";
 
 import { useApiPoller } from "@/lib/hooks";
-import { DashboardNav } from "@/components/nav";
+import { PageShell } from "@/components/nav";
 import { MetricCard, PnlText } from "@/components/ui";
 
 export default function RevenuePage() {
@@ -16,9 +16,11 @@ export default function RevenuePage() {
 
   if (loading && !briefing) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
-      </div>
+      <PageShell title="Revenue Intel" subtitle="Executive briefing & revenue attribution">
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+        </div>
+      </PageShell>
     );
   }
 
@@ -31,10 +33,7 @@ export default function RevenuePage() {
   const agentEntries = Object.entries(agentPnl).sort(([, a], [, b]) => (b.net ?? 0) - (a.net ?? 0));
 
   return (
-    <div className="min-h-screen bg-gray-950 p-6">
-      <DashboardNav />
-      <h1 className="mb-6 text-2xl font-bold">Revenue Attribution</h1>
-
+    <PageShell title="Revenue Intel" subtitle="Executive briefing & revenue attribution">
       <div className="mb-6 grid grid-cols-5 gap-4">
         <MetricCard label="Total MRR" value={`$${(snapshot.combined_mrr ?? 0).toFixed(2)}`} />
         <MetricCard
@@ -60,12 +59,12 @@ export default function RevenuePage() {
       <h2 className="mb-3 text-lg font-semibold">Department P&amp;L</h2>
       <div className="mb-6 grid grid-cols-4 gap-4">
         {Object.entries(deptPnl).map(([dept, data]) => (
-          <div key={dept} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-            <p className="text-xs tracking-wider text-gray-500 uppercase">{dept}</p>
+          <div key={dept} className="glass rounded-xl border border-[var(--border-dim)] p-4">
+            <p className="text-xs tracking-wider text-[var(--text-tertiary)] uppercase">{dept}</p>
             <p className="text-xl font-bold">
               <PnlText value={data.net ?? 0} />
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[var(--text-tertiary)]">
               Rev: ${(data.revenue ?? 0).toFixed(2)} | Cost: ${(data.cost ?? 0).toFixed(2)}
             </p>
           </div>
@@ -73,20 +72,23 @@ export default function RevenuePage() {
       </div>
 
       <h2 className="mb-3 text-lg font-semibold">Agent P&amp;L Leaderboard</h2>
-      <div className="overflow-hidden rounded-xl border border-gray-800 bg-gray-900">
+      <div className="glass overflow-hidden rounded-xl border border-[var(--border-dim)]">
         <table className="w-full text-sm">
-          <thead className="border-b border-gray-800 bg-gray-900/50">
+          <thead className="border-b border-[var(--border-dim)] bg-white/[0.04]">
             <tr>
-              <th className="px-4 py-3 text-left text-gray-400">Agent</th>
-              <th className="px-4 py-3 text-right text-gray-400">Revenue</th>
-              <th className="px-4 py-3 text-right text-gray-400">Cost</th>
-              <th className="px-4 py-3 text-right text-gray-400">Net</th>
-              <th className="px-4 py-3 text-right text-gray-400">Events</th>
+              <th className="px-4 py-3 text-left text-[var(--text-secondary)]">Agent</th>
+              <th className="px-4 py-3 text-right text-[var(--text-secondary)]">Revenue</th>
+              <th className="px-4 py-3 text-right text-[var(--text-secondary)]">Cost</th>
+              <th className="px-4 py-3 text-right text-[var(--text-secondary)]">Net</th>
+              <th className="px-4 py-3 text-right text-[var(--text-secondary)]">Events</th>
             </tr>
           </thead>
           <tbody>
             {agentEntries.map(([agent, data]) => (
-              <tr key={agent} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+              <tr
+                key={agent}
+                className="border-b border-[var(--border-dim)]/50 hover:bg-white/[0.04]"
+              >
                 <td className="px-4 py-3 font-mono">{agent}</td>
                 <td className="px-4 py-3 text-right text-emerald-400">
                   ${(data.revenue_attributed ?? 0).toFixed(2)}
@@ -97,12 +99,14 @@ export default function RevenuePage() {
                 <td className="px-4 py-3 text-right">
                   <PnlText value={data.net ?? 0} />
                 </td>
-                <td className="px-4 py-3 text-right text-gray-400">{data.events ?? 0}</td>
+                <td className="px-4 py-3 text-right text-[var(--text-secondary)]">
+                  {data.events ?? 0}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    </div>
+    </PageShell>
   );
 }

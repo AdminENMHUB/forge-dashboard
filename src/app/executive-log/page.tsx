@@ -1,7 +1,7 @@
 "use client";
 
 import { useApiPoller } from "@/lib/hooks";
-import { DashboardNav } from "@/components/nav";
+import { PageShell } from "@/components/nav";
 
 function outcomeIcon(outcome: string | null) {
   if (outcome === null) return "\uD83D\uDD50";
@@ -17,35 +17,31 @@ export default function ExecutiveLogPage() {
 
   if (loading && !briefing) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
-      </div>
+      <PageShell title="Executive Log" subtitle="AI decision audit trail">
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+        </div>
+      </PageShell>
     );
   }
 
   const actions = [...((briefing?.executive_actions as Record<string, string>[]) ?? [])].reverse();
 
   return (
-    <div className="min-h-screen bg-gray-950 p-6">
-      <DashboardNav />
-      <h1 className="mb-6 text-2xl font-bold">Executive Decision Trail</h1>
-      <p className="mb-4 text-sm text-gray-500">
-        Real actions taken by executive agents. No filler &mdash; results or silence.
-      </p>
-
+    <PageShell title="Executive Log" subtitle="AI decision audit trail">
       <div className="space-y-3">
         {actions.length === 0 && (
-          <p className="text-gray-500 italic">
+          <p className="text-[var(--text-tertiary)] italic">
             No executive actions recorded yet. Agents will write here after their first cycle.
           </p>
         )}
         {actions.map((action: Record<string, string>, i: number) => (
-          <div key={i} className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+          <div key={i} className="glass rounded-lg border border-[var(--border-dim)] p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-lg">{outcomeIcon(action.outcome)}</span>
                 <span className="font-mono text-cyan-400">{action.agent}</span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-[var(--text-tertiary)]">
                   {action.timestamp ? new Date(action.timestamp).toLocaleString() : ""}
                 </span>
               </div>
@@ -56,8 +52,8 @@ export default function ExecutiveLogPage() {
               )}
             </div>
             <p className="mt-2 text-sm font-medium">{action.action}</p>
-            <p className="mt-1 text-sm text-gray-400">{action.reasoning}</p>
-            <div className="mt-2 flex gap-4 text-xs text-gray-500">
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">{action.reasoning}</p>
+            <div className="mt-2 flex gap-4 text-xs text-[var(--text-tertiary)]">
               <span>Expected: {action.expected_outcome}</span>
               {action.measurement && <span>Measure: {action.measurement}</span>}
             </div>
@@ -67,6 +63,6 @@ export default function ExecutiveLogPage() {
           </div>
         ))}
       </div>
-    </div>
+    </PageShell>
   );
 }
