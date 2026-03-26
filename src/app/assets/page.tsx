@@ -71,6 +71,12 @@ const CHAIN_COLORS: Record<string, { bg: string; text: string; border: string; l
     border: "border-indigo-500/30",
     label: "COINBASE",
   },
+  solana: {
+    bg: "bg-green-500/20",
+    text: "text-green-400",
+    border: "border-green-500/30",
+    label: "SOLANA",
+  },
 };
 
 const FLOW_TYPE_COLORS: Record<string, string> = {
@@ -127,7 +133,13 @@ function WalletCard({ wallet }: { wallet: WalletData }) {
         {wallet.native_token > 0 && (
           <div className="flex justify-between">
             <span className="text-[var(--text-secondary)]">
-              {wallet.chain === "base" ? "ETH" : wallet.chain === "polygon" ? "MATIC" : "Native"}
+              {wallet.chain === "base"
+                ? "ETH"
+                : wallet.chain === "polygon"
+                  ? "MATIC"
+                  : wallet.chain === "solana"
+                    ? "SOL"
+                    : "Native"}
             </span>
             <span className="font-mono">
               {wallet.native_token.toFixed(6)}
@@ -405,7 +417,8 @@ export default function AssetsPage() {
 
       {/* Footer */}
       <footer className="mt-12 border-t border-[var(--border-dim)] pt-6 text-center text-xs text-[var(--text-muted)]">
-        Asset Registry | Base + Polygon + Coinbase | Zero LLM cost | Auto-refreshes every 60s
+        Asset Registry | Base + Polygon + Solana + Coinbase | Zero LLM cost | Auto-refreshes every
+        60s
       </footer>
     </PageShell>
   );

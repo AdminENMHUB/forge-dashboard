@@ -154,6 +154,16 @@ function eventIcon(type: string): { dot: string; label: string } {
       return { dot: "bg-purple-400", label: "SaaS" };
     case "web3":
       return { dot: "bg-cyan-400", label: "Web3" };
+    case "report":
+      return { dot: "bg-blue-400", label: "Report" };
+    case "llm_call":
+      return { dot: "bg-purple-400", label: "AI" };
+    case "outcome":
+      return { dot: "bg-emerald-400", label: "Outcome" };
+    case "decision":
+      return { dot: "bg-amber-400", label: "Decision" };
+    case "error":
+      return { dot: "bg-red-400", label: "Error" };
     default:
       return { dot: "bg-gray-400", label: type || "Event" };
   }
@@ -574,7 +584,7 @@ export default function Dashboard() {
   const saasSwarm = data.swarms["EganSaasFactory"] || data.swarms["SaasFactory"];
   const web3Swarm = data.swarms["EganWeb3Swarm"];
   const growthSwarm = data.swarms["EganGrowthEngine"];
-  const binanceSwarm = data.swarms["BinanceArb"];
+  const forgeDefiSwarm = data.swarms["ForgeDefi"];
 
   const chartData = financials?.daily_pnl_history || [];
   const recentEvents = financials?.recent_events || [];
@@ -723,15 +733,15 @@ export default function Dashboard() {
           />
         )}
 
-        {binanceSwarm && (
+        {forgeDefiSwarm && (
           <SwarmCard
-            title="Binance"
-            status={binanceSwarm.status}
+            title="ForgeDefi"
+            status={forgeDefiSwarm.status}
             metrics={[
-              { label: "Portfolio", value: formatUSD(binanceSwarm.portfolio_value) },
-              { label: "Cash %", value: formatPct(binanceSwarm.win_rate || 0) },
-              { label: "Positions", value: binanceSwarm.open_positions },
-              { label: "Daily P&L", value: <PnlValue value={binanceSwarm.daily_pnl} /> },
+              { label: "Portfolio", value: formatUSD(forgeDefiSwarm.portfolio_value) },
+              { label: "Win Rate", value: formatPct(forgeDefiSwarm.win_rate || 0) },
+              { label: "Positions", value: forgeDefiSwarm.open_positions },
+              { label: "Daily P&L", value: <PnlValue value={forgeDefiSwarm.daily_pnl} /> },
             ]}
           />
         )}

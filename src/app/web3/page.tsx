@@ -63,6 +63,15 @@ interface Web3Data {
     total_delivered: number;
     total_usdc_received: number;
   };
+  solana?: {
+    address: string;
+    network: string;
+    sol: number;
+    usdc: number;
+    total_usd: number;
+    mode: string;
+    status: string;
+  };
   gas_costs?: {
     total_eth: number;
     total_usd_est: number;
@@ -104,7 +113,7 @@ export default function Web3Page() {
 
   if (!data?.available) {
     return (
-      <PageShell title="Web3 & DeFi" subtitle="Base + Polygon wallets, AAVE yield, NFTs">
+      <PageShell title="Web3 & DeFi" subtitle="Base + Polygon + Solana wallets, AAVE yield, NFTs">
         <div className="glass rounded-xl border border-[var(--border-dim)] p-8 text-center">
           <p className="text-lg text-[var(--text-secondary)]">Web3 Swarm is currently offline</p>
           <p className="mt-2 text-sm text-[var(--text-tertiary)]">
@@ -117,7 +126,8 @@ export default function Web3Page() {
 
   const w = data;
   const polyValue = w.polygon?.total_value ?? 0;
-  const totalWeb3Value = w.wallet.total_usd + polyValue;
+  const solanaValue = w.solana?.total_usd ?? 0;
+  const totalWeb3Value = w.wallet.total_usd + polyValue + solanaValue;
 
   const subtitleContent = (
     <>
@@ -144,13 +154,27 @@ export default function Web3Page() {
           </a>
         </>
       )}
+      {w.solana && (
+        <>
+          {" "}
+          &middot; Solana &middot;{" "}
+          <a
+            href={`https://solscan.io/account/${w.solana.address}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-green-400 hover:text-green-300"
+          >
+            {w.solana.address.slice(0, 8)}...{w.solana.address.slice(-4)}
+          </a>
+        </>
+      )}
     </>
   );
 
   return (
     <PageShell
       title="Web3 & DeFi"
-      subtitle="Base + Polygon wallets, AAVE yield, NFTs"
+      subtitle="Base + Polygon + Solana wallets, AAVE yield, NFTs"
       lastUpdate={lastUpdate}
       error={error}
     >
@@ -162,7 +186,7 @@ export default function Web3Page() {
         <MetricCard
           label="Total Web3 Value"
           value={formatUSD(totalWeb3Value)}
-          subtext={`Base: ${formatUSD(w.wallet.total_usd)} · Polygon: ${formatUSD(polyValue)}`}
+          subtext={`Base: ${formatUSD(w.wallet.total_usd)} · Polygon: ${formatUSD(polyValue)}${solanaValue > 0 ? ` · Solana: ${formatUSD(solanaValue)}` : ""}`}
           accent="text-emerald-400"
         />
         <MetricCard
@@ -303,6 +327,57 @@ export default function Web3Page() {
             </div>
           </div>
         </div>
+
+        {/* Solana Wallet (ForgeDefi) */}
+        {w.solana && (
+          <div className="glass rounded-xl border border-green-500/30 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Solana Wallet</h2>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full border border-green-500/30 bg-green-500/20 px-2 py-0.5 text-xs text-green-400">
+                  SOL
+                </span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs ${
+                    w.solana.mode === "LIVE"
+                      ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                      : "border border-amber-500/30 bg-amber-500/10 text-amber-400"
+                  }`}
+                >
+                  {w.solana.mode}
+                </span>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20 text-sm">
+                    S
+                  </span>
+                  <span className="font-medium">SOL</span>
+                </div>
+                <span className="font-mono text-lg">{w.solana.sol.toFixed(4)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/20 text-sm">
+                    $
+                  </span>
+                  <span className="font-medium">USDC</span>
+                </div>
+                <span className="font-mono text-lg">{formatUSD(w.solana.usdc)}</span>
+              </div>
+              <div className="flex justify-between border-t border-[var(--border-dim)] pt-3">
+                <span className="text-[var(--text-secondary)]">Total Value</span>
+                <span className="font-mono text-emerald-400">{formatUSD(w.solana.total_usd)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--text-secondary)]">Status</span>
+                <span className="text-[var(--text-secondary)] capitalize">{w.solana.status}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Gas Cost Tracking */}
@@ -501,7 +576,7 @@ export default function Web3Page() {
 
       {/* Footer */}
       <footer className="mt-12 border-t border-[var(--border-dim)] pt-6 text-center text-xs text-[var(--text-muted)]">
-        Web3 Department | Base + Polygon Networks | Auto-refreshes every 60s
+        Web3 Department | Base + Polygon + Solana Networks | Auto-refreshes every 60s
       </footer>
     </PageShell>
   );

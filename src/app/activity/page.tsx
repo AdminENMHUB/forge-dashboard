@@ -7,10 +7,13 @@ import { Skeleton } from "@/components/ui";
 
 interface ActivityEvent {
   type: string;
-  message: string;
-  timestamp: string;
+  message?: string;
+  detail?: string;
+  timestamp?: string;
+  ts?: string;
   source?: string;
   details?: string;
+  category?: string;
 }
 
 function eventStyle(type: string): { dot: string; label: string; bg: string } {
@@ -27,6 +30,16 @@ function eventStyle(type: string): { dot: string; label: string; bg: string } {
       return { dot: "bg-amber-400", label: "Proposal", bg: "border-amber-500/20" };
     case "web3":
       return { dot: "bg-cyan-400", label: "Web3", bg: "border-cyan-500/20" };
+    case "report":
+      return { dot: "bg-blue-400", label: "Report", bg: "border-blue-500/20" };
+    case "llm_call":
+      return { dot: "bg-purple-400", label: "AI", bg: "border-purple-500/20" };
+    case "outcome":
+      return { dot: "bg-emerald-400", label: "Outcome", bg: "border-emerald-500/20" };
+    case "decision":
+      return { dot: "bg-amber-400", label: "Decision", bg: "border-amber-500/20" };
+    case "error":
+      return { dot: "bg-red-400", label: "Error", bg: "border-red-500/20" };
     default:
       return { dot: "bg-gray-400", label: type || "Event", bg: "border-gray-700" };
   }
@@ -117,12 +130,12 @@ export default function ActivityPage() {
               const { dot, label, bg } = eventStyle(ev.type);
               return (
                 <div
-                  key={`${ev.timestamp}-${i}`}
+                  key={`${ev.timestamp || ev.ts}-${i}`}
                   className={`flex items-start gap-3 rounded-lg border ${bg} bg-white/[0.04] px-4 py-3 transition-colors hover:bg-white/[0.06]`}
                 >
                   <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-[var(--text-primary)]">{ev.message}</p>
+                    <p className="text-sm text-[var(--text-primary)]">{ev.detail || ev.message}</p>
                     {ev.details && (
                       <p className="mt-1 text-xs text-[var(--text-tertiary)]">{ev.details}</p>
                     )}
@@ -131,7 +144,10 @@ export default function ActivityPage() {
                       {ev.source && (
                         <span className="mr-2 text-[var(--text-muted)]">{ev.source}</span>
                       )}
-                      {ev.timestamp ? timeAgo(ev.timestamp) : ""}
+                      {ev.category && (
+                        <span className="mr-2 text-[var(--text-muted)]">{ev.category}</span>
+                      )}
+                      {ev.timestamp || ev.ts ? timeAgo((ev.timestamp || ev.ts)!) : ""}
                     </p>
                   </div>
                 </div>
