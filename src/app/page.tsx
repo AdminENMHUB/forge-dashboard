@@ -91,19 +91,74 @@ interface FinancialsResponse {
 const API_BASE = "";
 
 const SAAS_PRODUCTS = [
-  { name: "CaptionCraft", url: "https://captioncraft.eganforge.com", icon: "CC", bg: "#F59E0B" },
-  { name: "MailMint AI", url: "https://mailmint.eganforge.com", icon: "MM", bg: "#818CF8" },
-  { name: "MeetSnap AI", url: "https://meetsnap.eganforge.com", icon: "MS", bg: "#34D399" },
-  { name: "WriteMap AI", url: "https://writemap.eganforge.com", icon: "WM", bg: "#3B82F6" },
-  { name: "LegalMind AI", url: "https://legalmind.eganforge.com", icon: "LM", bg: "#8B5CF6" },
-  { name: "OutlineAI", url: "https://outlineai.eganforge.com", icon: "OA", bg: "#06B6D4" },
-  { name: "IdeaSpark AI", url: "https://ideaspark.eganforge.com", icon: "IS", bg: "#FBBF24" },
-  { name: "PostCraft AI", url: "https://postcraft.eganforge.com", icon: "PC", bg: "#EF4444" },
-  { name: "PromptLab", url: "https://promptlab.eganforge.com", icon: "PL", bg: "#10B981" },
-  { name: "TicketSort AI", url: "https://ticketsort.eganforge.com", icon: "TS", bg: "#F472B6" },
-  { name: "PriceSpy AI", url: "https://pricespy.eganforge.com", icon: "PS", bg: "#14B8A6" },
-  { name: "CodeDocs AI", url: "https://codedocs.eganforge.com", icon: "CD", bg: "#60A5FA" },
-  { name: "Webhook Studio", url: "https://webhookstudio.eganforge.com", icon: "WS", bg: "#A78BFA" },
+  {
+    name: "CaptionCraft",
+    url: "https://eganforge.com/products/captioncraft",
+    icon: "CC",
+    bg: "#F59E0B",
+  },
+  {
+    name: "MailMint AI",
+    url: "https://eganforge.com/products/mailmint",
+    icon: "MM",
+    bg: "#818CF8",
+  },
+  {
+    name: "MeetSnap AI",
+    url: "https://eganforge.com/products/meetsnap",
+    icon: "MS",
+    bg: "#34D399",
+  },
+  {
+    name: "WriteMap AI",
+    url: "https://eganforge.com/products/writemap",
+    icon: "WM",
+    bg: "#3B82F6",
+  },
+  {
+    name: "LegalMind AI",
+    url: "https://eganforge.com/products/legalmind",
+    icon: "LM",
+    bg: "#8B5CF6",
+  },
+  { name: "OutlineAI", url: "https://eganforge.com/products/outlineai", icon: "OA", bg: "#06B6D4" },
+  {
+    name: "IdeaSpark AI",
+    url: "https://eganforge.com/products/ideaspark",
+    icon: "IS",
+    bg: "#FBBF24",
+  },
+  {
+    name: "PostCraft AI",
+    url: "https://eganforge.com/products/postcraft",
+    icon: "PC",
+    bg: "#EF4444",
+  },
+  { name: "PromptLab", url: "https://eganforge.com/products/promptlab", icon: "PL", bg: "#10B981" },
+  {
+    name: "TicketSort AI",
+    url: "https://eganforge.com/products/ticketsort",
+    icon: "TS",
+    bg: "#F472B6",
+  },
+  {
+    name: "PriceSpy AI",
+    url: "https://eganforge.com/products/pricespy",
+    icon: "PS",
+    bg: "#14B8A6",
+  },
+  {
+    name: "CodeDocs AI",
+    url: "https://eganforge.com/products/codedocs",
+    icon: "CD",
+    bg: "#60A5FA",
+  },
+  {
+    name: "Webhook Studio",
+    url: "https://eganforge.com/products/webhook-studio",
+    icon: "WS",
+    bg: "#A78BFA",
+  },
 ];
 
 // ---------------------------------------------------------------------------

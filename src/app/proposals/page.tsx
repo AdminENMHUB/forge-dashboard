@@ -184,7 +184,10 @@ export default function ProposalsPage() {
         throw new Error(err.error || `Failed: ${res.status}`);
       }
       const result = await res.json();
-      setToast(`${action.charAt(0).toUpperCase() + action.slice(1)}d: ${result.proposal_id}`);
+      const execNote = result.executed ? " (executed)" : "";
+      setToast(
+        `${action.charAt(0).toUpperCase() + action.slice(1)}d${execNote}: ${result.message || result.proposal_id}`,
+      );
       setTimeout(() => setToast(""), 3000);
       // Refresh
       await fetchProposals();
