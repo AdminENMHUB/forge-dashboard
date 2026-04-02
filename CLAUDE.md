@@ -19,15 +19,21 @@ src/
 ├── app/
 │   ├── page.tsx              ← Main dashboard (swarm status, KPIs, 30s auto-refresh)
 │   ├── layout.tsx            ← Root layout (dark mode default, Geist font)
+│   ├── activity/page.tsx     ← Live event feed (trades, alerts, deploys, SaaS, proposals)
+│   ├── agents/page.tsx       ← Agent scorecards (ratings, performance pillars, PDP)
 │   ├── assets/page.tsx       ← Multi-chain wallet view, allocation bars
+│   ├── constellation/page.tsx ← Visual galaxy map of all departments + agents
+│   ├── executive-log/page.tsx ← AI decision audit trail (executive actions)
 │   ├── financials/page.tsx   ← Revenue by swarm, API costs, budget status
 │   ├── proposals/page.tsx    ← CEO approval interface for AI optimization proposals
+│   ├── revenue/page.tsx      ← Executive briefing + revenue attribution by agent/dept
 │   ├── web3/page.tsx         ← Base + Polygon wallets, AAVE yield, NFTs
 │   ├── api/                  ← API routes (proxy to VPS, see table below)
 │   └── globals.css           ← Tailwind imports + dark mode CSS variables
 ├── components/
 │   ├── charts.tsx            ← PnlAreaChart, SwarmCostChart, CostDonutChart
-│   └── ui.tsx                ← MetricCard, StatusBadge, PnlText (shared UI components)
+│   ├── nav.tsx               ← PageShell, DashboardSidebar, DashboardNav
+│   └── ui.tsx                ← MetricCard, StatusBadge, PnlText, Skeleton
 └── lib/
     ├── api-config.ts         ← getHetznerApi() — validated VPS base URL (server-side only)
     ├── hooks.ts              ← useApiPoller(url, intervalMs) — generic polling hook
@@ -36,18 +42,23 @@ src/
 
 ## API Routes (proxy to VPS)
 
-| Route                   | VPS Endpoint                 | Cache | Purpose                                                      |
-| ----------------------- | ---------------------------- | ----- | ------------------------------------------------------------ |
-| `/api/health`           | `/api/health`                | 5s    | System health                                                |
-| `/api/status`           | `/api/status`                | 10s   | Swarm + empire overview                                      |
-| `/api/financials`       | `/api/financials`            | 30s   | P&L, MRR, per-swarm metrics                                  |
-| `/api/assets`           | `/api/assets`                | 30s   | Wallet balances, DeFi positions                              |
-| `/api/costs`            | `/api/costs`                 | 60s   | API costs, budget tracking                                   |
-| `/api/web3`             | `/api/web3`                  | 30s   | On-chain assets, gas                                         |
-| `/api/proposals`        | `/api/proposals`             | 5s    | AI optimization proposals                                    |
-| `/api/proposals/action` | POST `/api/proposals/action` | —     | Approve/reject/defer                                         |
-| `/api/scorecard`        | `/api/scorecard`             | 30s   | Signal win rates + treasury (CORS-enabled for eganforge.com) |
-| `/api/telegram/webhook` | POST `/api/telegram/webhook` | —     | Telegram forwarder                                           |
+| Route                      | VPS Endpoint                 | Cache | Purpose                                                      |
+| -------------------------- | ---------------------------- | ----- | ------------------------------------------------------------ |
+| `/api/health`              | `/api/health`                | 5s    | System health                                                |
+| `/api/status`              | `/api/status`                | 10s   | Swarm + empire overview                                      |
+| `/api/financials`          | `/api/financials`            | 30s   | P&L, MRR, per-swarm metrics                                  |
+| `/api/assets`              | `/api/assets`                | 30s   | Wallet balances, DeFi positions                              |
+| `/api/costs`               | `/api/costs`                 | 60s   | API costs, budget tracking                                   |
+| `/api/web3`                | `/api/web3`                  | 30s   | On-chain assets, gas                                         |
+| `/api/proposals`           | `/api/proposals`             | 5s    | AI optimization proposals                                    |
+| `/api/proposals/action`    | POST `/api/proposals/action` | —     | Approve/reject/defer                                         |
+| `/api/scorecard`           | `/api/scorecard`             | 30s   | Signal win rates + treasury (CORS-enabled for eganforge.com) |
+| `/api/scorecards`          | `/api/scorecards`            | 30s   | Agent performance scorecards (ratings, pillars, PDP)         |
+| `/api/talent`              | `/api/talent`                | 60s   | Agent talent/roster data                                     |
+| `/api/activity`            | `/api/activity`              | 10s   | Live event stream (filterable by swarm/agent/limit)          |
+| `/api/executive-briefing`  | `/api/executive-briefing`    | 10s   | Executive briefing (empire snapshot, decision log)           |
+| `/api/revenue-attribution` | `/api/revenue-attribution`   | 30s   | Per-agent and per-department P&L attribution                 |
+| `/api/telegram/webhook`    | POST `/api/telegram/webhook` | —     | Telegram forwarder                                           |
 
 ## Environment Variables (.env.local)
 
