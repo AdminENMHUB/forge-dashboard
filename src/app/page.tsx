@@ -159,6 +159,24 @@ const SAAS_PRODUCTS = [
     icon: "WS",
     bg: "#A78BFA",
   },
+  {
+    name: "HookFlow",
+    url: "https://eganforge.com/products/hookflow",
+    icon: "HF",
+    bg: "#F97316",
+  },
+  {
+    name: "Hook Studio",
+    url: "https://eganforge.com/products/hook-studio",
+    icon: "HS",
+    bg: "#EC4899",
+  },
+  {
+    name: "Webhook Builder",
+    url: "https://eganforge.com/products/webhook-builder",
+    icon: "WB",
+    bg: "#6366F1",
+  },
 ];
 
 // ---------------------------------------------------------------------------

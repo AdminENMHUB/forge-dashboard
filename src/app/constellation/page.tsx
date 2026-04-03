@@ -23,7 +23,6 @@ interface DepartmentDef {
   subtitle: string;
   swarmKey: string | null;
   serviceKey: string | null;
-  angle: number;
   color: string;
   agents: AgentDef[];
 }
@@ -53,7 +52,7 @@ interface Particle {
   size: number;
   color: string;
   reverse: boolean;
-  real: boolean; // true = triggered by actual activity, false = ambient
+  real: boolean;
 }
 
 interface Connection {
@@ -89,10 +88,6 @@ interface StatusResponse {
     peak_portfolio: number;
     cycle_count: number;
     milestones: string[];
-    total_agents?: number;
-    active_agents?: number;
-    top_performers?: number;
-    on_pdp?: number;
   };
   swarms: Record<string, StatusSwarm>;
   tradebot: {
@@ -124,7 +119,6 @@ interface HealthResponse {
 
 const C = {
   bg: "#050A14",
-  gridLine: "#0B1526",
   accent: "#00D4FF",
   healthy: "#00FF88",
   revenue: "#FFB800",
@@ -148,30 +142,28 @@ const STATUS_COLOR: Record<NodeStatus, string> = {
 };
 
 // ============================================================================
-// DEPARTMENT & AGENT DEFINITIONS
+// DEPARTMENT & AGENT DEFINITIONS (10 departments)
 // ============================================================================
 
 const DEPARTMENTS: DepartmentDef[] = [
   {
     id: "oversight",
-    name: "OPERATIONS",
+    name: "OVERSIGHT",
     subtitle: "Master Swarm",
     swarmKey: null,
     serviceKey: "egan-master", // pragma: allowlist secret
-    angle: -Math.PI / 2,
     color: "#00D4FF",
     agents: [
-      { id: "health_monitor", name: "Health Mon", role: "Infrastructure Monitor" },
-      { id: "improvement_engine", name: "Improve", role: "Proposal Engine" },
+      { id: "overseer", name: "Overseer", role: "Master Orchestrator" },
+      { id: "cfo", name: "CFO", role: "P&L Attribution" },
+      { id: "health_monitor", name: "Health Monitor", role: "Proactive Health" },
+      { id: "truth_verifier", name: "Truth Verifier", role: "Ground Truth" },
       { id: "cross_strategist", name: "Strategist", role: "Cross-Swarm Signals" },
-      { id: "daily_briefing", name: "Briefing", role: "CEO Daily Report" },
-      { id: "weekly_report", name: "Weekly", role: "Empire Summary" },
       { id: "optimizer", name: "Optimizer", role: "Parameter Tuning" },
-      { id: "hyper_agent", name: "Hyper", role: "Self-Improvement" },
-      { id: "retrospective", name: "Retro", role: "Lesson Extraction" },
-      { id: "log_janitor", name: "Log Clean", role: "Log Management" },
-      { id: "infra_sre", name: "SRE", role: "Infrastructure Ops" },
-      { id: "network_sentinel", name: "Sentinel", role: "Network Security" },
+      { id: "daily_briefing", name: "Briefing", role: "7am CEO Report" },
+      { id: "infra_sre", name: "Infra SRE", role: "VPS Infrastructure" },
+      { id: "cost_controller", name: "Cost Ctrl", role: "Budget Guard" },
+      { id: "strategic_analyst", name: "CSO", role: "Strategic Analysis" },
     ],
   },
   {
@@ -180,14 +172,15 @@ const DEPARTMENTS: DepartmentDef[] = [
     subtitle: "TradeBot",
     swarmKey: "EganTradeBot",
     serviceKey: "egan-trade", // pragma: allowlist secret
-    angle: -Math.PI / 2 + (2 * Math.PI) / 11,
     color: "#10B981",
     agents: [
-      { id: "trade_engine", name: "Engine", role: "Trade Execution" },
-      { id: "market_data_agent", name: "Market Data", role: "Price Feeds" },
-      { id: "portfolio_manager", name: "Portfolio", role: "Position Sizing" },
-      { id: "risk_manager", name: "Risk Mgr", role: "Circuit Breaker" },
-      { id: "trading_ops_guard", name: "Ops Guard", role: "Halt Enforcement" },
+      { id: "orchestrator", name: "Orchestrator", role: "Cycle Router" },
+      { id: "market_analyst", name: "Analyst", role: "Technical Analysis" },
+      { id: "risk_manager", name: "Risk Mgr", role: "VETO Gate" },
+      { id: "execution", name: "Executor", role: "Order Placement" },
+      { id: "portfolio", name: "Portfolio", role: "Rebalancing" },
+      { id: "sentiment", name: "Sentiment", role: "Fear & Greed" },
+      { id: "learning", name: "Learning", role: "Adaptive Params" },
     ],
   },
   {
@@ -196,22 +189,15 @@ const DEPARTMENTS: DepartmentDef[] = [
     subtitle: "EchoSwarm",
     swarmKey: "EchoSwarm",
     serviceKey: null,
-    angle: -Math.PI / 2 + (2 * Math.PI * 2) / 11,
     color: "#8B5CF6",
     agents: [
-      { id: "echoswarm_composite", name: "Composite", role: "13-Container Swarm" },
-      { id: "prediction_guard", name: "Guard", role: "Position Limits" },
+      { id: "momentum", name: "Momentum", role: "Price Momentum", active: true },
+      { id: "sentiment_echo", name: "Sentiment", role: "Social Signals", active: true },
+      { id: "orderbook", name: "Orderbook", role: "Book Imbalance", active: true },
+      { id: "arbitrage", name: "Arbitrage", role: "Cross-Market", active: false },
+      { id: "misprice", name: "Misprice", role: "Stat Mispricing", active: false },
+      { id: "news", name: "News", role: "News-Driven", active: false },
     ],
-  },
-  {
-    id: "defi",
-    name: "DEFI",
-    subtitle: "ForgeDefi",
-    swarmKey: "ForgeDefi",
-    serviceKey: null,
-    angle: -Math.PI / 2 + (2 * Math.PI * 3) / 11,
-    color: "#EC4899",
-    agents: [{ id: "defi_arb_engine", name: "Arb Engine", role: "DEX-CEX Arbitrage" }],
   },
   {
     id: "signals",
@@ -219,84 +205,41 @@ const DEPARTMENTS: DepartmentDef[] = [
     subtitle: "Web3 Swarm",
     swarmKey: "EganWeb3Swarm",
     serviceKey: "egan-web3", // pragma: allowlist secret
-    angle: -Math.PI / 2 + (2 * Math.PI * 4) / 11,
     color: "#FFB800",
     agents: [
-      { id: "signal_terminal", name: "Terminal", role: "Signal Generation" },
-      { id: "wallet_monitor", name: "Wallet", role: "Payment Watch" },
-      { id: "defi_yield", name: "Yield", role: "AAVE Management" },
-      { id: "nft_minter", name: "NFT Mint", role: "Pass Minting" },
-      { id: "renewal_reminder", name: "Renewal", role: "Sub Reminders" },
-      { id: "signal_scorecard", name: "Scorecard", role: "Win Rate Track" },
-      { id: "signal_audit", name: "Audit", role: "Signal Integrity" },
+      { id: "wallet_monitor", name: "Wallet Mon", role: "Payment Watch" },
+      { id: "signal_terminal", name: "Signal Term", role: "Signal Gen" },
+      { id: "scorecard", name: "Scorecard", role: "Win Rate Track" },
+      { id: "renewal", name: "Renewal", role: "Sub Reminders" },
+      { id: "defi_yield", name: "DeFi Yield", role: "AAVE Mgmt" },
+      { id: "nft_minter", name: "NFT Minter", role: "Pass Minting" },
     ],
   },
   {
     id: "products",
-    name: "SAAS",
+    name: "PRODUCTS",
     subtitle: "SaaS Factory",
     swarmKey: "EganSaasFactory",
     serviceKey: "egan-saas", // pragma: allowlist secret
-    angle: -Math.PI / 2 + (2 * Math.PI * 5) / 11,
     color: "#3B82F6",
     agents: [
-      { id: "design_director", name: "Design", role: "UI/UX Design" },
-      { id: "saas_builder", name: "Builder", role: "Code & Deploy" },
-      { id: "saas_iteration", name: "Iteration", role: "Feature Loop" },
-      { id: "saas_sre", name: "SaaS SRE", role: "Uptime Monitor" },
-      { id: "product_doctor", name: "Doctor", role: "Health Diagnostics" },
+      { id: "builder", name: "Builder", role: "Product Builder" },
+      { id: "marketer", name: "Marketer", role: "Growth Marketing" },
+      { id: "design_dir", name: "Design Dir", role: "Brand Design" },
     ],
   },
   {
-    id: "growth",
-    name: "GROWTH",
-    subtitle: "Growth Engine",
-    swarmKey: "EganGrowthEngine",
-    serviceKey: null,
-    angle: -Math.PI / 2 + (2 * Math.PI * 6) / 11,
-    color: "#F97316",
-    agents: [
-      { id: "marketing_director", name: "Marketing", role: "Content Creation" },
-      { id: "content_publisher", name: "Publisher", role: "Cross-Platform" },
-      { id: "content_monetization", name: "Monetize", role: "Revenue Engine" },
-      { id: "social_engagement_tracker", name: "Social", role: "Engagement" },
-      { id: "conversion_funnel", name: "Funnel", role: "Lead Convert" },
-    ],
-  },
-  {
-    id: "autonomous",
-    name: "AUTO",
-    subtitle: "Self-Managing",
+    id: "governance",
+    name: "GOVERNANCE",
+    subtitle: "Quality",
     swarmKey: null,
-    serviceKey: "egan-master", // pragma: allowlist secret
-    angle: -Math.PI / 2 + (2 * Math.PI * 7) / 11,
+    serviceKey: null,
     color: "#14B8A6",
     agents: [
-      { id: "alert_triage", name: "Triage", role: "Alert Resolution" },
-      { id: "auto_triage", name: "Classify", role: "Issue Routing" },
-      { id: "auto_dispatch", name: "Dispatch", role: "Signal Routing" },
-      { id: "auto_apply", name: "Apply", role: "Config Patches" },
-      { id: "code_patch_agent", name: "Code Patch", role: "SaaS Deploys" },
-      { id: "sub_agent_manager", name: "Sub Mgr", role: "Agent Lifecycle" },
-      { id: "spawner", name: "Spawner", role: "Empire Expansion" },
-    ],
-  },
-  {
-    id: "finance",
-    name: "FINANCE",
-    subtitle: "Treasury",
-    swarmKey: null,
-    serviceKey: "egan-master", // pragma: allowlist secret
-    angle: -Math.PI / 2 + (2 * Math.PI * 8) / 11,
-    color: "#22D3EE",
-    agents: [
-      { id: "revenue_intelligence", name: "Revenue", role: "Stripe Analytics" },
-      { id: "revenue_guard", name: "Rev Guard", role: "Leakage Detection" },
-      { id: "cfo", name: "CFO", role: "Budget Oversight" },
-      { id: "cro_agent", name: "CRO", role: "Revenue Optimization" },
-      { id: "capital_allocator", name: "Capital", role: "Cross-Swarm Alloc" },
-      { id: "sharpe_allocator", name: "Sharpe", role: "Portfolio Rebalance" },
-      { id: "cost_controller", name: "Cost Ctrl", role: "Budget Guard" },
+      { id: "qa_director", name: "QA Director", role: "Quality Assurance" },
+      { id: "audit_agent", name: "Audit Agent", role: "Ledger Integrity" },
+      { id: "compliance", name: "Compliance", role: "Policy Guard" },
+      { id: "sla_enforcer", name: "SLA Enforcer", role: "Heartbeat Watch" },
     ],
   },
   {
@@ -304,48 +247,77 @@ const DEPARTMENTS: DepartmentDef[] = [
     name: "STRATEGY",
     subtitle: "Intelligence",
     swarmKey: null,
-    serviceKey: "egan-master", // pragma: allowlist secret
-    angle: -Math.PI / 2 + (2 * Math.PI * 9) / 11,
-    color: "#A78BFA",
+    serviceKey: null,
+    color: "#6366F1",
     agents: [
-      { id: "strategic_analyst", name: "CSO", role: "Strategic Analysis" },
-      { id: "strategy_lab", name: "Lab", role: "A/B Experiments" },
-      { id: "competitive_intel", name: "Intel", role: "Competitor Scan" },
-      { id: "ai_research_scout", name: "Research", role: "AI Breakthroughs" },
-      { id: "promotion_evaluator", name: "Promoter", role: "Readiness Review" },
+      { id: "intelligence", name: "Intelligence", role: "Market Intel" },
+      { id: "scenario_planner", name: "Scenario", role: "What-If Analysis" },
+      { id: "capital_allocator", name: "Allocator", role: "Capital Routing" },
+      { id: "research", name: "Research", role: "Alpha Discovery" },
     ],
   },
   {
-    id: "governance",
-    name: "GOVERN",
-    subtitle: "Quality",
+    id: "finance",
+    name: "FINANCE",
+    subtitle: "Treasury",
     swarmKey: null,
-    serviceKey: "egan-master", // pragma: allowlist secret
-    angle: -Math.PI / 2 + (2 * Math.PI * 10) / 11,
-    color: "#F43F5E",
+    serviceKey: null,
+    color: "#059669",
     agents: [
-      { id: "qa_director", name: "QA", role: "Quality Assurance" },
-      { id: "truth_verifier", name: "Verifier", role: "Fact-Check" },
-      { id: "coo_agent", name: "COO", role: "Performance Review" },
-      { id: "asset_reconciler", name: "Reconciler", role: "Asset Audit" },
+      { id: "treasurer", name: "Treasurer", role: "Cash Management" },
+      { id: "tax_agent", name: "Tax Agent", role: "Tax Tracking" },
+      { id: "revenue_monitor", name: "Rev Monitor", role: "Revenue Track" },
+    ],
+  },
+  {
+    id: "growth",
+    name: "GROWTH",
+    subtitle: "Growth Engine",
+    swarmKey: null,
+    serviceKey: null,
+    color: "#F97316",
+    agents: [
+      { id: "content_marketing", name: "Content Mktg", role: "SEO Content" },
+      { id: "social_media", name: "Social Media", role: "X/Twitter Engine" },
+      { id: "email_nurture", name: "Email Nurture", role: "Drip Campaigns" },
+      { id: "auto_growth", name: "Auto Growth", role: "Autonomous Growth" },
+      { id: "directory_sub", name: "Directory", role: "Directory Submit" },
+      { id: "seo_agent", name: "SEO Agent", role: "SEO Optimization" },
+    ],
+  },
+  {
+    id: "defi",
+    name: "DEFI",
+    subtitle: "ForgeDefi",
+    swarmKey: null,
+    serviceKey: null,
+    color: "#84CC16",
+    agents: [
+      { id: "arb_scanner", name: "Arb Scanner", role: "Spread Detection" },
+      { id: "executor_defi", name: "Executor", role: "DEX-CEX Exec" },
+      { id: "risk_defi", name: "Risk Engine", role: "Circuit Breaker" },
     ],
   },
 ];
 
 // ============================================================================
-// LAYOUT CALCULATION
+// LAYOUT — 2 rows of 5 for empire view, grid for department view
 // ============================================================================
 
-function calculateLayout(w: number, h: number): { nodes: CNode[]; connections: Connection[] } {
+type ViewLevel = "empire" | "department";
+
+interface LayoutResult {
+  nodes: CNode[];
+  connections: Connection[];
+}
+
+function calculateEmpireLayout(w: number, h: number): LayoutResult {
   const cx = w / 2;
   const cy = h / 2;
-  const scale = Math.min(w, h);
-  const deptR = scale * 0.28;
-  const agentR = scale * 0.16;
-
   const nodes: CNode[] = [];
   const connections: Connection[] = [];
 
+  const centerR = Math.max(28, Math.min(w, h) * 0.032);
   nodes.push({
     id: "center",
     name: "EGAN FORGE",
@@ -356,14 +328,22 @@ function calculateLayout(w: number, h: number): { nodes: CNode[]; connections: C
     status: "unknown",
     x: cx,
     y: cy,
-    radius: Math.max(24, scale * 0.028),
+    radius: centerR,
     pulsePhase: 0,
     metrics: {},
   });
 
-  DEPARTMENTS.forEach((dept, di) => {
-    const dx = cx + Math.cos(dept.angle) * deptR;
-    const dy = cy + Math.sin(dept.angle) * deptR;
+  const colSpacing = w / 6;
+  const rowGap = Math.min(h * 0.32, 200);
+  const topY = cy - rowGap / 2;
+  const botY = cy + rowGap / 2;
+  const deptR = Math.max(38, Math.min(w, h) * 0.042);
+
+  DEPARTMENTS.forEach((dept, i) => {
+    const row = i < 5 ? 0 : 1;
+    const col = i < 5 ? i : i - 5;
+    const dx = colSpacing * (col + 1);
+    const dy = row === 0 ? topY : botY;
 
     nodes.push({
       id: dept.id,
@@ -375,22 +355,13 @@ function calculateLayout(w: number, h: number): { nodes: CNode[]; connections: C
       status: "unknown",
       x: dx,
       y: dy,
-      radius: Math.max(16, scale * 0.018),
-      pulsePhase: di * 1.3,
+      radius: deptR,
+      pulsePhase: i * 0.7,
       metrics: {},
     });
     connections.push({ fromId: "center", toId: dept.id, color: dept.color });
 
-    const outAngle = Math.atan2(dy - cy, dx - cx);
-    const count = dept.agents.length;
-    const spread = Math.min(Math.PI * 1.1, count * 0.42);
-    const start = outAngle - spread / 2;
-
     dept.agents.forEach((agent, ai) => {
-      const a = count === 1 ? outAngle : start + (spread * ai) / (count - 1);
-      const ax = dx + Math.cos(a) * agentR;
-      const ay = dy + Math.sin(a) * agentR;
-
       nodes.push({
         id: `${dept.id}.${agent.id}`,
         name: agent.name,
@@ -399,10 +370,10 @@ function calculateLayout(w: number, h: number): { nodes: CNode[]; connections: C
         role: agent.role,
         color: dept.color,
         status: agent.active === false ? "disabled" : "unknown",
-        x: ax,
-        y: ay,
-        radius: Math.max(5, scale * 0.006),
-        pulsePhase: di * 1.3 + ai * 0.4,
+        x: dx,
+        y: dy,
+        radius: 15,
+        pulsePhase: i * 0.7 + ai * 0.3,
         metrics: {},
         active: agent.active,
       });
@@ -417,6 +388,31 @@ function calculateLayout(w: number, h: number): { nodes: CNode[]; connections: C
   return { nodes, connections };
 }
 
+function getDeptAgentPositions(
+  dept: DepartmentDef,
+  deptX: number,
+  deptY: number,
+  canvasW: number,
+  canvasH: number,
+): { x: number; y: number }[] {
+  const cols = 2;
+  const vSpacing = 70;
+  const hSpacing = 200;
+  const startX = deptX + Math.min(canvasW * 0.18, 220);
+  const totalRows = Math.ceil(dept.agents.length / cols);
+  const blockH = (totalRows - 1) * vSpacing;
+  const startY = Math.max(60, Math.min(deptY - blockH / 2, canvasH - blockH - 60));
+
+  return dept.agents.map((_, i) => {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    return {
+      x: startX + col * hSpacing,
+      y: startY + row * vSpacing,
+    };
+  });
+}
+
 // ============================================================================
 // CANVAS RENDERING ENGINE
 // ============================================================================
@@ -429,18 +425,8 @@ class ConstellationEngine {
   private h = 0;
   private time = 0;
   private animId = 0;
-  private mouseX = 0;
-  private mouseY = 0;
-
-  // Zoom/pan state
-  private zoom = 1;
-  private panX = 0;
-  private panY = 0;
-  private isDragging = false;
-  private dragStartX = 0;
-  private dragStartY = 0;
-  private panStartX = 0;
-  private panStartY = 0;
+  private mouseX = -1000;
+  private mouseY = -1000;
 
   nodes: CNode[] = [];
   connections: Connection[] = [];
@@ -448,26 +434,28 @@ class ConstellationEngine {
   hoveredNode: CNode | null = null;
   selectedNode: CNode | null = null;
 
-  private stars: {
-    x: number;
-    y: number;
-    s: number;
-    b: number;
-    sp: number;
-  }[] = [];
+  viewLevel: ViewLevel = "empire";
+  focusedDeptId: string | null = null;
+  private zoomProgress = 0;
+  private empirePositions: Map<string, { x: number; y: number }> = new Map();
+  private targetPositions: Map<string, { x: number; y: number }> = new Map();
+
+  private stars: { x: number; y: number; s: number; b: number; sp: number }[] = [];
+  private prevStatus: StatusResponse | null = null;
 
   onHover: (node: CNode | null, x: number, y: number) => void = () => {};
   onSelect: (node: CNode | null) => void = () => {};
+  onViewChange: (level: ViewLevel, deptId: string | null) => void = () => {};
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
     this.dpr = window.devicePixelRatio || 1;
-    this.stars = Array.from({ length: 350 }, () => ({
+    this.stars = Array.from({ length: 100 }, () => ({
       x: Math.random(),
       y: Math.random(),
-      s: Math.random() * 1.5 + 0.3,
-      b: Math.random() * 0.4 + 0.15,
+      s: Math.random() * 1.2 + 0.3,
+      b: Math.random() * 0.35 + 0.1,
       sp: Math.random() * 2 + 0.5,
     }));
   }
@@ -482,8 +470,7 @@ class ConstellationEngine {
     this.canvas.style.height = `${height}px`;
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
-    const layout = calculateLayout(width, height);
-    // Preserve existing status/metrics
+    const layout = calculateEmpireLayout(width, height);
     layout.nodes.forEach((n) => {
       const old = this.nodes.find((o) => o.id === n.id);
       if (old) {
@@ -493,22 +480,33 @@ class ConstellationEngine {
     });
     this.nodes = layout.nodes;
     this.connections = layout.connections;
+
+    this.empirePositions.clear();
+    this.nodes.forEach((n) => this.empirePositions.set(n.id, { x: n.x, y: n.y }));
+
+    if (this.viewLevel === "department" && this.focusedDeptId) {
+      this.computeDeptTargets(this.focusedDeptId);
+      this.nodes.forEach((n) => {
+        const t = this.targetPositions.get(n.id);
+        if (t) {
+          n.x = t.x;
+          n.y = t.y;
+        }
+      });
+    }
+
     this.rebuildParticles();
   }
 
-  // Previous poll values for delta detection
-  private prevStatus: StatusResponse | null = null;
-
   private rebuildParticles() {
-    // One ambient heartbeat per active department connection
     this.particles = [];
     this.connections.forEach((conn) => {
-      if (conn.fromId !== "center") return; // only trunk connections
+      if (conn.fromId !== "center") return;
       this.particles.push({
         fromId: conn.fromId,
         toId: conn.toId,
         progress: Math.random(),
-        speed: 0.0002,
+        speed: 0.0003,
         size: 1.5,
         color: conn.color,
         reverse: false,
@@ -517,15 +515,59 @@ class ConstellationEngine {
     });
   }
 
-  updateData(
-    status: StatusResponse | null,
-    health: HealthResponse | null,
-    scorecards?: Record<
-      string,
-      { rating: number; pdp_active: boolean; pillars: Record<string, number> }
-    > | null,
-  ) {
-    // Center node
+  private computeDeptTargets(deptId: string) {
+    this.targetPositions.clear();
+    const dept = DEPARTMENTS.find((d) => d.id === deptId);
+    if (!dept) return;
+
+    const deptTargetX = this.w * 0.2;
+    const deptTargetY = this.h * 0.5;
+
+    this.targetPositions.set("center", { x: -100, y: -100 });
+
+    DEPARTMENTS.forEach((d) => {
+      if (d.id === deptId) {
+        this.targetPositions.set(d.id, { x: deptTargetX, y: deptTargetY });
+      } else {
+        this.targetPositions.set(d.id, { x: -200, y: -200 });
+      }
+    });
+
+    const agentPos = getDeptAgentPositions(dept, deptTargetX, deptTargetY, this.w, this.h);
+    dept.agents.forEach((agent, i) => {
+      this.targetPositions.set(`${deptId}.${agent.id}`, agentPos[i]);
+    });
+
+    DEPARTMENTS.forEach((d) => {
+      if (d.id !== deptId) {
+        d.agents.forEach((a) => {
+          this.targetPositions.set(`${d.id}.${a.id}`, { x: -200, y: -200 });
+        });
+      }
+    });
+  }
+
+  zoomToDepartment(deptId: string) {
+    this.focusedDeptId = deptId;
+    this.viewLevel = "department";
+    this.computeDeptTargets(deptId);
+    this.zoomProgress = 0;
+    this.onViewChange("department", deptId);
+  }
+
+  zoomToEmpire() {
+    this.viewLevel = "empire";
+    this.focusedDeptId = null;
+    this.targetPositions.clear();
+    this.nodes.forEach((n) => {
+      const ep = this.empirePositions.get(n.id);
+      if (ep) this.targetPositions.set(n.id, ep);
+    });
+    this.zoomProgress = 0;
+    this.onViewChange("empire", null);
+  }
+
+  updateData(status: StatusResponse | null, health: HealthResponse | null) {
     const center = this.nodes.find((n) => n.id === "center");
     if (center && status?.empire) {
       center.status = "active";
@@ -535,8 +577,6 @@ class ConstellationEngine {
         mrr: status.empire.combined_mrr,
         arr: status.empire.combined_arr,
         cycles: status.empire.cycle_count,
-        totalAgents: status.empire.total_agents ?? 0,
-        activeAgents: status.empire.active_agents ?? 0,
       };
     }
 
@@ -544,7 +584,6 @@ class ConstellationEngine {
       const node = this.nodes.find((n) => n.id === dept.id);
       if (!node) return;
 
-      // Swarm data
       const swarm =
         dept.swarmKey && status?.swarms?.[dept.swarmKey] ? status.swarms[dept.swarmKey] : null;
       if (swarm) {
@@ -567,42 +606,35 @@ class ConstellationEngine {
         };
       }
 
-      // Service health
       if (dept.serviceKey && health?.services) {
         const svc = health.services[dept.serviceKey];
         if (svc) {
           const svcOk =
             svc.status === "active" || svc.status === "running" || svc.status === "healthy";
-          if (!svcOk) {
-            node.status = "error";
-          } else if (node.status === "unknown") {
-            node.status = "active";
-          }
+          if (!svcOk) node.status = "error";
+          else if (node.status === "unknown") node.status = "active";
           if (svc.uptime) node.metrics.uptime = svc.uptime;
         }
       }
 
-      // Docker health for EchoSwarm & ForgeDefi
-      if ((dept.id === "predictions" || dept.id === "defi") && health?.docker) {
-        const containerKey = dept.id === "predictions" ? "echo-scout" : "echo-arb-engine";
-        const container = health.docker[containerKey];
-        if (container) {
+      if (dept.id === "predictions" && health?.docker) {
+        const scout = health.docker["echo-scout"];
+        if (scout) {
           const dockerOk =
-            container.status === "running" ||
-            container.status === "healthy" ||
-            container.status === "Up" ||
-            String(container.status).startsWith("Up");
-          if (!dockerOk) {
-            node.status = "error";
-          } else if (node.status === "unknown") {
-            node.status = "active";
-          }
+            scout.status === "running" ||
+            scout.status === "healthy" ||
+            scout.status === "Up" ||
+            String(scout.status).startsWith("Up");
+          if (!dockerOk) node.status = "error";
+          else if (node.status === "unknown") node.status = "active";
         }
       }
 
-      // Departments without a swarm (oversight, autonomous, finance, strategy, governance)
-      // derive status from egan-master service health
-      if (!dept.swarmKey && node.status === "unknown" && health?.services?.["egan-master"]) {
+      if (
+        dept.id === "oversight" &&
+        node.status === "unknown" &&
+        health?.services?.["egan-master"]
+      ) {
         const svc = health.services["egan-master"];
         node.status =
           svc.status === "active" || svc.status === "running" || svc.status === "healthy"
@@ -610,14 +642,12 @@ class ConstellationEngine {
             : "error";
       }
 
-      // TradeBot extras
       if (dept.id === "trading" && status?.tradebot) {
         if (status.tradebot.halted) node.status = "halted";
         node.metrics.regime = status.tradebot.market_regime;
         node.metrics.haltReason = status.tradebot.halt_reason;
       }
 
-      // SaaS extras
       if (dept.id === "products" && status?.saas) {
         node.metrics.mrr = status.saas.total_mrr;
         node.metrics.liveProducts = status.saas.live_products;
@@ -625,67 +655,91 @@ class ConstellationEngine {
         node.metrics.queue = status.saas.opportunity_queue;
       }
 
-      // Propagate status to agents — use scorecard data if available
       dept.agents.forEach((agent) => {
         const an = this.nodes.find((n) => n.id === `${dept.id}.${agent.id}`);
         if (!an) return;
-
-        // Check scorecard for this agent's real rating
-        const sc = scorecards?.[agent.id];
-        if (sc) {
-          an.metrics.rating = sc.rating;
-          an.metrics.pdp = sc.pdp_active;
-          if (sc.pillars) {
-            an.metrics.results = sc.pillars.results;
-            an.metrics.reliability = sc.pillars.reliability;
-          }
-
-          // Rating-based status (overrides swarm-level)
-          if (sc.rating >= 4) {
-            an.status = "active";
-          } else if (sc.rating === 3) {
-            an.status = "healthy";
-          } else if (sc.rating === 2) {
-            an.status = "degraded";
-          } else {
-            an.status = "error";
-          }
-
-          // But swarm-level halts still override
-          if (node.status === "halted") {
-            an.status = "halted";
-          }
-        } else {
-          // No scorecard data — inherit from department
-          if (node.status === "halted") {
-            an.status = "halted";
-          } else if (node.status === "error") {
-            an.status = "error";
-          } else if (node.status === "healthy" || node.status === "active") {
-            an.status = "active";
-          } else if (node.status === "degraded") {
-            an.status = "degraded";
-          }
+        if (agent.active === false) {
+          an.status = "disabled";
+        } else if (node.status === "halted") {
+          an.status = "halted";
+        } else if (node.status === "error") {
+          an.status = "error";
+        } else if (node.status === "healthy" || node.status === "active") {
+          an.status = "active";
+        } else if (node.status === "degraded") {
+          an.status = "degraded";
         }
       });
-
-      // Compute department aggregate status from agent ratings if scorecards available
-      if (scorecards) {
-        const deptAgentStatuses = dept.agents
-          .map((a) => this.nodes.find((n) => n.id === `${dept.id}.${a.id}`))
-          .filter(Boolean)
-          .map((n) => n!.status);
-        if (deptAgentStatuses.length > 0 && node.status !== "halted") {
-          const errorCount = deptAgentStatuses.filter((s) => s === "error").length;
-          const degradedCount = deptAgentStatuses.filter((s) => s === "degraded").length;
-          if (errorCount > deptAgentStatuses.length / 2) {
-            node.status = "error";
-          } else if (errorCount + degradedCount > deptAgentStatuses.length / 2) {
-            node.status = "degraded";
-          }
-        }
-      }
     });
+  }
+
+  private spawnActivityPulse(fromId: string, toId: string, color: string, count: number = 2) {
+    for (let i = 0; i < count; i++) {
+      this.particles.push({
+        fromId,
+        toId,
+        progress: i * 0.15,
+        speed: 0.003 + Math.random() * 0.002,
+        size: 3,
+        color,
+        reverse: false,
+        real: true,
+      });
+    }
+  }
+
+  detectActivity(status: StatusResponse | null) {
+    if (!status || !this.prevStatus) {
+      this.prevStatus = status;
+      return;
+    }
+    const prev = this.prevStatus;
+
+    if (status.empire.cycle_count !== prev.empire.cycle_count) {
+      DEPARTMENTS.forEach((d) => this.spawnActivityPulse("center", d.id, C.accent, 1));
+    }
+
+    const pt = prev.tradebot;
+    const ct = status.tradebot;
+    if (ct && pt) {
+      if (ct.trade_count_today !== pt.trade_count_today) {
+        this.spawnActivityPulse("center", "trading", "#10B981", 3);
+        this.spawnActivityPulse("trading", "trading.execution", "#10B981", 2);
+      }
+      if (ct.daily_pnl_today !== pt.daily_pnl_today) {
+        this.spawnActivityPulse("trading", "center", "#10B981", 1);
+      }
+    }
+
+    const pe = prev.swarms?.EchoSwarm;
+    const ce = status.swarms?.EchoSwarm;
+    if (ce && pe) {
+      if (ce.trades_today !== pe.trades_today) {
+        this.spawnActivityPulse("center", "predictions", "#8B5CF6", 3);
+      }
+      if (ce.total_pnl !== pe.total_pnl) {
+        this.spawnActivityPulse("predictions", "center", "#8B5CF6", 1);
+      }
+    }
+
+    const pw = prev.swarms?.EganWeb3Swarm;
+    const cw = status.swarms?.EganWeb3Swarm;
+    if (cw && pw && cw.trades_today !== pw.trades_today) {
+      this.spawnActivityPulse("center", "signals", "#FFB800", 2);
+    }
+
+    const ps = prev.saas;
+    const cs = status.saas;
+    if (cs && ps) {
+      if (cs.opportunity_queue !== ps.opportunity_queue || cs.live_products !== ps.live_products) {
+        this.spawnActivityPulse("center", "products", "#3B82F6", 2);
+      }
+      if (cs.total_mrr !== ps.total_mrr) {
+        this.spawnActivityPulse("products", "center", "#3B82F6", 2);
+      }
+    }
+
+    this.prevStatus = status;
   }
 
   start() {
@@ -694,7 +748,7 @@ class ConstellationEngine {
       const dt = (now - last) / 1000;
       last = now;
       this.time += dt;
-      this.update();
+      this.update(dt);
       this.render();
       this.animId = requestAnimationFrame(loop);
     };
@@ -705,520 +759,363 @@ class ConstellationEngine {
     cancelAnimationFrame(this.animId);
   }
 
-  // Spawn a particle burst on a specific connection
-  private spawnActivityPulse(fromId: string, toId: string, color: string, count: number = 2) {
-    for (let i = 0; i < count; i++) {
-      this.particles.push({
-        fromId,
-        toId,
-        progress: i * 0.15, // stagger
-        speed: 0.003 + Math.random() * 0.002,
-        size: 3,
-        color,
-        reverse: false,
-        real: true,
+  private update(dt: number) {
+    if (this.targetPositions.size > 0 && this.zoomProgress < 1) {
+      this.zoomProgress = Math.min(1, this.zoomProgress + dt * 2.5);
+      const ease = 1 - Math.pow(1 - this.zoomProgress, 3);
+
+      this.nodes.forEach((n) => {
+        const target = this.targetPositions.get(n.id);
+        const source = this.empirePositions.get(n.id);
+        if (target && source) {
+          if (this.viewLevel === "empire") {
+            n.x = n.x + (target.x - n.x) * ease;
+            n.y = n.y + (target.y - n.y) * ease;
+          } else {
+            n.x = source.x + (target.x - source.x) * ease;
+            n.y = source.y + (target.y - source.y) * ease;
+          }
+        }
       });
-    }
-  }
 
-  // Detect activity deltas and spawn particles
-  detectActivity(status: StatusResponse | null) {
-    if (!status || !this.prevStatus) {
-      this.prevStatus = status;
-      return;
-    }
-    const prev = this.prevStatus;
-
-    // Master cycle completed → pulse center → all departments
-    if (status.empire.cycle_count !== prev.empire.cycle_count) {
-      DEPARTMENTS.forEach((d) => {
-        this.spawnActivityPulse("center", d.id, C.accent, 1);
-      });
-    }
-
-    // TradeBot activity
-    const pt = prev.tradebot;
-    const ct = status.tradebot;
-    if (ct && pt) {
-      if (ct.trade_count_today !== pt.trade_count_today) {
-        this.spawnActivityPulse("center", "trading", "#10B981", 3);
-        // Pulse to individual trading agents
-        this.spawnActivityPulse("trading", "trading.execution", "#10B981", 2);
-        this.spawnActivityPulse("trading", "trading.risk_manager", "#10B981", 1);
-      }
-      if (ct.daily_pnl_today !== pt.daily_pnl_today) {
-        // PnL changed → report flowing back
-        this.spawnActivityPulse("trading", "center", "#10B981", 1);
+      if (this.zoomProgress >= 1) {
+        this.nodes.forEach((n) => {
+          const t = this.targetPositions.get(n.id);
+          if (t) {
+            n.x = t.x;
+            n.y = t.y;
+          }
+        });
+        if (this.viewLevel === "empire") {
+          this.targetPositions.clear();
+        }
       }
     }
 
-    // EchoSwarm activity
-    const pe = prev.swarms?.EchoSwarm;
-    const ce = status.swarms?.EchoSwarm;
-    if (ce && pe) {
-      if (ce.trades_today !== pe.trades_today) {
-        this.spawnActivityPulse("center", "predictions", "#8B5CF6", 3);
-        this.spawnActivityPulse("predictions", "predictions.momentum", "#8B5CF6", 1);
-      }
-      if (ce.total_pnl !== pe.total_pnl) {
-        this.spawnActivityPulse("predictions", "center", "#8B5CF6", 1);
-      }
-    }
-
-    // Web3Swarm activity (signals delivered = trades_today in API)
-    const pw = prev.swarms?.EganWeb3Swarm;
-    const cw = status.swarms?.EganWeb3Swarm;
-    if (cw && pw) {
-      if (cw.trades_today !== pw.trades_today) {
-        this.spawnActivityPulse("center", "signals", "#FFB800", 2);
-        this.spawnActivityPulse("signals", "signals.signal_terminal", "#FFB800", 2);
-        this.spawnActivityPulse("signals", "signals.wallet_monitor", "#FFB800", 1);
-      }
-    }
-
-    // SaaS Factory activity
-    const ps = prev.saas;
-    const cs = status.saas;
-    if (cs && ps) {
-      if (cs.opportunity_queue !== ps.opportunity_queue || cs.live_products !== ps.live_products) {
-        this.spawnActivityPulse("center", "products", "#3B82F6", 2);
-        this.spawnActivityPulse("products", "products.builder", "#3B82F6", 1);
-      }
-      if (cs.total_mrr !== ps.total_mrr) {
-        this.spawnActivityPulse("products", "center", "#3B82F6", 2);
-      }
-    }
-
-    // Any swarm status change
-    for (const [name, swarm] of Object.entries(status.swarms || {})) {
-      const prevSwarm = prev.swarms?.[name];
-      if (prevSwarm && swarm.status !== prevSwarm.status) {
-        // Status change → health_monitor activity
-        this.spawnActivityPulse("center", "oversight", C.accent, 2);
-        this.spawnActivityPulse("oversight", "oversight.health_monitor", C.accent, 1);
-      }
-    }
-
-    this.prevStatus = status;
-  }
-
-  private update() {
-    // Remove completed particles (real ones that finished their journey)
     this.particles = this.particles.filter((p) => {
-      if (p.real && p.progress >= 1) return false;
-      return true;
+      p.progress += p.speed + dt * p.speed * 60;
+      return p.progress < 1;
     });
-
-    this.particles.forEach((p) => {
-      const speedMult = p.real ? 1.0 : 0.5;
-      p.progress += p.speed * speedMult * 16;
-      // Real particles complete their journey and get removed
-      // Ambient particles loop (but we have none now)
-      if (!p.real && p.progress > 1) p.progress -= 1;
-    });
+    if (!this.particles.some((p) => !p.real)) {
+      this.rebuildParticles();
+    }
   }
 
   private render() {
     const { ctx, w, h } = this;
-    // Background (drawn in screen space, not world space)
+    ctx.clearRect(0, 0, w, h);
+
     ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, w, h);
 
-    // Radial gradient center glow
-    const cg = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.5);
-    cg.addColorStop(0, "rgba(0, 212, 255, 0.03)");
-    cg.addColorStop(1, "transparent");
-    ctx.fillStyle = cg;
-    ctx.fillRect(0, 0, w, h);
-
-    this.drawStars();
-
-    // Apply zoom/pan transform for world-space elements
-    ctx.save();
-    ctx.translate(this.panX, this.panY);
-    ctx.scale(this.zoom, this.zoom);
-
-    this.drawGrid();
-    this.drawRadarSweep();
-    this.drawConnections();
-    this.drawParticles();
-    this.drawNodes();
-
-    ctx.restore();
+    this.renderStars(ctx);
+    this.renderConnections(ctx);
+    this.renderParticles(ctx);
+    this.renderNodes(ctx);
   }
 
-  private drawStars() {
-    const { ctx, w, h, time } = this;
+  private renderStars(ctx: CanvasRenderingContext2D) {
     this.stars.forEach((s) => {
-      const twinkle = 0.5 + 0.5 * Math.sin(time * s.sp + s.x * 100);
-      const alpha = s.b * twinkle;
-      ctx.fillStyle = `rgba(180, 210, 255, ${alpha})`;
-      ctx.fillRect(s.x * w, s.y * h, s.s, s.s);
+      const brightness = s.b + Math.sin(this.time * s.sp) * 0.15;
+      ctx.fillStyle = `rgba(200, 220, 255, ${Math.max(0, brightness)})`;
+      ctx.beginPath();
+      ctx.arc(s.x * this.w, s.y * this.h, s.s, 0, Math.PI * 2);
+      ctx.fill();
     });
   }
 
-  private drawGrid() {
-    const { ctx, w, h } = this;
-    const cx = w / 2;
-    const cy = h / 2;
-    ctx.strokeStyle = C.gridLine;
-    ctx.lineWidth = 0.5;
-
-    // Concentric circles
-    const rings = [0.15, 0.28, 0.42];
-    const scale = Math.min(w, h);
-    rings.forEach((r) => {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
-      ctx.stroke();
-    });
-
-    // Radial lines
-    for (let i = 0; i < 12; i++) {
-      const a = (i * Math.PI * 2) / 12;
-      ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(a) * 30, cy + Math.sin(a) * 30);
-      ctx.lineTo(cx + Math.cos(a) * scale * 0.48, cy + Math.sin(a) * scale * 0.48);
-      ctx.stroke();
-    }
-  }
-
-  private drawRadarSweep() {
-    const { ctx, w, h, time } = this;
-    const cx = w / 2;
-    const cy = h / 2;
-    const radius = Math.min(w, h) * 0.45;
-    const angle = time * 0.4;
-
-    const grad = ctx.createConicGradient(angle, cx, cy);
-    grad.addColorStop(0, "rgba(0, 212, 255, 0.06)");
-    grad.addColorStop(0.08, "rgba(0, 212, 255, 0.0)");
-    grad.addColorStop(1, "rgba(0, 212, 255, 0.0)");
-
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  private drawConnections() {
-    const { ctx } = this;
+  private renderConnections(ctx: CanvasRenderingContext2D) {
     this.connections.forEach((conn) => {
       const from = this.nodes.find((n) => n.id === conn.fromId);
       const to = this.nodes.find((n) => n.id === conn.toId);
       if (!from || !to) return;
+      if (from.x < -50 || to.x < -50) return;
 
-      const isTrunk = conn.fromId === "center";
-      const toStatus = to.status;
-      const alpha =
-        toStatus === "disabled"
-          ? 0.08
-          : toStatus === "error" || toStatus === "halted"
-            ? 0.25
-            : isTrunk
-              ? 0.2
-              : 0.12;
+      const isDeptConn = conn.fromId === "center";
+      if (!isDeptConn && this.viewLevel === "empire") return;
 
-      ctx.strokeStyle =
-        toStatus === "error" || toStatus === "halted"
-          ? `rgba(255, 51, 68, ${alpha})`
-          : `${conn.color}${Math.round(alpha * 255)
-              .toString(16)
-              .padStart(2, "0")}`;
-      ctx.lineWidth = isTrunk ? 1.5 : 0.8;
+      const isHovered =
+        this.hoveredNode &&
+        (this.hoveredNode.id === conn.toId || this.hoveredNode.id === conn.fromId);
+      const alpha = isHovered ? 0.5 : 0.2;
+
+      ctx.strokeStyle = conn.color + (isHovered ? "80" : "33");
+      ctx.lineWidth = isDeptConn ? 2 : 1.5;
       ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.lineTo(to.x, to.y);
+
+      const midX = (from.x + to.x) / 2;
+      const midY = (from.y + to.y) / 2;
+      const cpOffset = Math.abs(to.y - from.y) * 0.3 + 20;
+
+      if (isDeptConn) {
+        const cpx = midX;
+        const cpy = midY - cpOffset * 0.5;
+        ctx.moveTo(from.x, from.y);
+        ctx.quadraticCurveTo(cpx, cpy, to.x, to.y);
+      } else {
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+      }
       ctx.stroke();
+
+      if (isHovered) {
+        ctx.shadowColor = conn.color;
+        ctx.shadowBlur = 8;
+        ctx.strokeStyle = conn.color + "22";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      void alpha;
     });
   }
 
-  private drawParticles() {
-    const { ctx } = this;
+  private renderParticles(ctx: CanvasRenderingContext2D) {
     this.particles.forEach((p) => {
       const from = this.nodes.find((n) => n.id === p.fromId);
       const to = this.nodes.find((n) => n.id === p.toId);
       if (!from || !to) return;
-      if (to.status === "disabled" && !p.real) return;
+      if (from.x < -50 || to.x < -50) return;
 
-      const x = from.x + (to.x - from.x) * p.progress;
-      const y = from.y + (to.y - from.y) * p.progress;
-      const color = p.real ? p.color : STATUS_COLOR[to.status] || p.color;
+      const t = p.reverse ? 1 - p.progress : p.progress;
+
+      const midX = (from.x + to.x) / 2;
+      const midY = (from.y + to.y) / 2;
+      const cpOffset = Math.abs(to.y - from.y) * 0.3 + 20;
+      const cpx = midX;
+      const cpy = midY - cpOffset * 0.5;
+
+      const u = 1 - t;
+      const x = u * u * from.x + 2 * u * t * cpx + t * t * to.x;
+      const y = u * u * from.y + 2 * u * t * cpy + t * t * to.y;
+
+      const fadeAlpha = Math.min(1, t * 5, (1 - t) * 5);
+      ctx.fillStyle =
+        p.color +
+        Math.round(fadeAlpha * (p.real ? 200 : 100))
+          .toString(16)
+          .padStart(2, "0");
+      ctx.beginPath();
+      ctx.arc(x, y, p.size, 0, Math.PI * 2);
+      ctx.fill();
 
       if (p.real) {
-        // Real activity: bright, large, with trail
-        const trailLen = 0.08;
-        for (let t = 0; t < 4; t++) {
-          const tp = p.progress - t * trailLen * 0.25;
-          if (tp < 0) continue;
-          const tx = from.x + (to.x - from.x) * tp;
-          const ty = from.y + (to.y - from.y) * tp;
-          const alpha = 1 - t * 0.25;
-          ctx.beginPath();
-          ctx.arc(tx, ty, p.size * (1 - t * 0.15), 0, Math.PI * 2);
-          ctx.fillStyle = `${color}${Math.round(alpha * 200)
-            .toString(16)
-            .padStart(2, "0")}`;
-          ctx.fill();
-        }
-        // Bright glow around lead particle
-        ctx.beginPath();
-        ctx.arc(x, y, p.size * 4, 0, Math.PI * 2);
-        ctx.fillStyle = `${color}22`;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 6;
         ctx.fill();
-      } else {
-        // Ambient: subtle dot
-        ctx.beginPath();
-        ctx.arc(x, y, p.size * 0.8, 0, Math.PI * 2);
-        ctx.fillStyle = `${color}66`;
-        ctx.fill();
+        ctx.shadowBlur = 0;
       }
     });
   }
 
-  private drawNodes() {
-    const { ctx, time } = this;
+  private renderNodes(ctx: CanvasRenderingContext2D) {
+    this.nodes.forEach((node) => {
+      if (node.x < -50 || node.y < -50) return;
 
-    // Draw agents first (behind departments)
-    const agents = this.nodes.filter((n) => n.type === "agent");
-    const depts = this.nodes.filter((n) => n.type === "department");
-    const center = this.nodes.find((n) => n.type === "center");
-
-    [...agents, ...depts, ...(center ? [center] : [])].forEach((node) => {
-      const sc = STATUS_COLOR[node.status] || C.disabled;
-      const pulse = Math.sin(time * 1.5 + node.pulsePhase) * 0.3 + 0.7;
-      const isHovered = this.hoveredNode?.id === node.id;
-      const isSelected = this.selectedNode?.id === node.id;
-      const highlight = isHovered || isSelected;
-
-      // Outer glow
-      const glowR =
-        node.type === "center"
-          ? node.radius * 2.5
-          : node.type === "department"
-            ? node.radius * 2.2
-            : node.radius * 2;
-      const glowAlpha = node.status === "disabled" ? 0.05 : 0.12 * pulse;
-      ctx.beginPath();
-      ctx.arc(node.x, node.y, glowR * (highlight ? 1.3 : 1), 0, Math.PI * 2);
-      ctx.fillStyle = `${sc}${Math.round(glowAlpha * 255)
-        .toString(16)
-        .padStart(2, "0")}`;
-      ctx.fill();
-
-      // Middle glow
-      if (node.status !== "disabled") {
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, node.radius * 1.6 * (highlight ? 1.15 : 1), 0, Math.PI * 2);
-        ctx.fillStyle = `${sc}${Math.round(0.08 * pulse * 255)
-          .toString(16)
-          .padStart(2, "0")}`;
-        ctx.fill();
-      }
-
-      // Core circle
-      ctx.beginPath();
-      ctx.arc(node.x, node.y, node.radius * (highlight ? 1.1 : 1), 0, Math.PI * 2);
-      ctx.fillStyle = node.status === "disabled" ? "#0A0F1A" : "#0D1321";
-      ctx.fill();
-      ctx.strokeStyle = node.status === "disabled" ? `${sc}44` : `${sc}${highlight ? "DD" : "88"}`;
-      ctx.lineWidth = node.type === "center" ? 2.5 : node.type === "department" ? 2 : 1.2;
-      ctx.stroke();
-
-      // Inner dot for active nodes
-      if (node.status === "active" || node.status === "healthy") {
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, node.radius * 0.35 * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = `${sc}88`;
-        ctx.fill();
-      }
-
-      // Error pulse ring
-      if (node.status === "error" || node.status === "halted") {
-        const errorPulse = Math.sin(time * 3 + node.pulsePhase) * 0.5 + 0.5;
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, node.radius * (1.5 + errorPulse * 0.8), 0, Math.PI * 2);
-        ctx.strokeStyle = `${C.error}${Math.round(errorPulse * 80)
-          .toString(16)
-          .padStart(2, "0")}`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-
-      // Labels
       if (node.type === "center") {
-        ctx.font = `bold ${Math.max(11, node.radius * 0.5)}px var(--font-geist-mono), monospace`;
-        ctx.fillStyle = C.accent;
-        ctx.textAlign = "center";
-        ctx.fillText(node.name, node.x, node.y + node.radius + 18);
-        ctx.font = `${Math.max(8, node.radius * 0.32)}px var(--font-geist-mono), monospace`;
-        ctx.fillStyle = C.textDim;
-        ctx.fillText(node.subtitle || "", node.x, node.y + node.radius + 32);
+        this.renderCenterNode(ctx, node);
       } else if (node.type === "department") {
-        ctx.font = `bold ${Math.max(9, node.radius * 0.55)}px var(--font-geist-mono), monospace`;
-        ctx.fillStyle = highlight ? C.text : node.color;
-        ctx.textAlign = "center";
-        ctx.fillText(node.name, node.x, node.y + node.radius + 14);
-        ctx.font = `${Math.max(7, node.radius * 0.4)}px var(--font-geist-mono), monospace`;
-        ctx.fillStyle = C.textDim;
-        ctx.fillText(node.subtitle || "", node.x, node.y + node.radius + 25);
-
-        // Status indicator text
-        if (node.status !== "unknown") {
-          ctx.font = `${Math.max(7, node.radius * 0.35)}px var(--font-geist-mono), monospace`;
-          ctx.fillStyle = sc;
-          ctx.fillText(node.status.toUpperCase(), node.x, node.y - node.radius - 8);
-        }
-      } else if (node.type === "agent") {
-        ctx.font = `${Math.max(7, node.radius * 0.9)}px var(--font-geist-mono), monospace`;
-        ctx.fillStyle =
-          node.status === "disabled" ? `${C.textDim}88` : highlight ? C.text : C.textDim;
-        ctx.textAlign = "center";
-        ctx.fillText(node.name, node.x, node.y + node.radius + 11);
+        this.renderDeptNode(ctx, node);
+      } else if (node.type === "agent" && this.viewLevel === "department") {
+        this.renderAgentNode(ctx, node);
       }
     });
   }
 
-  // Convert screen coordinates to world coordinates
-  private screenToWorld(sx: number, sy: number): [number, number] {
-    return [(sx - this.panX) / this.zoom, (sy - this.panY) / this.zoom];
+  private renderCenterNode(ctx: CanvasRenderingContext2D, node: CNode) {
+    if (this.viewLevel === "department") return;
+
+    const pulse = Math.sin(this.time * 1.5) * 0.15 + 0.85;
+    const r = node.radius;
+
+    const outerGlow = ctx.createRadialGradient(node.x, node.y, r * 0.5, node.x, node.y, r * 2.5);
+    outerGlow.addColorStop(0, `${C.accent}22`);
+    outerGlow.addColorStop(0.5, `${C.accent}08`);
+    outerGlow.addColorStop(1, "transparent");
+    ctx.fillStyle = outerGlow;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, r * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    const grad = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, r);
+    grad.addColorStop(0, `${C.accent}55`);
+    grad.addColorStop(0.7, `${C.accent}22`);
+    grad.addColorStop(1, `${C.accent}11`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = `${C.accent}${Math.round(pulse * 180)
+      .toString(16)
+      .padStart(2, "0")}`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = C.accent;
+    ctx.font = `bold ${Math.max(10, r * 0.38)}px ui-monospace, monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("EGAN", node.x, node.y - r * 0.15);
+    ctx.fillText("FORGE", node.x, node.y + r * 0.25);
   }
 
-  hitTest(sx: number, sy: number): CNode | null {
-    const [wx, wy] = this.screenToWorld(sx, sy);
-    const ordered = [
-      ...this.nodes.filter((n) => n.type === "center"),
-      ...this.nodes.filter((n) => n.type === "department"),
-      ...this.nodes.filter((n) => n.type === "agent"),
-    ].reverse();
+  private renderDeptNode(ctx: CanvasRenderingContext2D, node: CNode) {
+    const isHovered = this.hoveredNode?.id === node.id;
+    const r = node.radius;
+    const statusCol = STATUS_COLOR[node.status];
+    const pulse = Math.sin(this.time * 1.2 + node.pulsePhase) * 0.1 + 0.9;
+    const dept = DEPARTMENTS.find((d) => d.id === node.id);
 
-    for (const node of ordered) {
-      const dx = node.x - wx;
-      const dy = node.y - wy;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const hitR = Math.max(node.radius + 12, 16) / this.zoom;
-      if (dist < hitR) return node;
+    if (isHovered) {
+      const glow = ctx.createRadialGradient(node.x, node.y, r * 0.5, node.x, node.y, r * 2);
+      glow.addColorStop(0, `${node.color}18`);
+      glow.addColorStop(1, "transparent");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, r * 2, 0, Math.PI * 2);
+      ctx.fill();
     }
-    return null;
+
+    const innerGlow = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, r);
+    innerGlow.addColorStop(0, `${node.color}18`);
+    innerGlow.addColorStop(0.6, `${node.color}0A`);
+    innerGlow.addColorStop(1, `${C.bg}CC`);
+    ctx.fillStyle = innerGlow;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = `${node.color}${Math.round(pulse * (isHovered ? 220 : 140))
+      .toString(16)
+      .padStart(2, "0")}`;
+    ctx.lineWidth = isHovered ? 2.5 : 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = statusCol;
+    ctx.beginPath();
+    ctx.arc(node.x + r * 0.65, node.y - r * 0.65, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    const nameSize =
+      this.viewLevel === "department" ? Math.max(11, r * 0.28) : Math.max(10, r * 0.26);
+    ctx.fillStyle = node.color;
+    ctx.font = `bold ${nameSize}px ui-monospace, monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(node.name, node.x, node.y - nameSize * 0.45);
+
+    if (node.subtitle) {
+      ctx.fillStyle = `${C.text}88`;
+      ctx.font = `${Math.max(9, nameSize * 0.75)}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.fillText(node.subtitle, node.x, node.y + nameSize * 0.45);
+    }
+
+    if (this.viewLevel === "empire" && dept) {
+      ctx.fillStyle = `${node.color}AA`;
+      ctx.font = `bold ${Math.max(9, nameSize * 0.7)}px ui-monospace, monospace`;
+
+      const agentCount = dept.agents.length;
+      ctx.fillText(`${agentCount} agents`, node.x, node.y + r + nameSize * 0.9);
+
+      const pnl = node.metrics.dailyPnl;
+      const mrr = node.metrics.mrr;
+      if (typeof pnl === "number" && pnl !== 0) {
+        const pnlColor = pnl >= 0 ? C.healthy : C.error;
+        ctx.fillStyle = pnlColor;
+        ctx.fillText(formatUSD(pnl), node.x, node.y + r + nameSize * 2.1);
+      } else if (typeof mrr === "number" && mrr > 0) {
+        ctx.fillStyle = C.revenue;
+        ctx.fillText(`${formatUSD(mrr)}/mo`, node.x, node.y + r + nameSize * 2.1);
+      }
+    }
+  }
+
+  private renderAgentNode(ctx: CanvasRenderingContext2D, node: CNode) {
+    const r = 12;
+    const statusCol = STATUS_COLOR[node.status];
+    const isHovered = this.hoveredNode?.id === node.id;
+
+    if (isHovered) {
+      ctx.shadowColor = node.color;
+      ctx.shadowBlur = 10;
+    }
+
+    ctx.fillStyle = node.status === "disabled" ? `${C.disabled}88` : `${node.color}44`;
+    ctx.strokeStyle = node.status === "disabled" ? C.disabled : statusCol;
+    ctx.lineWidth = isHovered ? 2 : 1;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = node.status === "disabled" ? C.textDim : C.text;
+    ctx.font = `${isHovered ? "bold " : ""}12px ui-sans-serif, system-ui, sans-serif`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(node.name, node.x + r + 10, node.y - 7);
+
+    if (node.role) {
+      ctx.fillStyle = C.textDim;
+      ctx.font = "10px ui-sans-serif, system-ui, sans-serif";
+      ctx.fillText(node.role, node.x + r + 10, node.y + 7);
+    }
+
+    ctx.fillStyle = statusCol;
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, 3, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   handleMouseMove(x: number, y: number) {
     this.mouseX = x;
     this.mouseY = y;
 
-    if (this.isDragging) {
-      this.panX = this.panStartX + (x - this.dragStartX);
-      this.panY = this.panStartY + (y - this.dragStartY);
-      this.canvas.style.cursor = "grabbing";
-      return;
+    let found: CNode | null = null;
+    for (const n of this.nodes) {
+      if (n.x < -50) continue;
+      if (n.type === "agent" && this.viewLevel === "empire") continue;
+      const dist = Math.hypot(n.x - x, n.y - y);
+      const hitR = n.type === "agent" ? 20 : n.radius + 10;
+      if (dist < hitR) {
+        found = n;
+        break;
+      }
     }
 
-    const node = this.hitTest(x, y);
-    if (node !== this.hoveredNode) {
-      this.hoveredNode = node;
-      this.onHover(node, x, y);
-    }
-    this.canvas.style.cursor = node ? "pointer" : "grab";
-  }
-
-  handleMouseDown(x: number, y: number) {
-    const node = this.hitTest(x, y);
-    if (node) return; // Don't start drag on nodes
-    this.isDragging = true;
-    this.dragStartX = x;
-    this.dragStartY = y;
-    this.panStartX = this.panX;
-    this.panStartY = this.panY;
-  }
-
-  handleMouseUp() {
-    this.isDragging = false;
+    this.hoveredNode = found;
+    this.canvas.style.cursor = found ? "pointer" : "default";
+    this.onHover(found, x, y);
   }
 
   handleClick(x: number, y: number) {
-    if (this.isDragging) return;
-    const node = this.hitTest(x, y);
-    this.selectedNode = node;
-    this.onSelect(node);
-  }
-
-  handleWheel(x: number, y: number, deltaY: number) {
-    const zoomFactor = deltaY > 0 ? 0.92 : 1.08;
-    const newZoom = Math.max(0.3, Math.min(5, this.zoom * zoomFactor));
-
-    // Zoom toward cursor position
-    const wx = (x - this.panX) / this.zoom;
-    const wy = (y - this.panY) / this.zoom;
-    this.zoom = newZoom;
-    this.panX = x - wx * this.zoom;
-    this.panY = y - wy * this.zoom;
+    for (const n of this.nodes) {
+      if (n.x < -50) continue;
+      if (n.type === "agent" && this.viewLevel === "empire") continue;
+      const dist = Math.hypot(n.x - x, n.y - y);
+      const hitR = n.type === "agent" ? 20 : n.radius + 10;
+      if (dist < hitR) {
+        if (n.type === "department" && this.viewLevel === "empire") {
+          this.zoomToDepartment(n.id);
+          return;
+        }
+        this.selectedNode = n;
+        this.onSelect(n);
+        return;
+      }
+    }
+    if (this.viewLevel === "department") {
+      this.zoomToEmpire();
+    }
+    this.selectedNode = null;
+    this.onSelect(null);
   }
 }
 
 // ============================================================================
-// TOOLTIP COMPONENT
-// ============================================================================
-
-function Tooltip({ node, x, y }: { node: CNode; x: number; y: number }) {
-  const sc = STATUS_COLOR[node.status];
-  // Position tooltip to avoid going off-screen
-  const tipX = x + 20;
-  const tipY = y - 10;
-
-  return (
-    <div
-      className="pointer-events-none fixed z-50 min-w-[180px] rounded-lg border px-3 py-2 font-mono text-xs backdrop-blur-md"
-      style={{
-        left: Math.min(tipX, window.innerWidth - 220),
-        top: Math.min(tipY, window.innerHeight - 120),
-        background: C.panelBg,
-        borderColor: `${node.color}44`,
-      }}
-    >
-      <div className="mb-1 flex items-center gap-2">
-        <span className="font-bold" style={{ color: node.color }}>
-          {node.name}
-        </span>
-        <span
-          className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
-          style={{
-            color: sc,
-            background: `${sc}18`,
-          }}
-        >
-          {node.status.toUpperCase()}
-        </span>
-      </div>
-      {node.role && (
-        <div style={{ color: C.textDim }} className="mb-1">
-          {node.role}
-        </div>
-      )}
-      {node.subtitle && node.type !== "agent" && (
-        <div style={{ color: C.textDim }}>{node.subtitle}</div>
-      )}
-      {node.metrics.dailyPnl !== undefined && (
-        <div
-          className="mt-1"
-          style={{ color: (node.metrics.dailyPnl as number) >= 0 ? C.healthy : C.error }}
-        >
-          Daily P&L: {formatUSD(node.metrics.dailyPnl as number)}
-        </div>
-      )}
-      {node.metrics.mrr !== undefined && (node.metrics.mrr as number) > 0 && (
-        <div style={{ color: C.revenue }}>MRR: {formatUSD(node.metrics.mrr as number)}</div>
-      )}
-      {node.type === "agent" && (
-        <div className="mt-1 text-[10px]" style={{ color: C.textDim }}>
-          Click for details
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================================================
-// DETAIL PANEL COMPONENT
+// DETAIL PANEL (slides in from right)
 // ============================================================================
 
 function DetailPanel({
@@ -1230,252 +1127,172 @@ function DetailPanel({
   nodes: CNode[];
   onClose: () => void;
 }) {
-  const sc = STATUS_COLOR[node.status];
   const isDept = node.type === "department";
   const isCenter = node.type === "center";
-
-  // Get child agents if this is a department
-  const childAgents = isDept ? nodes.filter((n) => n.departmentId === node.id) : [];
-
-  // Get department info if this is an agent
-  const parentDept = node.departmentId ? nodes.find((n) => n.id === node.departmentId) : null;
+  const statusCol = STATUS_COLOR[node.status];
+  const childAgents = isDept
+    ? nodes.filter((n) => n.type === "agent" && n.departmentId === node.id)
+    : [];
 
   return (
     <div
-      className="fixed top-0 right-0 z-40 flex h-full w-[340px] flex-col overflow-y-auto border-l font-mono text-xs backdrop-blur-xl"
+      className="absolute top-0 right-0 z-30 flex h-full w-[340px] flex-col border-l"
       style={{
         background: C.panelBg,
         borderColor: C.panelBorder,
+        backdropFilter: "blur(12px)",
       }}
     >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between border-b px-4 py-3"
-        style={{ borderColor: `${node.color}22` }}
-      >
-        <div className="flex items-center gap-2">
-          <div
-            className="h-3 w-3 rounded-full"
-            style={{
-              background: sc,
-              boxShadow: `0 0 8px ${sc}88`,
-            }}
-          />
-          <span className="font-bold tracking-wider" style={{ color: node.color }}>
-            {node.name}
-          </span>
+      <div className="flex-1 overflow-y-auto p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div
+              className="h-3 w-3 rounded-full"
+              style={{ background: statusCol, boxShadow: `0 0 8px ${statusCol}66` }}
+            />
+            <h2
+              className="font-mono text-sm font-bold tracking-wider"
+              style={{ color: node.color }}
+            >
+              {node.name}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--border-dim)] text-sm transition-colors hover:bg-white/[0.06]"
+            style={{ color: C.textDim }}
+          >
+            ✕
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          className="rounded px-2 py-1 text-[var(--text-tertiary)] transition-colors hover:bg-white/[0.04] hover:text-[var(--text-primary)]"
-        >
-          ESC
-        </button>
-      </div>
 
-      <div className="flex-1 space-y-4 p-4">
-        {/* Status */}
-        <div className="flex items-center justify-between">
-          <span style={{ color: C.textDim }}>STATUS</span>
+        {(node.subtitle || node.role) && (
+          <p className="mb-3 text-xs" style={{ color: C.textDim }}>
+            {node.subtitle || node.role}
+          </p>
+        )}
+
+        <div className="mb-4 flex items-center gap-2">
           <span
-            className="rounded px-2 py-0.5 font-semibold"
-            style={{ color: sc, background: `${sc}18` }}
+            className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
+            style={{ background: `${statusCol}20`, color: statusCol }}
           >
-            {node.status.toUpperCase()}
+            {node.status}
+          </span>
+          <span className="text-[10px]" style={{ color: C.textDim }}>
+            {node.type}
           </span>
         </div>
 
-        {node.subtitle && (
-          <div className="flex items-center justify-between">
-            <span style={{ color: C.textDim }}>SYSTEM</span>
-            <span style={{ color: C.text }}>{node.subtitle}</span>
-          </div>
-        )}
-
-        {node.role && (
-          <div className="flex items-center justify-between">
-            <span style={{ color: C.textDim }}>ROLE</span>
-            <span style={{ color: C.text }}>{node.role}</span>
-          </div>
-        )}
-
-        {parentDept && (
-          <div className="flex items-center justify-between">
-            <span style={{ color: C.textDim }}>DEPARTMENT</span>
-            <span style={{ color: parentDept.color }}>{parentDept.name}</span>
-          </div>
-        )}
-
-        {/* Metrics */}
         {Object.keys(node.metrics).length > 0 && (
-          <>
-            <div className="border-t pt-3" style={{ borderColor: `${node.color}15` }}>
-              <div className="mb-2 font-bold tracking-wider" style={{ color: node.color }}>
-                METRICS
-              </div>
-              <div className="space-y-2">
-                {node.metrics.dailyPnl !== undefined && (
-                  <MetricRow
-                    label="DAILY P&L"
-                    value={formatUSD(node.metrics.dailyPnl as number)}
-                    color={(node.metrics.dailyPnl as number) >= 0 ? C.healthy : C.error}
-                  />
-                )}
-                {node.metrics.totalPnl !== undefined && (
-                  <MetricRow
-                    label="TOTAL P&L"
-                    value={formatUSD(node.metrics.totalPnl as number)}
-                    color={(node.metrics.totalPnl as number) >= 0 ? C.healthy : C.error}
-                  />
-                )}
-                {node.metrics.portfolio !== undefined && (
-                  <MetricRow
-                    label="PORTFOLIO"
-                    value={formatUSD(node.metrics.portfolio as number)}
-                    color={C.text}
-                  />
-                )}
-                {node.metrics.mrr !== undefined && (node.metrics.mrr as number) >= 0 && (
-                  <MetricRow
-                    label="MRR"
-                    value={formatUSD(node.metrics.mrr as number)}
-                    color={C.revenue}
-                  />
-                )}
-                {node.metrics.arr !== undefined && (
-                  <MetricRow
-                    label="ARR"
-                    value={formatUSD(node.metrics.arr as number)}
-                    color={C.revenue}
-                  />
-                )}
-                {node.metrics.winRate !== undefined && (
-                  <MetricRow
-                    label="WIN RATE"
-                    value={`${((node.metrics.winRate as number) * 100).toFixed(1)}%`}
-                    color={(node.metrics.winRate as number) >= 0.5 ? C.healthy : C.degraded}
-                  />
-                )}
-                {node.metrics.positions !== undefined && (
-                  <MetricRow
-                    label="POSITIONS"
-                    value={String(node.metrics.positions)}
-                    color={C.text}
-                  />
-                )}
-                {node.metrics.tradesToday !== undefined && (
-                  <MetricRow
-                    label="TRADES TODAY"
-                    value={String(node.metrics.tradesToday)}
-                    color={C.text}
-                  />
-                )}
-                {node.metrics.circuitBreaker !== undefined && (
-                  <MetricRow
-                    label="CIRCUIT BREAKER"
-                    value={node.metrics.circuitBreaker ? "TRIPPED" : "NORMAL"}
-                    color={node.metrics.circuitBreaker ? C.error : C.healthy}
-                  />
-                )}
-                {node.metrics.regime !== undefined && node.metrics.regime !== null && (
-                  <MetricRow
-                    label="MARKET REGIME"
-                    value={String(node.metrics.regime)}
-                    color={C.text}
-                  />
-                )}
-                {node.metrics.liveProducts !== undefined && (
-                  <MetricRow
-                    label="LIVE PRODUCTS"
-                    value={`${node.metrics.liveProducts}/${node.metrics.totalProducts}`}
-                    color={C.text}
-                  />
-                )}
-                {node.metrics.queue !== undefined && (
-                  <MetricRow label="OPP. QUEUE" value={String(node.metrics.queue)} color={C.text} />
-                )}
-                {node.metrics.cycles !== undefined && (
-                  <MetricRow label="CYCLES" value={String(node.metrics.cycles)} color={C.text} />
-                )}
-                {node.metrics.uptime !== undefined && (
-                  <MetricRow label="UPTIME" value={String(node.metrics.uptime)} color={C.text} />
-                )}
-                {node.metrics.haltReason !== undefined && node.metrics.haltReason !== null && (
-                  <MetricRow
-                    label="HALT REASON"
-                    value={String(node.metrics.haltReason)}
-                    color={C.error}
-                  />
-                )}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Error diagnostics */}
-        {(node.status === "error" || node.status === "halted") && (
-          <div
-            className="rounded-lg border p-3"
-            style={{
-              borderColor: `${C.error}33`,
-              background: `${C.error}08`,
-            }}
-          >
-            <div className="mb-2 font-bold tracking-wider" style={{ color: C.error }}>
-              DIAGNOSTICS
-            </div>
-            <div className="space-y-2 text-[11px]">
-              <div style={{ color: C.text }}>
-                {node.metrics.haltReason
-                  ? `Halt reason: ${node.metrics.haltReason}`
-                  : node.status === "halted"
-                    ? "Circuit breaker tripped — trading paused"
-                    : "Service reporting unhealthy or unreachable"}
-              </div>
-              <div style={{ color: C.textDim }}>
-                {isDept && node.subtitle
-                  ? `Check: ssh root@89.167.82.184 'systemctl status ${
-                      DEPARTMENTS.find((d) => d.id === node.id)?.serviceKey || "egan-master"
-                    }'`
-                  : "Check parent department for service details"}
-              </div>
-              <div className="flex gap-2 pt-1">
-                <button
-                  className="rounded border border-[var(--border-dim)] px-2 py-1 text-[10px] transition-colors hover:bg-white/[0.04]"
-                  style={{ borderColor: `${C.error}44`, color: C.error }}
-                  onClick={() => {
-                    navigator.clipboard.writeText(
-                      `ssh root@89.167.82.184 'systemctl restart ${
-                        DEPARTMENTS.find((d) => d.id === node.id)?.serviceKey ||
-                        DEPARTMENTS.find((d) => d.id === node.departmentId)?.serviceKey ||
-                        "egan-master"
-                      }'`,
-                    );
-                  }}
-                >
-                  COPY RESTART CMD
-                </button>
-                <button
-                  className="rounded border border-[var(--border-dim)] px-2 py-1 text-[10px] transition-colors hover:bg-white/[0.04]"
-                  style={{ borderColor: `${C.accent}44`, color: C.accent }}
-                  onClick={() => {
-                    navigator.clipboard.writeText(
-                      `ssh root@89.167.82.184 'journalctl -u ${
-                        DEPARTMENTS.find((d) => d.id === node.id)?.serviceKey ||
-                        DEPARTMENTS.find((d) => d.id === node.departmentId)?.serviceKey ||
-                        "egan-master"
-                      } -n 50'`,
-                    );
-                  }}
-                >
-                  COPY LOGS CMD
-                </button>
-              </div>
-            </div>
+          <div className="mb-4 space-y-2 text-xs">
+            {typeof node.metrics.dailyPnl === "number" && (
+              <MetricRow
+                label="Daily P&L"
+                value={formatUSD(node.metrics.dailyPnl as number)}
+                color={(node.metrics.dailyPnl as number) >= 0 ? C.healthy : C.error}
+              />
+            )}
+            {typeof node.metrics.totalPnl === "number" && (
+              <MetricRow
+                label="Total P&L"
+                value={formatUSD(node.metrics.totalPnl as number)}
+                color={(node.metrics.totalPnl as number) >= 0 ? C.healthy : C.error}
+              />
+            )}
+            {typeof node.metrics.portfolio === "number" &&
+              (node.metrics.portfolio as number) > 0 && (
+                <MetricRow
+                  label="Portfolio"
+                  value={formatUSD(node.metrics.portfolio as number)}
+                  color={C.text}
+                />
+              )}
+            {typeof node.metrics.mrr === "number" && (node.metrics.mrr as number) > 0 && (
+              <MetricRow
+                label="MRR"
+                value={formatUSD(node.metrics.mrr as number)}
+                color={C.revenue}
+              />
+            )}
+            {typeof node.metrics.winRate === "number" && (node.metrics.winRate as number) > 0 && (
+              <MetricRow
+                label="Win Rate"
+                value={`${((node.metrics.winRate as number) * 100).toFixed(1)}%`}
+                color={C.accent}
+              />
+            )}
+            {typeof node.metrics.positions === "number" && (
+              <MetricRow label="Positions" value={String(node.metrics.positions)} color={C.text} />
+            )}
+            {typeof node.metrics.tradesToday === "number" && (
+              <MetricRow
+                label="Trades Today"
+                value={String(node.metrics.tradesToday)}
+                color={C.text}
+              />
+            )}
+            {node.metrics.circuitBreaker === true && (
+              <MetricRow label="Circuit Breaker" value="HALTED" color={C.error} />
+            )}
+            {typeof node.metrics.regime === "string" && (
+              <MetricRow
+                label="Market Regime"
+                value={node.metrics.regime as string}
+                color={C.textDim}
+              />
+            )}
+            {typeof node.metrics.liveProducts === "number" && (
+              <MetricRow
+                label="Live Products"
+                value={String(node.metrics.liveProducts)}
+                color={C.accent}
+              />
+            )}
+            {typeof node.metrics.uptime === "string" && (
+              <MetricRow label="Uptime" value={node.metrics.uptime as string} color={C.textDim} />
+            )}
+            {typeof node.metrics.cycles === "number" && (
+              <MetricRow
+                label="Master Cycles"
+                value={String(node.metrics.cycles)}
+                color={C.accent}
+              />
+            )}
           </div>
         )}
 
-        {/* Child agents for departments */}
+        {(isDept || isCenter) && (
+          <div className="mb-3 flex gap-2">
+            <button
+              className="rounded border px-2 py-1 text-[10px] transition-colors hover:bg-white/[0.04]"
+              style={{ borderColor: `${node.color}44`, color: node.color }}
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  `ssh root@89.167.82.184 'systemctl restart ${
+                    DEPARTMENTS.find((d) => d.id === node.id)?.serviceKey || "egan-master"
+                  }'`,
+                );
+              }}
+            >
+              COPY RESTART CMD
+            </button>
+            <button
+              className="rounded border px-2 py-1 text-[10px] transition-colors hover:bg-white/[0.04]"
+              style={{ borderColor: `${C.accent}44`, color: C.accent }}
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  `ssh root@89.167.82.184 'journalctl -u ${
+                    DEPARTMENTS.find((d) => d.id === node.id)?.serviceKey || "egan-master"
+                  } -n 50'`,
+                );
+              }}
+            >
+              COPY LOGS CMD
+            </button>
+          </div>
+        )}
+
         {isDept && childAgents.length > 0 && (
           <div className="border-t pt-3" style={{ borderColor: `${node.color}15` }}>
             <div className="mb-2 font-bold tracking-wider" style={{ color: node.color }}>
@@ -1506,7 +1323,6 @@ function DetailPanel({
           </div>
         )}
 
-        {/* Empire overview for center node */}
         {isCenter && (
           <div className="border-t pt-3" style={{ borderColor: `${C.accent}15` }}>
             <div className="mb-2 font-bold tracking-wider" style={{ color: C.accent }}>
@@ -1526,10 +1342,7 @@ function DetailPanel({
                       <div className="flex items-center gap-2">
                         <div
                           className="h-2 w-2 rounded-full"
-                          style={{
-                            background: dsc,
-                            boxShadow: `0 0 4px ${dsc}66`,
-                          }}
+                          style={{ background: dsc, boxShadow: `0 0 4px ${dsc}66` }}
                         />
                         <span style={{ color: dept.color }}>{dept.name}</span>
                       </div>
@@ -1543,22 +1356,22 @@ function DetailPanel({
           </div>
         )}
 
-        {/* Activity transcript */}
         <ActivityTranscript node={node} />
 
-        {/* Footer */}
         <div
           className="border-t pt-2 text-center text-[10px]"
           style={{ borderColor: C.panelBorder, color: C.textDim }}
         >
-          EGAN FORGE CONSTELLATION v2.0
+          EGAN FORGE CONSTELLATION v3.0
         </div>
       </div>
     </div>
   );
 }
 
-// ── Swarm name mapping for API queries ─────────────────────────────────────
+// ============================================================================
+// ACTIVITY TRANSCRIPT
+// ============================================================================
 
 const DEPT_TO_SWARM: Record<string, string> = {
   oversight: "EganMasterSwarm",
@@ -1657,11 +1470,88 @@ function ActivityTranscript({ node }: { node: CNode }) {
   );
 }
 
+// ============================================================================
+// TOOLTIP
+// ============================================================================
+
+function Tooltip({ node, x, y }: { node: CNode; x: number; y: number }) {
+  const statusCol = STATUS_COLOR[node.status];
+  return (
+    <div
+      className="pointer-events-none absolute z-20 max-w-[220px] rounded-lg border px-3 py-2"
+      style={{
+        left: x + 16,
+        top: y - 10,
+        background: C.panelBg,
+        borderColor: `${node.color}33`,
+        backdropFilter: "blur(8px)",
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <div className="h-2 w-2 rounded-full" style={{ background: statusCol }} />
+        <span className="font-mono text-xs font-bold" style={{ color: node.color }}>
+          {node.name}
+        </span>
+      </div>
+      {(node.subtitle || node.role) && (
+        <div className="mt-1 text-[10px]" style={{ color: C.textDim }}>
+          {node.subtitle || node.role}
+        </div>
+      )}
+      <div className="mt-1 text-[10px]" style={{ color: statusCol }}>
+        {node.status.toUpperCase()}
+      </div>
+      {typeof node.metrics.dailyPnl === "number" && (
+        <div
+          className="mt-0.5 text-[10px]"
+          style={{ color: (node.metrics.dailyPnl as number) >= 0 ? C.healthy : C.error }}
+        >
+          P&L: {formatUSD(node.metrics.dailyPnl as number)}
+        </div>
+      )}
+      {node.type === "department" && (
+        <div className="mt-1 text-[9px]" style={{ color: C.textDim }}>
+          Click to zoom in
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// SMALL HUD COMPONENTS
+// ============================================================================
+
 function MetricRow({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div className="flex items-center justify-between">
       <span style={{ color: C.textDim }}>{label}</span>
       <span className="font-semibold" style={{ color }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function StatusPill({ count, label, color }: { count: number; label: string; color: string }) {
+  if (count === 0) return null;
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+      <span style={{ color }}>
+        {count} {label}
+      </span>
+    </div>
+  );
+}
+
+function HudMetric({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] tracking-wider" style={{ color: C.textDim }}>
+        {label}
+      </span>
+      <span className="font-bold" style={{ color }}>
         {value}
       </span>
     </div>
@@ -1676,21 +1566,18 @@ export default function ConstellationPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<ConstellationEngine | null>(null);
 
-  const [tooltip, setTooltip] = useState<{
-    node: CNode;
-    x: number;
-    y: number;
-  } | null>(null);
+  const [tooltip, setTooltip] = useState<{ node: CNode; x: number; y: number } | null>(null);
   const [selectedNode, setSelectedNode] = useState<CNode | null>(null);
   const [allNodes, setAllNodes] = useState<CNode[]>([]);
   const [statusData, setStatusData] = useState<StatusResponse | null>(null);
   const [connected, setConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState("");
+  const [viewLevel, setViewLevel] = useState<ViewLevel>("empire");
+  const [focusedDeptId, setFocusedDeptId] = useState<string | null>(null);
 
-  // Fetch data
   const fetchData = useCallback(async () => {
     try {
-      const [statusRes, healthRes, scorecardsRes] = await Promise.allSettled([
+      const [statusRes, healthRes] = await Promise.allSettled([
         fetch("/api/status").then((r) => {
           if (!r.ok) throw new Error(`${r.status}`);
           return r.json() as Promise<StatusResponse>;
@@ -1699,22 +1586,15 @@ export default function ConstellationPage() {
           if (!r.ok) throw new Error(`${r.status}`);
           return r.json() as Promise<HealthResponse>;
         }),
-        fetch("/api/scorecards").then((r) => {
-          if (!r.ok) throw new Error(`${r.status}`);
-          return r.json() as Promise<
-            Record<string, { rating: number; pdp_active: boolean; pillars: Record<string, number> }>
-          >;
-        }),
       ]);
 
       const status = statusRes.status === "fulfilled" ? statusRes.value : null;
       const health = healthRes.status === "fulfilled" ? healthRes.value : null;
-      const scorecards = scorecardsRes.status === "fulfilled" ? scorecardsRes.value : null;
 
       if (status) setStatusData(status);
 
       if (engineRef.current) {
-        engineRef.current.updateData(status, health, scorecards);
+        engineRef.current.updateData(status, health);
         engineRef.current.detectActivity(status);
         setAllNodes([...engineRef.current.nodes]);
       }
@@ -1727,16 +1607,12 @@ export default function ConstellationPage() {
   }, []);
 
   useEffect(() => {
-    // fetchData is async — setState calls happen after awaited operations, not synchronously
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchData();
-    const interval = setInterval(() => {
-      void fetchData();
-    }, 15000);
+    const interval = setInterval(() => void fetchData(), 15000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  // Init canvas engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -1744,16 +1620,17 @@ export default function ConstellationPage() {
     const engine = new ConstellationEngine(canvas);
     engineRef.current = engine;
 
-    engine.onHover = (node, x, y) => {
-      setTooltip(node ? { node, x, y } : null);
-    };
+    engine.onHover = (node, x, y) => setTooltip(node ? { node, x, y } : null);
     engine.onSelect = (node) => {
       setSelectedNode(node);
       if (engine.nodes) setAllNodes([...engine.nodes]);
     };
+    engine.onViewChange = (level, deptId) => {
+      setViewLevel(level);
+      setFocusedDeptId(deptId);
+    };
 
     const handleResize = () => {
-      // On desktop (lg+), account for sidebar width (224px = w-56)
       const sidebarWidth = window.innerWidth >= 1024 ? 224 : 0;
       const canvasWidth = window.innerWidth - sidebarWidth;
       engine.resize(canvasWidth, window.innerHeight);
@@ -1764,18 +1641,8 @@ export default function ConstellationPage() {
 
     const onMove = (e: MouseEvent) => engine.handleMouseMove(e.offsetX, e.offsetY);
     const onClick = (e: MouseEvent) => engine.handleClick(e.offsetX, e.offsetY);
-    const onDown = (e: MouseEvent) => engine.handleMouseDown(e.offsetX, e.offsetY);
-    const onUp = () => engine.handleMouseUp();
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      engine.handleWheel(e.offsetX, e.offsetY, e.deltaY);
-    };
     canvas.addEventListener("mousemove", onMove);
     canvas.addEventListener("click", onClick);
-    canvas.addEventListener("mousedown", onDown);
-    canvas.addEventListener("mouseup", onUp);
-    canvas.addEventListener("mouseleave", onUp);
-    canvas.addEventListener("wheel", onWheel, { passive: false });
 
     engine.start();
 
@@ -1784,33 +1651,30 @@ export default function ConstellationPage() {
       window.removeEventListener("resize", handleResize);
       canvas.removeEventListener("mousemove", onMove);
       canvas.removeEventListener("click", onClick);
-      canvas.removeEventListener("mousedown", onDown);
-      canvas.removeEventListener("mouseup", onUp);
-      canvas.removeEventListener("mouseleave", onUp);
-      canvas.removeEventListener("wheel", onWheel);
     };
   }, []);
 
-  // Sync data to engine when status updates
   useEffect(() => {
     if (engineRef.current && statusData) {
       setAllNodes([...engineRef.current.nodes]);
     }
   }, [statusData]);
 
-  // Keyboard: ESC to close panel
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setSelectedNode(null);
-        if (engineRef.current) engineRef.current.selectedNode = null;
+        if (selectedNode) {
+          setSelectedNode(null);
+          if (engineRef.current) engineRef.current.selectedNode = null;
+        } else if (viewLevel === "department" && engineRef.current) {
+          engineRef.current.zoomToEmpire();
+        }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [selectedNode, viewLevel]);
 
-  // Count statuses for HUD
   const statusCounts = allNodes.reduce(
     (acc, n) => {
       if (n.type === "agent" || n.type === "department") {
@@ -1825,32 +1689,48 @@ export default function ConstellationPage() {
     { ok: 0, err: 0, warn: 0, off: 0, unknown: 0 },
   );
 
+  const focusedDept = focusedDeptId ? DEPARTMENTS.find((d) => d.id === focusedDeptId) : null;
+
   return (
     <>
-      {/* Sidebar nav (desktop) */}
       <DashboardSidebar />
 
-      {/* Full-bleed constellation area offset by sidebar */}
       <div className="relative h-screen overflow-hidden lg:pl-56" style={{ background: C.bg }}>
         <canvas ref={canvasRef} className="absolute inset-0" />
 
         {/* ── HUD TOP BAR ────────────────────────────────────── */}
         <div className="pointer-events-none absolute top-0 right-0 left-0 z-10">
           <div className="flex items-center justify-between px-5 pt-4">
-            {/* Left: title + mobile nav */}
-            <div className="pointer-events-auto flex items-center gap-4">
+            <div className="pointer-events-auto flex items-center gap-3">
+              {viewLevel === "department" && (
+                <button
+                  onClick={() => engineRef.current?.zoomToEmpire()}
+                  className="flex items-center gap-1.5 rounded-md border border-[var(--border-dim)] px-2.5 py-1 font-mono text-[10px] tracking-wider transition-colors hover:bg-white/[0.06]"
+                  style={{ color: C.accent, borderColor: `${C.accent}33` }}
+                >
+                  ← BACK
+                </button>
+              )}
               <h1
                 className="font-mono text-sm font-bold tracking-[0.25em]"
                 style={{ color: C.accent }}
               >
-                CONSTELLATION
+                {viewLevel === "empire" ? "CONSTELLATION" : ""}
               </h1>
-              <span className="hidden text-xs text-[var(--text-tertiary)] sm:inline">
-                Live network topology
-              </span>
+              {viewLevel === "department" && focusedDept && (
+                <div className="flex items-center gap-2 font-mono text-xs">
+                  <span style={{ color: C.textDim }}>EGAN FORGE</span>
+                  <span style={{ color: C.textDim }}>›</span>
+                  <span style={{ color: focusedDept.color }}>{focusedDept.name}</span>
+                </div>
+              )}
+              {viewLevel === "empire" && (
+                <span className="hidden text-xs text-[var(--text-tertiary)] sm:inline">
+                  Click a department to explore
+                </span>
+              )}
             </div>
 
-            {/* Right: connection + time */}
             <div className="pointer-events-auto flex items-center gap-4 font-mono text-[10px]">
               <div className="flex items-center gap-2">
                 <div
@@ -1868,19 +1748,16 @@ export default function ConstellationPage() {
             </div>
           </div>
 
-          {/* Mobile nav row */}
           <div className="pointer-events-auto mt-2 px-5 lg:hidden">
             <DashboardNav />
           </div>
         </div>
 
-        {/* ── HUD STATUS PILLS ────────────────────────────────── */}
+        {/* ── STATUS PILLS ────────────────────────────────────── */}
         <div className="pointer-events-none absolute top-12 right-0 left-0 z-10 flex justify-center lg:top-12">
           <div
             className="glass flex items-center gap-3 rounded-full border border-[var(--border-dim)] px-4 py-1.5 font-mono text-[10px]"
-            style={{
-              background: `${C.bg}CC`,
-            }}
+            style={{ background: `${C.bg}CC` }}
           >
             <StatusPill count={statusCounts.ok} label="ACTIVE" color={C.healthy} />
             <StatusPill count={statusCounts.err} label="ERROR" color={C.error} />
@@ -1896,9 +1773,7 @@ export default function ConstellationPage() {
         <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-10">
           <div
             className="glass flex items-center justify-center gap-8 border-t border-[var(--border-dim)] px-6 py-3 font-mono text-xs"
-            style={{
-              background: `${C.bg}DD`,
-            }}
+            style={{ background: `${C.bg}DD` }}
           >
             {statusData?.empire ? (
               <>
@@ -1950,34 +1825,5 @@ export default function ConstellationPage() {
         )}
       </div>
     </>
-  );
-}
-
-// ============================================================================
-// SMALL HUD COMPONENTS
-// ============================================================================
-
-function StatusPill({ count, label, color }: { count: number; label: string; color: string }) {
-  if (count === 0) return null;
-  return (
-    <div className="flex items-center gap-1.5">
-      <div className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
-      <span style={{ color }}>
-        {count} {label}
-      </span>
-    </div>
-  );
-}
-
-function HudMetric({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] tracking-wider" style={{ color: C.textDim }}>
-        {label}
-      </span>
-      <span className="font-bold" style={{ color }}>
-        {value}
-      </span>
-    </div>
   );
 }

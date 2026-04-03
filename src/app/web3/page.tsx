@@ -66,11 +66,12 @@ interface Web3Data {
   solana?: {
     address: string;
     network: string;
-    sol: number;
-    usdc: number;
-    total_usd: number;
-    mode: string;
-    status: string;
+    sol_balance: number;
+    usdc_balance: number;
+    total_usd?: number;
+    total_value: number;
+    total_pnl: number;
+    source: string;
   };
   gas_costs?: {
     total_eth: number;
@@ -85,9 +86,9 @@ export default function Web3Page() {
 
   if (error && !data) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="mb-2 text-2xl font-bold">Connection Error</h1>
+      <PageShell title="Web3 & DeFi" subtitle="Base + Polygon + Solana wallets, AAVE yield, NFTs">
+        <div className="glass flex flex-col items-center justify-center rounded-xl border border-[var(--border-dim)] p-12 text-center">
+          <h2 className="mb-2 text-xl font-bold text-red-400">Connection Error</h2>
           <p className="text-[var(--text-secondary)]">{error}</p>
           <button
             onClick={refresh}
@@ -96,18 +97,20 @@ export default function Web3Page() {
             Retry
           </button>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   if (loading && !data) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
-          <p className="text-[var(--text-secondary)]">Loading Web3 Status...</p>
+      <PageShell title="Web3 & DeFi" subtitle="Base + Polygon + Solana wallets, AAVE yield, NFTs">
+        <div className="flex items-center justify-center py-24">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
+            <p className="text-[var(--text-secondary)]">Loading Web3 Status...</p>
+          </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
@@ -126,7 +129,7 @@ export default function Web3Page() {
 
   const w = data;
   const polyValue = w.polygon?.total_value ?? 0;
-  const solanaValue = w.solana?.total_usd ?? 0;
+  const solanaValue = w.solana?.total_value ?? w.solana?.total_usd ?? 0;
   const totalWeb3Value = w.wallet.total_usd + polyValue + solanaValue;
 
   const subtitleContent = (
@@ -239,7 +242,7 @@ export default function Web3Page() {
                 </span>
                 <span className="font-medium">ETH</span>
               </div>
-              <span className="font-mono text-lg">{w.wallet.eth.toFixed(6)}</span>
+              <span className="font-mono text-lg">{(w.wallet.eth ?? 0).toFixed(6)}</span>
             </div>
             <div className="flex justify-between border-t border-[var(--border-dim)] pt-3">
               <span className="text-[var(--text-secondary)]">Total Received</span>
@@ -333,20 +336,9 @@ export default function Web3Page() {
           <div className="glass rounded-xl border border-green-500/30 p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Solana Wallet</h2>
-              <div className="flex items-center gap-2">
-                <span className="rounded-full border border-green-500/30 bg-green-500/20 px-2 py-0.5 text-xs text-green-400">
-                  SOL
-                </span>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs ${
-                    w.solana.mode === "LIVE"
-                      ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                      : "border border-amber-500/30 bg-amber-500/10 text-amber-400"
-                  }`}
-                >
-                  {w.solana.mode}
-                </span>
-              </div>
+              <span className="rounded-full border border-green-500/30 bg-green-500/20 px-2 py-0.5 text-xs text-green-400">
+                SOL
+              </span>
             </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -356,7 +348,7 @@ export default function Web3Page() {
                   </span>
                   <span className="font-medium">SOL</span>
                 </div>
-                <span className="font-mono text-lg">{w.solana.sol.toFixed(4)}</span>
+                <span className="font-mono text-lg">{(w.solana.sol_balance ?? 0).toFixed(4)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -365,15 +357,19 @@ export default function Web3Page() {
                   </span>
                   <span className="font-medium">USDC</span>
                 </div>
-                <span className="font-mono text-lg">{formatUSD(w.solana.usdc)}</span>
+                <span className="font-mono text-lg">{formatUSD(w.solana.usdc_balance ?? 0)}</span>
               </div>
               <div className="flex justify-between border-t border-[var(--border-dim)] pt-3">
                 <span className="text-[var(--text-secondary)]">Total Value</span>
-                <span className="font-mono text-emerald-400">{formatUSD(w.solana.total_usd)}</span>
+                <span className="font-mono text-emerald-400">
+                  {formatUSD(w.solana.total_value ?? w.solana.total_usd ?? 0)}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">Status</span>
-                <span className="text-[var(--text-secondary)] capitalize">{w.solana.status}</span>
+                <span className="text-[var(--text-secondary)]">Source</span>
+                <span className="text-sm text-[var(--text-secondary)]">
+                  {w.solana.source ?? "ForgeDefi"}
+                </span>
               </div>
             </div>
           </div>
