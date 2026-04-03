@@ -10,9 +10,11 @@ import { usePathname } from "next/navigation";
 const NAV_ITEMS = [
   { href: "/", label: "Command Center", icon: "⚡", section: "core" },
   { href: "/constellation", label: "Constellation", icon: "◉", section: "core" },
+  { href: "/orchestrator", label: "Orchestrator", icon: "⬡", section: "core" },
   { href: "/financials", label: "Financials", icon: "◈", section: "money" },
   { href: "/revenue", label: "Revenue Intel", icon: "◆", section: "money" },
   { href: "/agents", label: "Agent Roster", icon: "◎", section: "ops" },
+  { href: "/teams", label: "Teams", icon: "⬢", section: "ops" },
   { href: "/executive-log", label: "Exec Log", icon: "◇", section: "ops" },
   { href: "/proposals", label: "Proposals", icon: "▷", section: "ops" },
   { href: "/activity", label: "Activity Feed", icon: "◌", section: "ops" },
