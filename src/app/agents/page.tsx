@@ -178,7 +178,7 @@ export default function AgentsPage() {
   );
   const { data: pdps } = useApiPoller<PDPData[]>("/api/pdps", 30000);
   const { data: talent } = useApiPoller<{
-    pipeline: Record<string, string>[];
+    pipeline: Record<string, string>[] | Record<string, unknown>;
     compound_score: { score: number }[];
   }>("/api/talent", 60000);
 
@@ -379,20 +379,21 @@ export default function AgentsPage() {
             {(Array.isArray(talent.pipeline)
               ? talent.pipeline
               : Object.values(talent.pipeline)
-            ).map((candidate: Record<string, string>, i: number) => (
-              <div key={i} className="glass rounded-lg border border-[var(--border-dim)] p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-cyan-400">{candidate.role}</span>
-                  <StatusBadge status={candidate.status} />
+            ).map((candidate: Record<string, string> | unknown, i: number) => {
+              const c = candidate as Record<string, string>;
+              return (
+                <div key={i} className="glass rounded-lg border border-[var(--border-dim)] p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-cyan-400">{c.role}</span>
+                    <StatusBadge status={c.status} />
+                  </div>
+                  <p className="mt-1 text-sm text-[var(--text-secondary)]">{c.business_case}</p>
+                  <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                    Expected: {c.expected_revenue}
+                  </p>
                 </div>
-                <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                  {candidate.business_case}
-                </p>
-                <p className="mt-1 text-xs text-[var(--text-tertiary)]">
-                  Expected: {candidate.expected_revenue}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
