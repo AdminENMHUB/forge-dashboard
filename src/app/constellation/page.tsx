@@ -89,6 +89,10 @@ interface StatusResponse {
     peak_portfolio: number;
     cycle_count: number;
     milestones: string[];
+    total_agents?: number;
+    active_agents?: number;
+    top_performers?: number;
+    on_pdp?: number;
   };
   swarms: Record<string, StatusSwarm>;
   tradebot: {
@@ -150,23 +154,24 @@ const STATUS_COLOR: Record<NodeStatus, string> = {
 const DEPARTMENTS: DepartmentDef[] = [
   {
     id: "oversight",
-    name: "OVERSIGHT",
+    name: "OPERATIONS",
     subtitle: "Master Swarm",
     swarmKey: null,
     serviceKey: "egan-master", // pragma: allowlist secret
     angle: -Math.PI / 2,
     color: "#00D4FF",
     agents: [
-      { id: "overseer", name: "Overseer", role: "Master Orchestrator" },
-      { id: "cfo", name: "CFO", role: "P&L Attribution" },
-      { id: "health_monitor", name: "Health Monitor", role: "Proactive Health" },
-      { id: "truth_verifier", name: "Truth Verifier", role: "Ground Truth" },
+      { id: "health_monitor", name: "Health Mon", role: "Infrastructure Monitor" },
+      { id: "improvement_engine", name: "Improve", role: "Proposal Engine" },
       { id: "cross_strategist", name: "Strategist", role: "Cross-Swarm Signals" },
+      { id: "daily_briefing", name: "Briefing", role: "CEO Daily Report" },
+      { id: "weekly_report", name: "Weekly", role: "Empire Summary" },
       { id: "optimizer", name: "Optimizer", role: "Parameter Tuning" },
-      { id: "daily_briefing", name: "Briefing", role: "7am CEO Report" },
-      { id: "infra_sre", name: "Infra SRE", role: "VPS Infrastructure" },
-      { id: "cost_controller", name: "Cost Ctrl", role: "Budget Guard" },
-      { id: "strategic_analyst", name: "CSO", role: "Strategic Analysis" },
+      { id: "hyper_agent", name: "Hyper", role: "Self-Improvement" },
+      { id: "retrospective", name: "Retro", role: "Lesson Extraction" },
+      { id: "log_janitor", name: "Log Clean", role: "Log Management" },
+      { id: "infra_sre", name: "SRE", role: "Infrastructure Ops" },
+      { id: "network_sentinel", name: "Sentinel", role: "Network Security" },
     ],
   },
   {
@@ -175,16 +180,14 @@ const DEPARTMENTS: DepartmentDef[] = [
     subtitle: "TradeBot",
     swarmKey: "EganTradeBot",
     serviceKey: "egan-trade", // pragma: allowlist secret
-    angle: -Math.PI / 2 + (2 * Math.PI) / 5,
+    angle: -Math.PI / 2 + (2 * Math.PI) / 11,
     color: "#10B981",
     agents: [
-      { id: "orchestrator", name: "Orchestrator", role: "Cycle Router" },
-      { id: "market_analyst", name: "Analyst", role: "Technical Analysis" },
-      { id: "risk_manager", name: "Risk Mgr", role: "VETO Gate" },
-      { id: "execution", name: "Executor", role: "Order Placement" },
-      { id: "portfolio", name: "Portfolio", role: "Rebalancing" },
-      { id: "sentiment", name: "Sentiment", role: "Fear & Greed" },
-      { id: "learning", name: "Learning", role: "Adaptive Params" },
+      { id: "trade_engine", name: "Engine", role: "Trade Execution" },
+      { id: "market_data_agent", name: "Market Data", role: "Price Feeds" },
+      { id: "portfolio_manager", name: "Portfolio", role: "Position Sizing" },
+      { id: "risk_manager", name: "Risk Mgr", role: "Circuit Breaker" },
+      { id: "trading_ops_guard", name: "Ops Guard", role: "Halt Enforcement" },
     ],
   },
   {
@@ -193,16 +196,22 @@ const DEPARTMENTS: DepartmentDef[] = [
     subtitle: "EchoSwarm",
     swarmKey: "EchoSwarm",
     serviceKey: null,
-    angle: -Math.PI / 2 + (2 * Math.PI * 2) / 5,
+    angle: -Math.PI / 2 + (2 * Math.PI * 2) / 11,
     color: "#8B5CF6",
     agents: [
-      { id: "momentum", name: "Momentum", role: "Price Momentum", active: true },
-      { id: "sentiment_echo", name: "Sentiment", role: "Social Signals", active: true },
-      { id: "orderbook", name: "Orderbook", role: "Book Imbalance", active: true },
-      { id: "arbitrage", name: "Arbitrage", role: "Cross-Market", active: false },
-      { id: "misprice", name: "Misprice", role: "Stat Mispricing", active: false },
-      { id: "news", name: "News", role: "News-Driven", active: false },
+      { id: "echoswarm_composite", name: "Composite", role: "13-Container Swarm" },
+      { id: "prediction_guard", name: "Guard", role: "Position Limits" },
     ],
+  },
+  {
+    id: "defi",
+    name: "DEFI",
+    subtitle: "ForgeDefi",
+    swarmKey: "ForgeDefi",
+    serviceKey: null,
+    angle: -Math.PI / 2 + (2 * Math.PI * 3) / 11,
+    color: "#EC4899",
+    agents: [{ id: "defi_arb_engine", name: "Arb Engine", role: "DEX-CEX Arbitrage" }],
   },
   {
     id: "signals",
@@ -210,29 +219,115 @@ const DEPARTMENTS: DepartmentDef[] = [
     subtitle: "Web3 Swarm",
     swarmKey: "EganWeb3Swarm",
     serviceKey: "egan-web3", // pragma: allowlist secret
-    angle: -Math.PI / 2 + (2 * Math.PI * 3) / 5,
+    angle: -Math.PI / 2 + (2 * Math.PI * 4) / 11,
     color: "#FFB800",
     agents: [
-      { id: "wallet_monitor", name: "Wallet Mon", role: "Payment Watch" },
-      { id: "signal_terminal", name: "Signal Term", role: "Signal Gen" },
-      { id: "scorecard", name: "Scorecard", role: "Win Rate Track" },
-      { id: "renewal", name: "Renewal", role: "Sub Reminders" },
-      { id: "defi_yield", name: "DeFi Yield", role: "AAVE Mgmt" },
-      { id: "nft_minter", name: "NFT Minter", role: "Pass Minting" },
+      { id: "signal_terminal", name: "Terminal", role: "Signal Generation" },
+      { id: "wallet_monitor", name: "Wallet", role: "Payment Watch" },
+      { id: "defi_yield", name: "Yield", role: "AAVE Management" },
+      { id: "nft_minter", name: "NFT Mint", role: "Pass Minting" },
+      { id: "renewal_reminder", name: "Renewal", role: "Sub Reminders" },
+      { id: "signal_scorecard", name: "Scorecard", role: "Win Rate Track" },
+      { id: "signal_audit", name: "Audit", role: "Signal Integrity" },
     ],
   },
   {
     id: "products",
-    name: "PRODUCTS",
+    name: "SAAS",
     subtitle: "SaaS Factory",
     swarmKey: "EganSaasFactory",
     serviceKey: "egan-saas", // pragma: allowlist secret
-    angle: -Math.PI / 2 + (2 * Math.PI * 4) / 5,
+    angle: -Math.PI / 2 + (2 * Math.PI * 5) / 11,
     color: "#3B82F6",
     agents: [
-      { id: "builder", name: "Builder", role: "Product Builder" },
-      { id: "marketer", name: "Marketer", role: "Growth Marketing" },
-      { id: "design_dir", name: "Design Dir", role: "Brand Design" },
+      { id: "design_director", name: "Design", role: "UI/UX Design" },
+      { id: "saas_builder", name: "Builder", role: "Code & Deploy" },
+      { id: "saas_iteration", name: "Iteration", role: "Feature Loop" },
+      { id: "saas_sre", name: "SaaS SRE", role: "Uptime Monitor" },
+      { id: "product_doctor", name: "Doctor", role: "Health Diagnostics" },
+    ],
+  },
+  {
+    id: "growth",
+    name: "GROWTH",
+    subtitle: "Growth Engine",
+    swarmKey: "EganGrowthEngine",
+    serviceKey: null,
+    angle: -Math.PI / 2 + (2 * Math.PI * 6) / 11,
+    color: "#F97316",
+    agents: [
+      { id: "marketing_director", name: "Marketing", role: "Content Creation" },
+      { id: "content_publisher", name: "Publisher", role: "Cross-Platform" },
+      { id: "content_monetization", name: "Monetize", role: "Revenue Engine" },
+      { id: "social_engagement_tracker", name: "Social", role: "Engagement" },
+      { id: "conversion_funnel", name: "Funnel", role: "Lead Convert" },
+    ],
+  },
+  {
+    id: "autonomous",
+    name: "AUTO",
+    subtitle: "Self-Managing",
+    swarmKey: null,
+    serviceKey: "egan-master", // pragma: allowlist secret
+    angle: -Math.PI / 2 + (2 * Math.PI * 7) / 11,
+    color: "#14B8A6",
+    agents: [
+      { id: "alert_triage", name: "Triage", role: "Alert Resolution" },
+      { id: "auto_triage", name: "Classify", role: "Issue Routing" },
+      { id: "auto_dispatch", name: "Dispatch", role: "Signal Routing" },
+      { id: "auto_apply", name: "Apply", role: "Config Patches" },
+      { id: "code_patch_agent", name: "Code Patch", role: "SaaS Deploys" },
+      { id: "sub_agent_manager", name: "Sub Mgr", role: "Agent Lifecycle" },
+      { id: "spawner", name: "Spawner", role: "Empire Expansion" },
+    ],
+  },
+  {
+    id: "finance",
+    name: "FINANCE",
+    subtitle: "Treasury",
+    swarmKey: null,
+    serviceKey: "egan-master", // pragma: allowlist secret
+    angle: -Math.PI / 2 + (2 * Math.PI * 8) / 11,
+    color: "#22D3EE",
+    agents: [
+      { id: "revenue_intelligence", name: "Revenue", role: "Stripe Analytics" },
+      { id: "revenue_guard", name: "Rev Guard", role: "Leakage Detection" },
+      { id: "cfo", name: "CFO", role: "Budget Oversight" },
+      { id: "cro_agent", name: "CRO", role: "Revenue Optimization" },
+      { id: "capital_allocator", name: "Capital", role: "Cross-Swarm Alloc" },
+      { id: "sharpe_allocator", name: "Sharpe", role: "Portfolio Rebalance" },
+      { id: "cost_controller", name: "Cost Ctrl", role: "Budget Guard" },
+    ],
+  },
+  {
+    id: "strategy",
+    name: "STRATEGY",
+    subtitle: "Intelligence",
+    swarmKey: null,
+    serviceKey: "egan-master", // pragma: allowlist secret
+    angle: -Math.PI / 2 + (2 * Math.PI * 9) / 11,
+    color: "#A78BFA",
+    agents: [
+      { id: "strategic_analyst", name: "CSO", role: "Strategic Analysis" },
+      { id: "strategy_lab", name: "Lab", role: "A/B Experiments" },
+      { id: "competitive_intel", name: "Intel", role: "Competitor Scan" },
+      { id: "ai_research_scout", name: "Research", role: "AI Breakthroughs" },
+      { id: "promotion_evaluator", name: "Promoter", role: "Readiness Review" },
+    ],
+  },
+  {
+    id: "governance",
+    name: "GOVERN",
+    subtitle: "Quality",
+    swarmKey: null,
+    serviceKey: "egan-master", // pragma: allowlist secret
+    angle: -Math.PI / 2 + (2 * Math.PI * 10) / 11,
+    color: "#F43F5E",
+    agents: [
+      { id: "qa_director", name: "QA", role: "Quality Assurance" },
+      { id: "truth_verifier", name: "Verifier", role: "Fact-Check" },
+      { id: "coo_agent", name: "COO", role: "Performance Review" },
+      { id: "asset_reconciler", name: "Reconciler", role: "Asset Audit" },
     ],
   },
 ];
@@ -422,7 +517,14 @@ class ConstellationEngine {
     });
   }
 
-  updateData(status: StatusResponse | null, health: HealthResponse | null) {
+  updateData(
+    status: StatusResponse | null,
+    health: HealthResponse | null,
+    scorecards?: Record<
+      string,
+      { rating: number; pdp_active: boolean; pillars: Record<string, number> }
+    > | null,
+  ) {
     // Center node
     const center = this.nodes.find((n) => n.id === "center");
     if (center && status?.empire) {
@@ -433,6 +535,8 @@ class ConstellationEngine {
         mrr: status.empire.combined_mrr,
         arr: status.empire.combined_arr,
         cycles: status.empire.cycle_count,
+        totalAgents: status.empire.total_agents ?? 0,
+        activeAgents: status.empire.active_agents ?? 0,
       };
     }
 
@@ -478,15 +582,16 @@ class ConstellationEngine {
         }
       }
 
-      // Docker health for EchoSwarm
-      if (dept.id === "predictions" && health?.docker) {
-        const scout = health.docker["echo-scout"];
-        if (scout) {
+      // Docker health for EchoSwarm & ForgeDefi
+      if ((dept.id === "predictions" || dept.id === "defi") && health?.docker) {
+        const containerKey = dept.id === "predictions" ? "echo-scout" : "echo-arb-engine";
+        const container = health.docker[containerKey];
+        if (container) {
           const dockerOk =
-            scout.status === "running" ||
-            scout.status === "healthy" ||
-            scout.status === "Up" ||
-            String(scout.status).startsWith("Up");
+            container.status === "running" ||
+            container.status === "healthy" ||
+            container.status === "Up" ||
+            String(container.status).startsWith("Up");
           if (!dockerOk) {
             node.status = "error";
           } else if (node.status === "unknown") {
@@ -495,12 +600,9 @@ class ConstellationEngine {
         }
       }
 
-      // Oversight doesn't appear in swarms — derive from service health
-      if (
-        dept.id === "oversight" &&
-        node.status === "unknown" &&
-        health?.services?.["egan-master"]
-      ) {
+      // Departments without a swarm (oversight, autonomous, finance, strategy, governance)
+      // derive status from egan-master service health
+      if (!dept.swarmKey && node.status === "unknown" && health?.services?.["egan-master"]) {
         const svc = health.services["egan-master"];
         node.status =
           svc.status === "active" || svc.status === "running" || svc.status === "healthy"
@@ -523,22 +625,66 @@ class ConstellationEngine {
         node.metrics.queue = status.saas.opportunity_queue;
       }
 
-      // Propagate status to agents
+      // Propagate status to agents — use scorecard data if available
       dept.agents.forEach((agent) => {
         const an = this.nodes.find((n) => n.id === `${dept.id}.${agent.id}`);
         if (!an) return;
-        if (agent.active === false) {
-          an.status = "disabled";
-        } else if (node.status === "halted") {
-          an.status = "halted";
-        } else if (node.status === "error") {
-          an.status = "error";
-        } else if (node.status === "healthy" || node.status === "active") {
-          an.status = "active";
-        } else if (node.status === "degraded") {
-          an.status = "degraded";
+
+        // Check scorecard for this agent's real rating
+        const sc = scorecards?.[agent.id];
+        if (sc) {
+          an.metrics.rating = sc.rating;
+          an.metrics.pdp = sc.pdp_active;
+          if (sc.pillars) {
+            an.metrics.results = sc.pillars.results;
+            an.metrics.reliability = sc.pillars.reliability;
+          }
+
+          // Rating-based status (overrides swarm-level)
+          if (sc.rating >= 4) {
+            an.status = "active";
+          } else if (sc.rating === 3) {
+            an.status = "healthy";
+          } else if (sc.rating === 2) {
+            an.status = "degraded";
+          } else {
+            an.status = "error";
+          }
+
+          // But swarm-level halts still override
+          if (node.status === "halted") {
+            an.status = "halted";
+          }
+        } else {
+          // No scorecard data — inherit from department
+          if (node.status === "halted") {
+            an.status = "halted";
+          } else if (node.status === "error") {
+            an.status = "error";
+          } else if (node.status === "healthy" || node.status === "active") {
+            an.status = "active";
+          } else if (node.status === "degraded") {
+            an.status = "degraded";
+          }
         }
       });
+
+      // Compute department aggregate status from agent ratings if scorecards available
+      if (scorecards) {
+        const deptAgentStatuses = dept.agents
+          .map((a) => this.nodes.find((n) => n.id === `${dept.id}.${a.id}`))
+          .filter(Boolean)
+          .map((n) => n!.status);
+        if (deptAgentStatuses.length > 0 && node.status !== "halted") {
+          const errorCount = deptAgentStatuses.filter((s) => s === "error").length;
+          const degradedCount = deptAgentStatuses.filter((s) => s === "degraded").length;
+          if (errorCount > deptAgentStatuses.length / 2) {
+            node.status = "error";
+          } else if (errorCount + degradedCount > deptAgentStatuses.length / 2) {
+            node.status = "degraded";
+          }
+        }
+      }
     });
   }
 
@@ -1364,7 +1510,7 @@ function DetailPanel({
         {isCenter && (
           <div className="border-t pt-3" style={{ borderColor: `${C.accent}15` }}>
             <div className="mb-2 font-bold tracking-wider" style={{ color: C.accent }}>
-              DEPARTMENTS (5)
+              DEPARTMENTS ({DEPARTMENTS.length})
             </div>
             <div className="space-y-1">
               {nodes
@@ -1544,7 +1690,7 @@ export default function ConstellationPage() {
   // Fetch data
   const fetchData = useCallback(async () => {
     try {
-      const [statusRes, healthRes] = await Promise.allSettled([
+      const [statusRes, healthRes, scorecardsRes] = await Promise.allSettled([
         fetch("/api/status").then((r) => {
           if (!r.ok) throw new Error(`${r.status}`);
           return r.json() as Promise<StatusResponse>;
@@ -1553,15 +1699,22 @@ export default function ConstellationPage() {
           if (!r.ok) throw new Error(`${r.status}`);
           return r.json() as Promise<HealthResponse>;
         }),
+        fetch("/api/scorecards").then((r) => {
+          if (!r.ok) throw new Error(`${r.status}`);
+          return r.json() as Promise<
+            Record<string, { rating: number; pdp_active: boolean; pillars: Record<string, number> }>
+          >;
+        }),
       ]);
 
       const status = statusRes.status === "fulfilled" ? statusRes.value : null;
       const health = healthRes.status === "fulfilled" ? healthRes.value : null;
+      const scorecards = scorecardsRes.status === "fulfilled" ? scorecardsRes.value : null;
 
       if (status) setStatusData(status);
 
       if (engineRef.current) {
-        engineRef.current.updateData(status, health);
+        engineRef.current.updateData(status, health, scorecards);
         engineRef.current.detectActivity(status);
         setAllNodes([...engineRef.current.nodes]);
       }
