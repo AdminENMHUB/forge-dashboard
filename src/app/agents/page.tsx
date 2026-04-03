@@ -68,13 +68,13 @@ function PillarBar({ label, score }: { label: string; score: number }) {
   return (
     <div className="flex items-center gap-2">
       <span className="w-20 text-xs text-[var(--text-tertiary)] capitalize">{label}</span>
-      <div className="flex-1 h-2 rounded-full bg-white/5 overflow-hidden">
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/5">
         <div
           className={`h-full rounded-full transition-all ${pillarColor(score)}`}
           style={{ width: `${Math.min(score, 100)}%` }}
         />
       </div>
-      <span className="w-10 text-right text-xs font-mono text-[var(--text-secondary)]">
+      <span className="w-10 text-right font-mono text-xs text-[var(--text-secondary)]">
         {score.toFixed(0)}
       </span>
     </div>
@@ -84,10 +84,8 @@ function PillarBar({ label, score }: { label: string; score: number }) {
 function PDPDetail({ pdp }: { pdp: PDPData }) {
   return (
     <div className="mt-3 space-y-3 rounded-lg border border-red-500/20 bg-red-500/5 p-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h4 className="text-sm font-semibold text-red-400">
-          Performance Development Plan
-        </h4>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold text-red-400">Performance Development Plan</h4>
         <div className="flex gap-3 text-xs text-[var(--text-tertiary)]">
           <span>Issued: {pdp.issued}</span>
           <span>Review by: {pdp.review_date}</span>
@@ -96,25 +94,27 @@ function PDPDetail({ pdp }: { pdp: PDPData }) {
 
       {pdp.improvement_targets.length > 0 && (
         <div>
-          <h5 className="mb-2 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+          <h5 className="mb-2 text-xs font-medium tracking-wider text-[var(--text-secondary)] uppercase">
             Improvement Targets
           </h5>
           <div className="space-y-2">
             {pdp.improvement_targets.map((t, i) => (
               <div key={i} className="rounded-lg border border-[var(--border-dim)] bg-black/20 p-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium capitalize text-orange-400">
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="text-xs font-medium text-orange-400 capitalize">
                     {t.pillar}: {t.current_score.toFixed(0)} → {t.target_score}
                   </span>
-                  <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-1.5 w-24 overflow-hidden rounded-full bg-white/10">
                     <div
                       className="h-full rounded-full bg-orange-500"
-                      style={{ width: `${Math.min((t.current_score / t.target_score) * 100, 100)}%` }}
+                      style={{
+                        width: `${Math.min((t.current_score / t.target_score) * 100, 100)}%`,
+                      }}
                     />
                   </div>
                 </div>
                 <p className="text-xs text-[var(--text-secondary)]">{t.target_description}</p>
-                <p className="mt-1 text-xs text-[var(--text-tertiary)] font-mono">
+                <p className="mt-1 font-mono text-xs text-[var(--text-tertiary)]">
                   Metric: {t.success_metric}
                 </p>
               </div>
@@ -125,13 +125,13 @@ function PDPDetail({ pdp }: { pdp: PDPData }) {
 
       {pdp.development_actions.length > 0 && (
         <div>
-          <h5 className="mb-2 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+          <h5 className="mb-2 text-xs font-medium tracking-wider text-[var(--text-secondary)] uppercase">
             Development Actions
           </h5>
           <div className="space-y-1">
             {pdp.development_actions.map((action, i) => (
               <div key={i} className="flex items-start gap-2 text-xs text-[var(--text-secondary)]">
-                <span className="text-orange-400 mt-0.5">▸</span>
+                <span className="mt-0.5 text-orange-400">▸</span>
                 <span>{action}</span>
               </div>
             ))}
@@ -142,7 +142,7 @@ function PDPDetail({ pdp }: { pdp: PDPData }) {
       {pdp.deficiencies.length > 0 && pdp.improvement_targets.length === 0 && (
         <div>
           <h5 className="mb-1 text-xs font-medium text-[var(--text-secondary)]">Deficiencies</h5>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2">
             {pdp.deficiencies.map((d, i) => (
               <span key={i} className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs text-red-400">
                 {d.pillar}: {d.score.toFixed(0)}
@@ -197,8 +197,7 @@ export default function AgentsPage() {
   }
 
   const cards = scorecards ? Object.values(scorecards) : [];
-  const filtered =
-    deptFilter === "all" ? cards : cards.filter((c) => c.department === deptFilter);
+  const filtered = deptFilter === "all" ? cards : cards.filter((c) => c.department === deptFilter);
   const sorted = [...filtered].sort(
     (a, b) => b.rating - a.rating || b.pnl_attributed - a.pnl_attributed,
   );
@@ -225,7 +224,7 @@ export default function AgentsPage() {
   return (
     <PageShell title="Agent Roster" subtitle="Performance scorecards for all empire agents">
       {/* KPI Summary */}
-      <div className="mb-6 grid grid-cols-2 sm:grid-cols-5 gap-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
         <MetricCard label="Total Agents" value={cards.length} />
         <MetricCard
           label="Top Performers"
@@ -253,8 +252,8 @@ export default function AgentsPage() {
               onClick={() => setDeptFilter(dept)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 deptFilter === dept
-                  ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/40"
-                  : "bg-white/5 text-[var(--text-tertiary)] hover:bg-white/10 border border-transparent"
+                  ? "border border-cyan-500/40 bg-cyan-500/20 text-cyan-400"
+                  : "border border-transparent bg-white/5 text-[var(--text-tertiary)] hover:bg-white/10"
               }`}
             >
               {DEPT_LABELS[dept] || dept} ({count})
@@ -283,11 +282,11 @@ export default function AgentsPage() {
               {/* Main row — clickable */}
               <button
                 onClick={() => setExpanded(isExpanded ? null : card.agent)}
-                className="w-full px-4 py-3 flex items-center gap-4 text-left hover:bg-white/5 rounded-xl transition-colors"
+                className="flex w-full items-center gap-4 rounded-xl px-4 py-3 text-left transition-colors hover:bg-white/5"
               >
                 {/* Rating badge */}
                 <div
-                  className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold ${
+                  className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-lg font-bold ${
                     card.rating >= 4
                       ? "bg-emerald-500/20 text-emerald-400"
                       : card.rating === 3
@@ -301,9 +300,9 @@ export default function AgentsPage() {
                 </div>
 
                 {/* Agent info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-sm truncate">{card.agent}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="truncate font-mono text-sm">{card.agent}</span>
                     <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-[var(--text-tertiary)]">
                       {card.department}
                     </span>
@@ -313,21 +312,21 @@ export default function AgentsPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[var(--text-tertiary)] truncate">{card.role}</p>
+                  <p className="truncate text-xs text-[var(--text-tertiary)]">{card.role}</p>
                 </div>
 
                 {/* Stars */}
-                <span className={`hidden sm:block text-sm ${ratingColor(card.rating)}`}>
+                <span className={`hidden text-sm sm:block ${ratingColor(card.rating)}`}>
                   {ratingStars(card.rating)}
                 </span>
 
                 {/* PnL */}
-                <div className="hidden sm:block text-right w-24">
+                <div className="hidden w-24 text-right sm:block">
                   <PnlText value={card.pnl_attributed} />
                 </div>
 
                 {/* Cost */}
-                <span className="hidden sm:block w-20 text-right text-xs text-[var(--text-secondary)]">
+                <span className="hidden w-20 text-right text-xs text-[var(--text-secondary)] sm:block">
                   ${card.llm_cost_30d.toFixed(2)}
                 </span>
 
@@ -341,21 +340,26 @@ export default function AgentsPage() {
 
               {/* Expanded detail */}
               {isExpanded && (
-                <div className="px-4 pb-4 space-y-3 border-t border-[var(--border-dim)]/50">
+                <div className="space-y-3 border-t border-[var(--border-dim)]/50 px-4 pb-4">
                   {/* Pillar bars */}
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5">
-                    {(
-                      Object.entries(card.pillars) as [keyof PillarScores, number][]
-                    ).map(([pillar, score]) => (
-                      <PillarBar key={pillar} label={pillar} score={score} />
-                    ))}
+                  <div className="mt-3 grid grid-cols-1 gap-x-8 gap-y-1.5 sm:grid-cols-2">
+                    {(Object.entries(card.pillars) as [keyof PillarScores, number][]).map(
+                      ([pillar, score]) => (
+                        <PillarBar key={pillar} label={pillar} score={score} />
+                      ),
+                    )}
                   </div>
 
                   {/* Metrics row */}
                   <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-[var(--text-tertiary)]">
                     <span>Cycles (30d): {card.cycles_completed_30d ?? 0}</span>
                     <span>Error rate: {((card.error_rate_30d ?? 0) * 100).toFixed(1)}%</span>
-                    <span>Last review: {card.last_review ? new Date(card.last_review).toLocaleDateString() : "\u2014"}</span>
+                    <span>
+                      Last review:{" "}
+                      {card.last_review
+                        ? new Date(card.last_review).toLocaleDateString()
+                        : "\u2014"}
+                    </span>
                   </div>
 
                   {/* PDP detail */}
