@@ -54,6 +54,7 @@ src/
 | `/api/proposals/action`    | POST `/api/proposals/action` | —     | Approve/reject/defer                                         |
 | `/api/scorecard`           | `/api/scorecard`             | 30s   | Signal win rates + treasury (CORS-enabled for eganforge.com) |
 | `/api/scorecards`          | `/api/scorecards`            | 30s   | Agent performance scorecards (ratings, pillars, PDP)         |
+| `/api/pdps`                | `/api/pdps`                  | 30s   | Active professional development plans with targets & actions |
 | `/api/talent`              | `/api/talent`                | 60s   | Agent talent/roster data                                     |
 | `/api/activity`            | `/api/activity`              | 10s   | Live event stream (filterable by swarm/agent/limit)          |
 | `/api/executive-briefing`  | `/api/executive-briefing`    | 10s   | Executive briefing (empire snapshot, decision log)           |
