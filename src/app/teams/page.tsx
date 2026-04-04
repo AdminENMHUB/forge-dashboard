@@ -120,9 +120,13 @@ export default function TeamsPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-white">{preset.name.replace(/_/g, " ")}</h3>
-                  <p className="mt-0.5 text-[11px] text-[var(--text-tertiary)]">{preset.description}</p>
+                  <p className="mt-0.5 text-[11px] text-[var(--text-tertiary)]">
+                    {preset.description}
+                  </p>
                 </div>
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${badgeColor}`}>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${badgeColor}`}
+                >
                   {preset.cadence}
                 </span>
               </div>
@@ -132,7 +136,8 @@ export default function TeamsPage() {
                   <>
                     <span className="text-[var(--text-muted)]">·</span>
                     <span className={lastRun.success ? "text-emerald-400" : "text-red-400"}>
-                      Last: {lastRun.success ? "✓" : "✗"} {lastRun.tasks_succeeded}/{lastRun.tasks_succeeded + lastRun.tasks_failed} tasks
+                      Last: {lastRun.success ? "✓" : "✗"} {lastRun.tasks_succeeded}/
+                      {lastRun.tasks_succeeded + lastRun.tasks_failed} tasks
                     </span>
                     <span className="text-[var(--text-muted)]">{lastRun.latency_ms}ms</span>
                   </>
@@ -167,7 +172,7 @@ export default function TeamsPage() {
                   {team.agents.map((agent) => (
                     <span
                       key={agent}
-                      className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-mono text-[var(--text-secondary)]"
+                      className="rounded-full bg-white/5 px-2 py-0.5 font-mono text-[10px] text-[var(--text-secondary)]"
                     >
                       {agent}
                     </span>
@@ -205,16 +210,15 @@ export default function TeamsPage() {
                   {r.tasks_succeeded}/{r.tasks_succeeded + r.tasks_failed} tasks
                 </span>
                 <span>{r.latency_ms}ms</span>
-                {r.started_at && (
-                  <span>{new Date(r.started_at).toLocaleTimeString()}</span>
-                )}
+                {r.started_at && <span>{new Date(r.started_at).toLocaleTimeString()}</span>}
               </div>
             </div>
           ))}
         </div>
       ) : (
         <p className="text-xs text-[var(--text-muted)]">
-          Team execution history will appear after the overseer runs its next cycle with the new orchestrator.
+          Team execution history will appear after the overseer runs its next cycle with the new
+          orchestrator.
         </p>
       )}
     </PageShell>

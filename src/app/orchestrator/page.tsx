@@ -11,7 +11,10 @@ interface OrchestratorData {
     recent_success_rate: number;
     timestamp: string;
   };
-  active_teams?: Record<string, { name: string; objective: string; status: string; agents: string[] }>;
+  active_teams?: Record<
+    string,
+    { name: string; objective: string; status: string; agents: string[] }
+  >;
   recent_results?: {
     team: string;
     success: boolean;
@@ -98,7 +101,9 @@ export default function OrchestratorPage() {
 
       {/* ── Agent Pool ──────────────────────────────────────────── */}
       <div className="glass-card mb-6 p-4">
-        <h2 className="mb-3 text-sm font-semibold tracking-wide text-white uppercase">Agent Pool</h2>
+        <h2 className="mb-3 text-sm font-semibold tracking-wide text-white uppercase">
+          Agent Pool
+        </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Kpi label="Max Concurrent" value={p?.max_concurrent ?? "—"} small />
           <Kpi label="Active Now" value={p?.active ?? 0} small color="text-cyan-400" />
@@ -197,7 +202,9 @@ export default function OrchestratorPage() {
                   </div>
                   <div className="mt-1 flex gap-3 text-[var(--text-muted)]">
                     <span>{r.tasks_succeeded} passed</span>
-                    {r.tasks_failed > 0 && <span className="text-red-400">{r.tasks_failed} failed</span>}
+                    {r.tasks_failed > 0 && (
+                      <span className="text-red-400">{r.tasks_failed} failed</span>
+                    )}
                     <span>{r.latency_ms}ms</span>
                   </div>
                   {r.error && <p className="mt-1 text-red-400">{r.error}</p>}
@@ -250,7 +257,9 @@ function Kpi({
 }) {
   return (
     <div className="glass-card p-3 text-center">
-      <p className={`${small ? "text-lg" : "text-2xl"} font-bold ${color ?? "text-white"}`}>{value}</p>
+      <p className={`${small ? "text-lg" : "text-2xl"} font-bold ${color ?? "text-white"}`}>
+        {value}
+      </p>
       <p className="mt-0.5 text-[10px] font-medium tracking-wider text-[var(--text-muted)] uppercase">
         {label}
       </p>
