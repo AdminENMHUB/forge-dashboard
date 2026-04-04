@@ -250,6 +250,9 @@ function useMultiPoller(intervalMs: number = 20000) {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [financials, setFinancials] = useState<FinancialsResponse | null>(null);
+  const [activityEvents, setActivityEvents] = useState<
+    Array<{ type: string; message: string; timestamp: string; source?: string }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lastUpdate, setLastUpdate] = useState("");
@@ -261,10 +264,11 @@ function useMultiPoller(intervalMs: number = 20000) {
     const signal = abortRef.current.signal;
 
     try {
-      const [statusRes, healthRes, financialsRes] = await Promise.allSettled([
+      const [statusRes, healthRes, financialsRes, activityRes] = await Promise.allSettled([
         fetch(`${API_BASE}/api/status`, { signal }),
         fetch(`${API_BASE}/api/health`, { signal }),
         fetch(`${API_BASE}/api/financials`, { signal }),
+        fetch(`${API_BASE}/api/activity`, { signal }),
       ]);
 
       if (statusRes.status === "fulfilled" && statusRes.value.ok) {
@@ -275,6 +279,10 @@ function useMultiPoller(intervalMs: number = 20000) {
       }
       if (financialsRes.status === "fulfilled" && financialsRes.value.ok) {
         setFinancials(await financialsRes.value.json());
+      }
+      if (activityRes.status === "fulfilled" && activityRes.value.ok) {
+        const aData = await activityRes.value.json();
+        setActivityEvents(aData?.events || aData || []);
       }
 
       if (
@@ -308,7 +316,7 @@ function useMultiPoller(intervalMs: number = 20000) {
     };
   }, [refresh, intervalMs]);
 
-  return { status, health, financials, loading, error, lastUpdate, refresh };
+  return { status, health, financials, activityEvents, loading, error, lastUpdate, refresh };
 }
 
 // ---------------------------------------------------------------------------
@@ -613,6 +621,7 @@ export default function Dashboard() {
     status: data,
     health,
     financials,
+    activityEvents,
     loading,
     error,
     lastUpdate,
@@ -660,7 +669,7 @@ export default function Dashboard() {
   const forgeDefiSwarm = data.swarms["ForgeDefi"];
 
   const chartData = financials?.daily_pnl_history || [];
-  const recentEvents = financials?.recent_events || [];
+  const recentEvents = activityEvents.length > 0 ? activityEvents : financials?.recent_events || [];
 
   return (
     <PageShell

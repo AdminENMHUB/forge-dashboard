@@ -316,8 +316,8 @@ const DEPARTMENTS: DepartmentDef[] = [
     id: "defi",
     name: "DEFI",
     subtitle: "ForgeDefi · 1 engine",
-    swarmKey: null,
-    serviceKey: null,
+    swarmKey: "ForgeDefi",
+    serviceKey: "egan-master", // pragma: allowlist secret
     color: "#84CC16",
     agents: [{ id: "arb_engine_defi", name: "Arb Engine", role: "DEX-CEX Arbitrage" }],
   },
@@ -326,7 +326,7 @@ const DEPARTMENTS: DepartmentDef[] = [
     name: "CLAWS",
     subtitle: "Product Pipeline · 5 stages",
     swarmKey: null,
-    serviceKey: null,
+    serviceKey: "egan-master", // pragma: allowlist secret
     color: "#EF4444",
     agents: [
       { id: "claw_scout", name: "Scout", role: "Opportunity Scan" },
@@ -407,7 +407,7 @@ function calculateEmpireLayout(w: number, h: number): LayoutResult {
         departmentId: dept.id,
         role: agent.role,
         color: dept.color,
-        status: agent.active === false ? "disabled" : "unknown",
+        status: agent.active === false ? "disabled" : "active",
         x: dx,
         y: dy,
         radius: 15,
