@@ -171,7 +171,7 @@ export function SaasGridSkeleton() {
     <div className="glass rounded-xl p-5">
       <Skeleton className="mb-4 h-5 w-32" />
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-        {Array.from({ length: 13 }).map((_, i) => (
+        {Array.from({ length: 16 }).map((_, i) => (
           <div
             key={i}
             className="flex items-center gap-2 rounded-lg border border-[var(--border-dim)] p-2"
