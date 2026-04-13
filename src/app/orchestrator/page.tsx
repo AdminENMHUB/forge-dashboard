@@ -51,21 +51,41 @@ interface ToolsData {
   }[];
 }
 
+interface BusActivityData {
+  total_messages?: number;
+  by_status?: Record<string, number>;
+  by_priority?: Record<string, number>;
+  by_type?: Record<string, number>;
+  inboxes?: Record<string, number>;
+  recent_log?: {
+    type?: string;
+    sender?: string;
+    recipient?: string;
+    subject?: string;
+    _log_ts?: string;
+    created_at?: string;
+  }[];
+  error?: string;
+}
+
 export default function OrchestratorPage() {
   const [data, setData] = useState<OrchestratorData | null>(null);
   const [tools, setTools] = useState<ToolsData | null>(null);
+  const [bus, setBus] = useState<BusActivityData | null>(null);
   const [loading, setLoading] = useState(true);
   const [ts, setTs] = useState("");
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [orchRes, toolRes] = await Promise.all([
+        const [orchRes, toolRes, busRes] = await Promise.all([
           fetch("/api/orchestrator").then((r) => r.json()),
           fetch("/api/tools").then((r) => r.json()),
+          fetch("/api/bus/activity").then((r) => r.json()),
         ]);
         setData(orchRes);
         setTools(toolRes);
+        setBus(busRes);
         setTs(new Date().toLocaleTimeString());
       } catch {
         setData({ error: "Failed to reach API" });
@@ -86,9 +106,10 @@ export default function OrchestratorPage() {
     <PageShell title="Orchestrator" subtitle="OpenMultiAgent Architecture" lastUpdate={ts}>
       {loading && <p className="text-sm text-[var(--text-muted)]">Loading…</p>}
       {data?.error && <p className="text-sm text-red-400">{data.error}</p>}
+      {bus?.error && <p className="text-sm text-red-400">Bus: {bus.error}</p>}
 
       {/* ── KPI Row ─────────────────────────────────────────────── */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Kpi label="Registered Agents" value={o?.registered_agents ?? "—"} />
         <Kpi label="Active Teams" value={o?.active_teams ?? 0} />
         <Kpi
@@ -97,6 +118,7 @@ export default function OrchestratorPage() {
           color={o && o.recent_success_rate >= 0.9 ? "text-emerald-400" : "text-amber-400"}
         />
         <Kpi label="Total Tools" value={t?.total_tools ?? "—"} />
+        <Kpi label="A2A Msgs" value={bus?.total_messages ?? "—"} color="text-violet-400" />
       </div>
 
       {/* ── Agent Pool ──────────────────────────────────────────── */}
@@ -124,6 +146,60 @@ export default function OrchestratorPage() {
           </div>
         )}
       </div>
+
+      {/* ── A2A Bus ─────────────────────────────────────────────── */}
+      {(bus?.inboxes && Object.keys(bus.inboxes).length > 0) ||
+      (bus?.recent_log && bus.recent_log.length > 0) ? (
+        <div className="glass-card mb-6 p-4">
+          <h2 className="mb-3 text-sm font-semibold tracking-wide text-white uppercase">A2A Bus</h2>
+          {bus.inboxes && Object.keys(bus.inboxes).length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {Object.entries(bus.inboxes).map(([name, count]) => (
+                <span
+                  key={name}
+                  className="rounded-full bg-violet-500/10 px-2.5 py-1 text-[11px] font-medium text-violet-300"
+                >
+                  {name}: {count}
+                </span>
+              ))}
+            </div>
+          )}
+          {bus.by_type && Object.keys(bus.by_type).length > 0 && (
+            <p className="mb-2 text-[10px] text-[var(--text-muted)]">
+              Types:{" "}
+              {Object.entries(bus.by_type)
+                .map(([k, v]) => `${k} ${v}`)
+                .join(" · ")}
+            </p>
+          )}
+          {bus.recent_log && bus.recent_log.length > 0 && (
+            <div className="max-h-52 space-y-1 overflow-y-auto border-t border-white/5 pt-3">
+              <p className="mb-1 text-[10px] font-medium tracking-wide text-[var(--text-muted)] uppercase">
+                Recent log
+              </p>
+              {bus.recent_log
+                .slice()
+                .reverse()
+                .map((row, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-mono text-[10px]"
+                  >
+                    <span className="text-violet-400/90">{row.type ?? "?"}</span>
+                    <span className="text-white/90">
+                      {row.sender ?? "?"}
+                      {row.recipient ? ` → ${row.recipient}` : ""}
+                    </span>
+                    <span className="truncate text-[var(--text-secondary)]">{row.subject}</span>
+                    <span className="text-[var(--text-muted)]">
+                      {row._log_ts?.slice(11, 19) ?? row.created_at?.slice(11, 19) ?? ""}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* ── Tool Registry ────────────────────────────────────── */}
