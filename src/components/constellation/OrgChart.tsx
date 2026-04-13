@@ -4,7 +4,6 @@ import { useCallback, useEffect } from "react";
 import {
   Background,
   Controls,
-  MiniMap,
   ReactFlow,
   ReactFlowProvider,
   type Edge,
@@ -62,7 +61,7 @@ function OrgChartInner({
   }, [onSelect]);
 
   const onInit = useCallback((instance: ReactFlowInstance<Node<EmpireNodeData>>) => {
-    instance.fitView({ padding: 0.2, maxZoom: 1.2, duration: 200 });
+    instance.fitView({ padding: 0.16, maxZoom: 1.05, duration: 180 });
   }, []);
 
   return (
@@ -78,19 +77,13 @@ function OrgChartInner({
         onInit={onInit}
         nodesConnectable={false}
         elementsSelectable
-        minZoom={0.4}
-        maxZoom={1.5}
+        minZoom={0.55}
+        maxZoom={1.2}
         proOptions={{ hideAttribution: true }}
         className="rounded-xl"
       >
-        <Background gap={20} size={1} color="rgba(255,255,255,0.04)" />
+        <Background gap={22} size={1} color="rgba(255,255,255,0.03)" />
         <Controls className="!m-2 !border-[var(--border-dim)] !bg-[var(--surface-2)]/95 !text-white" />
-        <MiniMap
-          className="!m-2 !rounded-lg !border !border-[var(--border-dim)] !bg-[var(--surface-2)]/90"
-          nodeStrokeWidth={2}
-          zoomable
-          pannable
-        />
       </ReactFlow>
     </div>
   );
