@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { href: "/activity", label: "Activity Feed", icon: "◌", section: "ops" },
   { href: "/seo", label: "SEO Hub", icon: "✧", section: "ops" },
   { href: "/ip-empire", label: "Forge IP Empire", icon: "⚖", section: "ops" },
+  { href: "/ip-marketplace", label: "IP Marketplace", icon: "▦", section: "ops" },
   { href: "/assets", label: "Assets", icon: "◍", section: "web3" },
   { href: "/web3", label: "Web3 & DeFi", icon: "◉", section: "web3" },
 ] as const;
