@@ -59,6 +59,8 @@ src/
 | `/api/activity`            | `/api/activity`              | 10s   | Live event stream (filterable by swarm/agent/limit)          |
 | `/api/executive-briefing`  | `/api/executive-briefing`    | 10s   | Executive briefing (empire snapshot, decision log)           |
 | `/api/revenue-attribution` | `/api/revenue-attribution`   | 30s   | Per-agent and per-department P&L attribution                 |
+| `/api/product-catalog`     | `/api/product-catalog`       | 60s   | ProductClaws digital product registry (JSON)                 |
+| `/api/reflection-summary`  | `/api/reflection-summary`    | 60s   | Last ReflectionSynthesizer cycle digest                      |
 | `/api/telegram/webhook`    | POST `/api/telegram/webhook` | —     | Telegram forwarder                                           |
 
 ## Environment Variables (.env.local)

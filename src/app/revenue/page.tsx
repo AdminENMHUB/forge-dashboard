@@ -40,6 +40,10 @@ export default function RevenuePage() {
     "/api/revenue-attribution",
     60000,
   );
+  const { data: reflection } = useApiPoller<Record<string, unknown>>(
+    "/api/reflection-summary",
+    120000,
+  );
 
   if (loading && !status) {
     return (
@@ -58,7 +62,6 @@ export default function RevenuePage() {
   const totalMrr = empire.combined_mrr ?? 0;
   const totalPortfolio = empire.combined_portfolio_value ?? 0;
   const dailyPnl = empire.combined_daily_pnl ?? 0;
-  const arr = empire.combined_arr ?? 0;
 
   const monthlyBurnEstimate = 45;
   const monthsRunway = totalPortfolio > 0 ? totalPortfolio / monthlyBurnEstimate : 0;
@@ -109,6 +112,20 @@ export default function RevenuePage() {
           </div>
         ))}
       </div>
+
+      {reflection && typeof reflection.summary === "string" && reflection.summary.length > 0 && (
+        <div className="glass mb-6 rounded-xl border border-[var(--border-dim)] p-4">
+          <h2 className="mb-2 text-lg font-semibold">Reflection synthesizer</h2>
+          <p className="text-sm text-[var(--text-secondary)]">
+            {(reflection.summary as string) || "—"}
+          </p>
+          {reflection.updated_at != null && (
+            <p className="mt-2 text-xs text-[var(--text-tertiary)]">
+              Updated {String(reflection.updated_at)}
+            </p>
+          )}
+        </div>
+      )}
 
       {agentEntries.length > 0 && (
         <>
