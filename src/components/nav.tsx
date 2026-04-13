@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: "/executive-log", label: "Exec Log", icon: "◇", section: "ops" },
   { href: "/proposals", label: "Proposals", icon: "▷", section: "ops" },
   { href: "/activity", label: "Activity Feed", icon: "◌", section: "ops" },
+  { href: "/seo", label: "SEO Hub", icon: "✧", section: "ops" },
   { href: "/assets", label: "Assets", icon: "◍", section: "web3" },
   { href: "/web3", label: "Web3 & DeFi", icon: "◉", section: "web3" },
 ] as const;
