@@ -47,7 +47,7 @@ export function ConstellationDetailPanel({
 
   if (!node) {
     return (
-      <aside className="glass hidden w-full shrink-0 rounded-xl border border-[var(--border-dim)] p-4 lg:block lg:w-[320px]">
+      <aside className="glass w-full shrink-0 rounded-xl border border-[var(--border-dim)] p-4 lg:w-[320px]">
         <p className="text-sm text-[var(--text-tertiary)]">
           Select a node to see swarm metrics, agents, and a live activity slice.
         </p>

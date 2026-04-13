@@ -10,6 +10,7 @@ import {
   type Edge,
   type Node,
   type OnSelectionChangeParams,
+  type ReactFlowInstance,
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
@@ -60,6 +61,10 @@ function OrgChartInner({
     onSelect(null);
   }, [onSelect]);
 
+  const onInit = useCallback((instance: ReactFlowInstance<Node<EmpireNodeData>>) => {
+    instance.fitView({ padding: 0.2, maxZoom: 1.2, duration: 200 });
+  }, []);
+
   return (
     <div className="h-[min(78vh,820px)] w-full rounded-xl border border-[var(--border-dim)] bg-[var(--surface-1)]/80">
       <ReactFlow
@@ -70,8 +75,9 @@ function OrgChartInner({
         nodeTypes={empireNodeTypes}
         onSelectionChange={onSelectionChange}
         onPaneClick={onPaneClick}
-        fitView
-        fitViewOptions={{ padding: 0.2, maxZoom: 1.2 }}
+        onInit={onInit}
+        nodesConnectable={false}
+        elementsSelectable
         minZoom={0.4}
         maxZoom={1.5}
         proOptions={{ hideAttribution: true }}

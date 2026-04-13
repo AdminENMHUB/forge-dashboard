@@ -6,6 +6,7 @@ import type { Node } from "@xyflow/react";
 
 import { ConstellationErrorBoundary } from "@/components/ConstellationErrorBoundary";
 import { buildEmpireFlowGraph, type EmpireNodeData } from "@/components/constellation/buildGraph";
+import { ConstellationDetailPanel } from "@/components/constellation/DetailPanel";
 import { PageShell } from "@/components/nav";
 import { Skeleton } from "@/components/ui";
 import { useApiPoller } from "@/lib/hooks";
@@ -19,7 +20,15 @@ import type {
   StatusResponse,
 } from "@/types/empire";
 
-import { ConstellationDetailPanel } from "@/components/constellation/DetailPanel";
+/** Reject error JSON bodies and malformed payloads from /api/organization */
+function parseOrganizationPayload(data: unknown): OrganizationDocument | null {
+  if (!data || typeof data !== "object") return null;
+  const o = data as Record<string, unknown>;
+  if (typeof o.error === "string") return null;
+  if (typeof o.company !== "object" || o.company === null) return null;
+  if (typeof o.departments !== "object" || o.departments === null) return null;
+  return data as OrganizationDocument;
+}
 
 const OrgChart = dynamic(() => import("@/components/constellation/OrgChart"), {
   ssr: false,
@@ -39,7 +48,14 @@ export default function ConstellationPage() {
   const orchPoll = useApiPoller<OrchestratorSummary>("/api/orchestrator", 15_000);
   const signalPoll = useApiPoller<SignalHealthResponse>("/api/forge-signal/health", 30_000);
 
-  const [selected, setSelected] = useState<Node<EmpireNodeData> | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const orgDoc = useMemo(() => parseOrganizationPayload(orgPoll.data), [orgPoll.data]);
+  const orgLoadError =
+    orgPoll.error ||
+    (orgPoll.data && typeof orgPoll.data === "object" && "error" in orgPoll.data
+      ? String((orgPoll.data as { error?: string }).error ?? "")
+      : null);
 
   const mergedError = [
     orgPoll.error,
@@ -56,7 +72,8 @@ export default function ConstellationPage() {
   const { nodes, edges } = useMemo(
     () =>
       buildEmpireFlowGraph(
-        orgPoll.data ?? null,
+        orgDoc,
+        orgLoadError && !orgDoc ? orgLoadError : null,
         statusPoll.data ?? null,
         healthPoll.data ?? null,
         catalogPoll.data ?? null,
@@ -65,7 +82,8 @@ export default function ConstellationPage() {
         signalPoll.data ?? null,
       ),
     [
-      orgPoll.data,
+      orgDoc,
+      orgLoadError,
       statusPoll.data,
       healthPoll.data,
       catalogPoll.data,
@@ -75,8 +93,13 @@ export default function ConstellationPage() {
     ],
   );
 
+  const selectedNode = useMemo(
+    () => (selectedId ? (nodes.find((n) => n.id === selectedId) ?? null) : null),
+    [nodes, selectedId],
+  );
+
   const onSelect = useCallback((n: Node<EmpireNodeData> | null) => {
-    setSelected(n);
+    setSelectedId(n?.id ?? null);
   }, []);
 
   const lastUpdate = statusPoll.lastUpdate || healthPoll.lastUpdate;
@@ -91,15 +114,10 @@ export default function ConstellationPage() {
       <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-stretch">
         <div className="min-h-0 min-w-0 flex-1">
           <ConstellationErrorBoundary>
-            <OrgChart
-              nodes={nodes}
-              edges={edges}
-              selectedId={selected?.id ?? null}
-              onSelect={onSelect}
-            />
+            <OrgChart nodes={nodes} edges={edges} selectedId={selectedId} onSelect={onSelect} />
           </ConstellationErrorBoundary>
         </div>
-        <ConstellationDetailPanel node={selected} onClose={() => setSelected(null)} />
+        <ConstellationDetailPanel node={selectedNode} onClose={() => setSelectedId(null)} />
       </div>
 
       <p className="mt-4 text-center text-[11px] text-[var(--text-muted)]">

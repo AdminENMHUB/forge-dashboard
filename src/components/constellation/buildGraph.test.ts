@@ -25,7 +25,7 @@ const minimalOrg: OrganizationDocument = {
 
 describe("buildEmpireFlowGraph", () => {
   it("returns only center when org is null", () => {
-    const { nodes, edges } = buildEmpireFlowGraph(null, null, null, null, null, null, null);
+    const { nodes, edges } = buildEmpireFlowGraph(null, null, null, null, null, null, null, null);
     expect(nodes).toHaveLength(1);
     expect(nodes[0]?.id).toBe("node-center");
     expect(edges).toHaveLength(0);
@@ -34,6 +34,7 @@ describe("buildEmpireFlowGraph", () => {
   it("includes center, departments, oversight, claws, and edges", () => {
     const { nodes, edges } = buildEmpireFlowGraph(
       minimalOrg,
+      null,
       {
         swarms: {
           EganTradeBot: {

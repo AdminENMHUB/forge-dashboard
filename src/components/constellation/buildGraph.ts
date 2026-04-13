@@ -68,6 +68,7 @@ function healthForService(
 /** Fixed ring layout: center + departments + synthetic claws. */
 export function buildEmpireFlowGraph(
   org: OrganizationDocument | null,
+  orgLoadError: string | null,
   status: StatusResponse | null,
   health: HealthResponse | null,
   catalog: ProductCatalogResponse | null,
@@ -78,6 +79,7 @@ export function buildEmpireFlowGraph(
   const centerId = "node-center";
 
   if (!org) {
+    const hint = orgLoadError?.trim() || "Loading organization from /api/organization…";
     return {
       nodes: [
         {
@@ -90,7 +92,7 @@ export function buildEmpireFlowGraph(
           data: {
             label: "Egan Forge",
             kind: "center",
-            reflectionSnippet: "Loading organization from /api/organization…",
+            reflectionSnippet: orgLoadError ? `Organization: ${hint}` : hint,
           },
         },
       ],
