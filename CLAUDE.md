@@ -9,6 +9,7 @@ Next.js 16 web dashboard for the Egan Forge empire. Shows real-time status of al
 - **Framework**: Next.js 16 (App Router, React 19)
 - **UI**: Tailwind CSS v4 + custom components
 - **Charts**: Recharts v3
+- **Constellation**: `@xyflow/react` (interactive org chart)
 - **Deploy**: Vercel (auto-deploy from GitHub main branch)
 - **Port**: 3001 (local dev)
 
@@ -22,7 +23,7 @@ src/
 │   ├── activity/page.tsx     ← Live event feed (trades, alerts, deploys, SaaS, proposals)
 │   ├── agents/page.tsx       ← Agent scorecards (ratings, performance pillars, PDP)
 │   ├── assets/page.tsx       ← Multi-chain wallet view, allocation bars
-│   ├── constellation/page.tsx ← Visual galaxy map of all departments + agents
+│   ├── constellation/page.tsx ← React Flow org chart (`@xyflow/react`): organization.yaml + live APIs
 │   ├── executive-log/page.tsx ← AI decision audit trail (executive actions)
 │   ├── financials/page.tsx   ← Revenue by swarm, API costs, budget status
 │   ├── proposals/page.tsx    ← CEO approval interface for AI optimization proposals
@@ -32,8 +33,13 @@ src/
 │   └── globals.css           ← Tailwind imports + dark mode CSS variables
 ├── components/
 │   ├── charts.tsx            ← PnlAreaChart, SwarmCostChart, CostDonutChart
+│   ├── constellation/      ← OrgChart (React Flow), buildGraph, EmpireNodes, DetailPanel
 │   ├── nav.tsx               ← PageShell, DashboardSidebar, DashboardNav
 │   └── ui.tsx                ← MetricCard, StatusBadge, PnlText, Skeleton
+├── data/
+│   └── organization.yaml   ← Copy of forge-core org chart (served by /api/organization)
+├── types/
+│   └── empire.ts             ← Shared StatusResponse, OrganizationDocument, API shapes
 └── lib/
     ├── api-config.ts         ← getHetznerApi() — validated VPS base URL (server-side only)
     ├── hooks.ts              ← useApiPoller(url, intervalMs) — generic polling hook
@@ -42,26 +48,27 @@ src/
 
 ## API Routes (proxy to VPS)
 
-| Route                      | VPS Endpoint                 | Cache | Purpose                                                      |
-| -------------------------- | ---------------------------- | ----- | ------------------------------------------------------------ |
-| `/api/health`              | `/api/health`                | 5s    | System health                                                |
-| `/api/status`              | `/api/status`                | 10s   | Swarm + empire overview                                      |
-| `/api/financials`          | `/api/financials`            | 30s   | P&L, MRR, per-swarm metrics                                  |
-| `/api/assets`              | `/api/assets`                | 30s   | Wallet balances, DeFi positions                              |
-| `/api/costs`               | `/api/costs`                 | 60s   | API costs, budget tracking                                   |
-| `/api/web3`                | `/api/web3`                  | 30s   | On-chain assets, gas                                         |
-| `/api/proposals`           | `/api/proposals`             | 5s    | AI optimization proposals                                    |
-| `/api/proposals/action`    | POST `/api/proposals/action` | —     | Approve/reject/defer                                         |
-| `/api/scorecard`           | `/api/scorecard`             | 30s   | Signal win rates + treasury (CORS-enabled for eganforge.com) |
-| `/api/scorecards`          | `/api/scorecards`            | 30s   | Agent performance scorecards (ratings, pillars, PDP)         |
-| `/api/pdps`                | `/api/pdps`                  | 30s   | Active professional development plans with targets & actions |
-| `/api/talent`              | `/api/talent`                | 60s   | Agent talent/roster data                                     |
-| `/api/activity`            | `/api/activity`              | 10s   | Live event stream (filterable by swarm/agent/limit)          |
-| `/api/executive-briefing`  | `/api/executive-briefing`    | 10s   | Executive briefing (empire snapshot, decision log)           |
-| `/api/revenue-attribution` | `/api/revenue-attribution`   | 30s   | Per-agent and per-department P&L attribution                 |
-| `/api/product-catalog`     | `/api/product-catalog`       | 60s   | ProductClaws digital product registry (JSON)                 |
-| `/api/reflection-summary`  | `/api/reflection-summary`    | 60s   | Last ReflectionSynthesizer cycle digest                      |
-| `/api/telegram/webhook`    | POST `/api/telegram/webhook` | —     | Telegram forwarder                                           |
+| Route                      | VPS Endpoint                           | Cache | Purpose                                                      |
+| -------------------------- | -------------------------------------- | ----- | ------------------------------------------------------------ |
+| `/api/health`              | `/api/health`                          | 5s    | System health                                                |
+| `/api/status`              | `/api/status`                          | 10s   | Swarm + empire overview                                      |
+| `/api/financials`          | `/api/financials`                      | 30s   | P&L, MRR, per-swarm metrics                                  |
+| `/api/assets`              | `/api/assets`                          | 30s   | Wallet balances, DeFi positions                              |
+| `/api/costs`               | `/api/costs`                           | 60s   | API costs, budget tracking                                   |
+| `/api/web3`                | `/api/web3`                            | 30s   | On-chain assets, gas                                         |
+| `/api/proposals`           | `/api/proposals`                       | 5s    | AI optimization proposals                                    |
+| `/api/proposals/action`    | POST `/api/proposals/action`           | —     | Approve/reject/defer                                         |
+| `/api/scorecard`           | `/api/scorecard`                       | 30s   | Signal win rates + treasury (CORS-enabled for eganforge.com) |
+| `/api/scorecards`          | `/api/scorecards`                      | 30s   | Agent performance scorecards (ratings, pillars, PDP)         |
+| `/api/pdps`                | `/api/pdps`                            | 30s   | Active professional development plans with targets & actions |
+| `/api/talent`              | `/api/talent`                          | 60s   | Agent talent/roster data                                     |
+| `/api/activity`            | `/api/activity`                        | 10s   | Live event stream (filterable by swarm/agent/limit)          |
+| `/api/executive-briefing`  | `/api/executive-briefing`              | 10s   | Executive briefing (empire snapshot, decision log)           |
+| `/api/revenue-attribution` | `/api/revenue-attribution`             | 30s   | Per-agent and per-department P&L attribution                 |
+| `/api/organization`        | _(local `src/data/organization.yaml`)_ | 1h    | Parsed org chart JSON for Constellation                      |
+| `/api/product-catalog`     | `/api/product-catalog`                 | 60s   | ProductClaws digital product registry (JSON)                 |
+| `/api/reflection-summary`  | `/api/reflection-summary`              | 60s   | Last ReflectionSynthesizer cycle digest                      |
+| `/api/telegram/webhook`    | POST `/api/telegram/webhook`           | —     | Telegram forwarder                                           |
 
 ## Environment Variables (.env.local)
 

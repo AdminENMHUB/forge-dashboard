@@ -3,36 +3,7 @@
 import { useApiPoller } from "@/lib/hooks";
 import { PageShell } from "@/components/nav";
 import { MetricCard, PnlText } from "@/components/ui";
-
-interface StatusResponse {
-  empire?: {
-    combined_mrr?: number;
-    combined_total_pnl?: number;
-    combined_portfolio_value?: number;
-    combined_daily_pnl?: number;
-    combined_arr?: number;
-    stripe_mrr?: number;
-    web3_mrr?: number;
-    total_agents?: number;
-    active_agents?: number;
-    top_performers?: number;
-    on_pdp?: number;
-  };
-  swarms?: Record<
-    string,
-    {
-      status: string;
-      daily_pnl: number;
-      total_pnl: number;
-      portfolio_value: number;
-      mrr: number;
-      agents: number;
-      active_agents: number;
-      win_rate: number;
-      trades_today: number;
-    }
-  >;
-}
+import type { StatusResponse } from "@/types/empire";
 
 export default function RevenuePage() {
   const { data: status, loading } = useApiPoller<StatusResponse>("/api/status", 30000);
@@ -55,13 +26,13 @@ export default function RevenuePage() {
     );
   }
 
-  const empire = status?.empire ?? {};
+  const empire = status?.empire;
   const swarms = status?.swarms ?? {};
 
-  const totalPnl = empire.combined_total_pnl ?? 0;
-  const totalMrr = empire.combined_mrr ?? 0;
-  const totalPortfolio = empire.combined_portfolio_value ?? 0;
-  const dailyPnl = empire.combined_daily_pnl ?? 0;
+  const totalPnl = empire?.combined_total_pnl ?? 0;
+  const totalMrr = empire?.combined_mrr ?? 0;
+  const totalPortfolio = empire?.combined_portfolio_value ?? 0;
+  const dailyPnl = empire?.combined_daily_pnl ?? 0;
 
   const monthlyBurnEstimate = 45;
   const monthsRunway = totalPortfolio > 0 ? totalPortfolio / monthlyBurnEstimate : 0;

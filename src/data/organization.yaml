@@ -1,0 +1,204 @@
+# Egan Forge LLC — Organizational Structure
+# Machine-readable org chart for agent coordination
+# Last updated: 2026-03-19
+
+company:
+  name: "Egan Forge LLC"
+  state: "West Virginia"
+  mission: "Generate $50K/mo autonomous revenue by EOY 2026"
+  ceo: "Josh Egan"
+  contact: "ceo@eganforge.com"
+
+departments:
+  trading:
+    name: "Trading"
+    head: "trade_coordinator"
+    swarm: "EganTradeBot"
+    vps_path: "/root/EganTradeBot"
+    service: "egan-trade.service"
+    budget_monthly_usd: 15.0
+    agents:
+      - name: "market_analyzer"
+        role: "Analyze crypto market data and identify opportunities"
+        supervisor: "trade_coordinator"
+        budget_daily_usd: 1.0
+        autonomy_level: "GUIDED"
+      - name: "execution_agent"
+        role: "Execute approved trades on Binance"
+        supervisor: "trade_coordinator"
+        budget_daily_usd: 0.50
+        autonomy_level: "SUPERVISED"
+      - name: "risk_monitor"
+        role: "Monitor positions and enforce stop-losses"
+        supervisor: "trade_coordinator"
+        budget_daily_usd: 0.50
+        autonomy_level: "SEMI_AUTO"
+
+  predictions:
+    name: "Predictions"
+    head: "echo_coordinator"
+    swarm: "EchoSwarm"
+    vps_path: "/root/EchoSwarm"
+    service: "docker-compose"
+    budget_monthly_usd: 10.0
+    agents:
+      - name: "scout"
+        role: "Scan Polymarket for profitable opportunities"
+        supervisor: "echo_coordinator"
+        budget_daily_usd: 0.50
+        autonomy_level: "GUIDED"
+      - name: "consensus_engine"
+        role: "Multi-model agreement before position entry"
+        supervisor: "echo_coordinator"
+        budget_daily_usd: 1.0
+        autonomy_level: "GUIDED"
+      - name: "position_manager"
+        role: "Manage open Polymarket positions"
+        supervisor: "echo_coordinator"
+        budget_daily_usd: 0.50
+        autonomy_level: "SEMI_AUTO"
+
+  products:
+    name: "Products"
+    head: "saas_coordinator"
+    swarm: "EganSaasFactory"
+    vps_path: "/root/EganSaasFactory"
+    service: "egan-saas.service"
+    budget_monthly_usd: 10.0
+    agents:
+      - name: "builder"
+        role: "Build and deploy SaaS products"
+        supervisor: "saas_coordinator"
+        budget_daily_usd: 1.0
+        autonomy_level: "GUIDED"
+      - name: "marketer"
+        role: "Generate marketing content and social posts"
+        supervisor: "saas_coordinator"
+        budget_daily_usd: 0.50
+        autonomy_level: "SEMI_AUTO"
+      - name: "design_director"
+        role: "Maintain brand consistency across products"
+        supervisor: "saas_coordinator"
+        budget_daily_usd: 0.50
+        autonomy_level: "SEMI_AUTO"
+
+  signals:
+    name: "Signals"
+    head: "web3_coordinator"
+    swarm: "EganWeb3Swarm"
+    vps_path: "/root/EganWeb3Swarm"
+    service: "egan-web3.service"
+    budget_monthly_usd: 5.0
+    agents:
+      - name: "wallet_monitor"
+        role: "Monitor subscription payments on Base L2"
+        supervisor: "web3_coordinator"
+        budget_daily_usd: 0.25
+        autonomy_level: "AUTONOMOUS"
+      - name: "signal_terminal"
+        role: "Generate and deliver crypto signals to subscribers"
+        supervisor: "web3_coordinator"
+        budget_daily_usd: 0.50
+        autonomy_level: "SEMI_AUTO"
+      - name: "defi_yield"
+        role: "Manage AAVE yield positions"
+        supervisor: "web3_coordinator"
+        budget_daily_usd: 0.25
+        autonomy_level: "GUIDED"
+
+oversight:
+  name: "Master Oversight"
+  head: "overseer"
+  reports_to: "ceo"
+  vps_path: "/root/EganMasterSwarm"
+  service: "egan-master.service"
+  budget_monthly_usd: 20.0
+  agents:
+    - name: "cross_strategist"
+      role: "Cross-swarm signal generation and strategic analysis"
+      supervisor: "overseer"
+      budget_daily_usd: 2.00
+    - name: "optimizer"
+      role: "Tune parameters across all swarms"
+      supervisor: "overseer"
+      budget_daily_usd: 0.50
+    - name: "cfo"
+      role: "Financial tracking, ROI analysis, budget management"
+      supervisor: "overseer"
+      budget_daily_usd: 0.25
+    - name: "qa_director"
+      role: "Quality assurance and testing"
+      supervisor: "overseer"
+      budget_daily_usd: 0.25
+    - name: "retrospective"
+      role: "Weekly outcome analysis and learning extraction"
+      supervisor: "overseer"
+      budget_daily_usd: 0.50
+    - name: "truth_verifier"
+      role: "Validate ground truth criteria across swarms"
+      supervisor: "overseer"
+      budget_daily_usd: 0.10
+    - name: "health_monitor"
+      role: "System health checks every 15 minutes"
+      supervisor: "overseer"
+      budget_daily_usd: 0.10
+    - name: "asset_reconciler"
+      role: "Verify all on-chain and exchange balances against reported values"
+      supervisor: "cfo"
+      budget_daily_usd: 0.00 # Zero cost — pure HTTP/RPC calls
+      autonomy_level: "AUTONOMOUS"
+      description: "Treasury auditor. Queries Binance API, Polygon Blockscout, Base Blockscout every cycle. Auto-corrects discrepancies < $50. Escalates larger gaps."
+    - name: "promotion_evaluator"
+      role: "Track paper strategy performance and manage R&D-to-Live promotion pipeline"
+      supervisor: "capital_allocator"
+      budget_daily_usd: 2.00 # Multi-model consensus calls for promotion decisions
+      autonomy_level: "SEMI_AUTO"
+      description: "R&D Strategy Analyst. Tracks 30-day Sharpe, computes promotion readiness. Auto-promotes with 2/3 model consensus. Escalates split decisions to CEO."
+    - name: "ai_research_scout"
+      role: "Scan for AI breakthroughs and emerging technology to adopt"
+      supervisor: "overseer"
+      budget_daily_usd: 1.00
+      autonomy_level: "GUIDED"
+      description: "VP Innovation. Scans HuggingFace, GitHub, arXiv, Reddit daily for AI breakthroughs applicable to Egan Forge."
+
+escalation_chain:
+  - level: "AUTO_APPROVE"
+    threshold_usd: 100
+    approver: "automation"
+    description: "Routine actions under $100"
+  - level: "EXECUTIVE_CONSENSUS"
+    threshold_usd: 5000
+    approver: "multi_model_consensus"
+    description: "CFO + Capital Allocator + CRO decide via 2/3 model consensus. CEO notified but approval not required."
+    applies_to:
+      - "paper_to_live_promotion"
+      - "capital_reallocation"
+      - "strategy_demotion"
+      - "balance_discrepancy_correction"
+  - level: "CEO_REVIEW"
+    threshold_usd: null # unlimited
+    approver: "Josh Egan"
+    description: "CEO approval via Telegram — only for conflicts, split decisions, or moves > $5000"
+    timeout_hours: 24
+    triggers:
+      - "model_consensus_split"
+      - "capital_move_above_5000"
+      - "previously_demoted_strategy_requalifying"
+      - "competing_strategies_for_same_capital"
+
+autonomy_levels:
+  AUTONOMOUS:
+    description: "Fully autonomous, no approval needed"
+    human_review: false
+  SEMI_AUTO:
+    description: "Autonomous with post-hoc review"
+    human_review: false
+  GUIDED:
+    description: "AI-driven with supervisor checkpoints"
+    human_review: false
+  SUPERVISED:
+    description: "Requires supervisor approval before execution"
+    human_review: false
+  MANUAL:
+    description: "Requires CEO approval before execution"
+    human_review: true
