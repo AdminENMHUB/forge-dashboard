@@ -7,3 +7,12 @@ export function getHetznerApi(): string {
   }
   return url;
 }
+
+/** Base URL for forge-web3 `signal_api_server` (e.g. http://host:8402). Used only server-side. */
+export function getSignalApiBase(): string | null {
+  const raw = process.env.SIGNAL_API_URL?.trim();
+  if (!raw) {
+    return null;
+  }
+  return raw.replace(/\/$/, "");
+}

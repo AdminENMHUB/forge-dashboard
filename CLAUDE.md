@@ -67,9 +67,12 @@ src/
 
 ```
 HETZNER_API_URL=http://89.167.82.184:8080
+SIGNAL_API_URL=http://89.167.82.184:8402
 ```
 
 **Required**: `HETZNER_API_URL` must be set — API routes call `getHetznerApi()` from `lib/api-config.ts` which throws at request time if missing (no hardcoded fallback).
+
+**Signal API proxy**: `SIGNAL_API_URL` is the base URL for forge-web3 `signal_api_server` (PM2 on the VPS). Enables `/api/forge-signal/*` routes used by eganforge.com public API (HTTPS gateway, no raw IP in the marketing repo).
 
 ## Dev Commands
 
