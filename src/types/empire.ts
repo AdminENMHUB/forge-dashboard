@@ -93,6 +93,7 @@ export interface OrgDepartment {
 export interface OrgOversight {
   name: string;
   head?: string;
+  swarm?: string;
   vps_path?: string;
   service?: string;
   budget_monthly_usd?: number;
