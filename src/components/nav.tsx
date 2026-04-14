@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/", label: "Command Center", icon: "⚡", section: "core" },
-  { href: "/constellation", label: "Constellation", icon: "◉", section: "core" },
+  { href: "/constellation", label: "Galaxy Map", icon: "✦", section: "core" },
   { href: "/orchestrator", label: "Orchestrator", icon: "⬡", section: "core" },
   { href: "/financials", label: "Financials", icon: "◈", section: "money" },
   { href: "/revenue", label: "Revenue Intel", icon: "◆", section: "money" },

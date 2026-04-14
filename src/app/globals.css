@@ -301,6 +301,25 @@ body {
   z-index: 50 !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   GALAXY MAP — immersive 3D scene
+   ═══════════════════════════════════════════════════════════════════ */
+
+.galaxy-container {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(34, 211, 238, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 60%, rgba(168, 85, 247, 0.02) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 90%, rgba(59, 130, 246, 0.02) 0%, transparent 40%), #020408;
+}
+
+.galaxy-container canvas {
+  cursor: grab;
+}
+
+.galaxy-container canvas:active {
+  cursor: grabbing;
+}
+
 /* Print */
 @media print {
   body {
