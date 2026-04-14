@@ -16,3 +16,12 @@ export function getSignalApiBase(): string | null {
   }
   return raw.replace(/\/$/, "");
 }
+
+/** Base URL for forge-core `tools.signal_api_public` (systemd port 3201 on VPS). Server-side only. */
+export function getDeveloperSignalApi(): string | null {
+  const raw = process.env.DEVELOPER_SIGNAL_API_URL?.trim();
+  if (!raw) {
+    return null;
+  }
+  return raw.replace(/\/$/, "");
+}

@@ -71,6 +71,12 @@ interface HealthResponse {
   services?: Record<string, { status: string; uptime?: string }>;
   docker?: Record<string, { status: string }>;
   pm2?: Record<string, { status: string }>;
+  developer_signal_api?: {
+    public_url?: string;
+    health_http_local?: number;
+    systemd?: string;
+    truth_snapshot?: Record<string, unknown> | null;
+  };
   [key: string]: unknown;
 }
 
@@ -82,6 +88,25 @@ interface FinancialsResponse {
     timestamp: string;
   }>;
   [key: string]: unknown;
+}
+
+interface PredictionMetricsResponse {
+  runs?: number;
+  unhealthy_runs?: number;
+  api_failures?: number;
+  blocked_remediations_total?: number;
+  blocked_signal_dispatches_total?: number;
+  signals_dispatched_total?: number;
+  last_actionable_markets?: number;
+  last_scanned_markets?: number;
+  last_top_actionable?: string[];
+  consecutive_no_opportunity_runs?: number;
+  last_nonzero_actionable_at?: string | null;
+  consecutive_api_failures?: number;
+  last_api_outage_signal_at?: string | null;
+  updated_at?: string | null;
+  source?: string;
+  error?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -253,6 +278,9 @@ function useMultiPoller(intervalMs: number = 20000) {
   const [activityEvents, setActivityEvents] = useState<
     Array<{ type: string; message: string; timestamp: string; source?: string }>
   >([]);
+  const [predictionMetrics, setPredictionMetrics] = useState<PredictionMetricsResponse | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lastUpdate, setLastUpdate] = useState("");
@@ -264,11 +292,12 @@ function useMultiPoller(intervalMs: number = 20000) {
     const signal = abortRef.current.signal;
 
     try {
-      const [statusRes, healthRes, financialsRes, activityRes] = await Promise.allSettled([
+      const [statusRes, healthRes, financialsRes, activityRes, predRes] = await Promise.allSettled([
         fetch(`${API_BASE}/api/status`, { signal }),
         fetch(`${API_BASE}/api/health`, { signal }),
         fetch(`${API_BASE}/api/financials`, { signal }),
         fetch(`${API_BASE}/api/activity`, { signal }),
+        fetch(`${API_BASE}/api/prediction-metrics`, { signal }),
       ]);
 
       if (statusRes.status === "fulfilled" && statusRes.value.ok) {
@@ -283,6 +312,13 @@ function useMultiPoller(intervalMs: number = 20000) {
       if (activityRes.status === "fulfilled" && activityRes.value.ok) {
         const aData = await activityRes.value.json();
         setActivityEvents(aData?.events || aData || []);
+      }
+      if (predRes.status === "fulfilled" && predRes.value.ok) {
+        setPredictionMetrics(await predRes.value.json());
+      } else if (predRes.status === "fulfilled" && !predRes.value.ok) {
+        setPredictionMetrics({ error: `HTTP ${predRes.value.status}` });
+      } else if (predRes.status === "rejected") {
+        setPredictionMetrics({ error: "prediction-metrics request failed" });
       }
 
       if (
@@ -316,7 +352,17 @@ function useMultiPoller(intervalMs: number = 20000) {
     };
   }, [refresh, intervalMs]);
 
-  return { status, health, financials, activityEvents, loading, error, lastUpdate, refresh };
+  return {
+    status,
+    health,
+    financials,
+    activityEvents,
+    predictionMetrics,
+    loading,
+    error,
+    lastUpdate,
+    refresh,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -419,6 +465,130 @@ function RevenueProgressBar({ empire }: { empire: EmpireData }) {
         <span>Trading: {formatUSD(empire.combined_daily_pnl * 30)}/mo</span>
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Prediction guard (master Polymarket opportunity scan)
+// ---------------------------------------------------------------------------
+
+function PredictionGuardPanel({ data }: { data: PredictionMetricsResponse | null }) {
+  if (!data) {
+    return (
+      <SectionCard
+        title="Prediction Guard"
+        subtitle="Polymarket scan & cross-swarm signals"
+        glow="purple"
+      >
+        <p className="text-sm text-[var(--text-tertiary)]">Fetching metrics…</p>
+      </SectionCard>
+    );
+  }
+  if (data.error) {
+    return (
+      <SectionCard
+        title="Prediction Guard"
+        subtitle="Polymarket scan & cross-swarm signals"
+        glow="purple"
+      >
+        <p className="text-sm text-amber-400/90">Metrics unavailable ({data.error})</p>
+      </SectionCard>
+    );
+  }
+
+  const drought = data.consecutive_no_opportunity_runs ?? 0;
+  const apiStreak = data.consecutive_api_failures ?? 0;
+  const droughtWarn = drought >= 5;
+  const apiWarn = apiStreak >= 2;
+
+  return (
+    <SectionCard
+      title="Prediction Guard"
+      subtitle="Master overseer · opportunity telemetry"
+      glow="purple"
+    >
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="rounded-lg border border-[var(--border-dim)] bg-white/[0.02] px-3 py-2">
+          <p className="text-[10px] font-semibold tracking-wider text-[var(--text-tertiary)] uppercase">
+            Actionable
+          </p>
+          <p className="text-lg font-bold text-white">{data.last_actionable_markets ?? 0}</p>
+          <p className="text-[10px] text-[var(--text-muted)]">
+            of {data.last_scanned_markets ?? 0} scanned
+          </p>
+        </div>
+        <div
+          className={`rounded-lg border px-3 py-2 ${
+            droughtWarn
+              ? "border-amber-500/30 bg-amber-500/5"
+              : "border-[var(--border-dim)] bg-white/[0.02]"
+          }`}
+        >
+          <p className="text-[10px] font-semibold tracking-wider text-[var(--text-tertiary)] uppercase">
+            Drought streak
+          </p>
+          <p className={`text-lg font-bold ${droughtWarn ? "text-amber-400" : "text-white"}`}>
+            {drought}
+          </p>
+          <p className="text-[10px] text-[var(--text-muted)]">no-opportunity runs</p>
+        </div>
+        <div
+          className={`rounded-lg border px-3 py-2 ${
+            apiWarn
+              ? "border-red-500/30 bg-red-500/5"
+              : "border-[var(--border-dim)] bg-white/[0.02]"
+          }`}
+        >
+          <p className="text-[10px] font-semibold tracking-wider text-[var(--text-tertiary)] uppercase">
+            API streak
+          </p>
+          <p className={`text-lg font-bold ${apiWarn ? "text-red-400" : "text-white"}`}>
+            {apiStreak}
+          </p>
+          <p className="text-[10px] text-[var(--text-muted)]">failures</p>
+        </div>
+        <div className="rounded-lg border border-[var(--border-dim)] bg-white/[0.02] px-3 py-2">
+          <p className="text-[10px] font-semibold tracking-wider text-[var(--text-tertiary)] uppercase">
+            Signals out
+          </p>
+          <p className="text-lg font-bold text-cyan-400">{data.signals_dispatched_total ?? 0}</p>
+          <p className="text-[10px] text-[var(--text-muted)]">total dispatched</p>
+        </div>
+        <div className="rounded-lg border border-[var(--border-dim)] bg-white/[0.02] px-3 py-2">
+          <p className="text-[10px] font-semibold tracking-wider text-[var(--text-tertiary)] uppercase">
+            Blocked
+          </p>
+          <p className="text-lg font-bold text-[var(--text-secondary)]">
+            {(data.blocked_signal_dispatches_total ?? 0) + (data.blocked_remediations_total ?? 0)}
+          </p>
+          <p className="text-[10px] text-[var(--text-muted)]">signals + remediations</p>
+        </div>
+        <div className="rounded-lg border border-[var(--border-dim)] bg-white/[0.02] px-3 py-2">
+          <p className="text-[10px] font-semibold tracking-wider text-[var(--text-tertiary)] uppercase">
+            Guard runs
+          </p>
+          <p className="text-lg font-bold text-white">{data.runs ?? 0}</p>
+          <p className="text-[10px] text-[var(--text-muted)]">
+            {data.updated_at ? timeAgo(data.updated_at) : "—"} · unhealthy{" "}
+            {data.unhealthy_runs ?? 0}
+          </p>
+        </div>
+      </div>
+      {data.last_top_actionable && data.last_top_actionable.length > 0 && (
+        <div className="mt-3 border-t border-[var(--border-dim)] pt-3">
+          <p className="mb-1.5 text-[10px] font-semibold tracking-wider text-[var(--text-tertiary)] uppercase">
+            Top actionable (snapshot)
+          </p>
+          <ul className="space-y-1 text-[11px] text-[var(--text-secondary)]">
+            {data.last_top_actionable.slice(0, 3).map((line, i) => (
+              <li key={i} className="truncate font-mono">
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </SectionCard>
   );
 }
 
@@ -557,10 +727,20 @@ function SystemHealthBar({ health }: { health: HealthResponse | null }) {
   }
 
   if (services.length === 0) {
-    for (const name of ["egan-trade", "egan-master", "egan-saas", "egan-web3", "docker", "pm2"]) {
+    for (const name of [
+      "egan-trade",
+      "egan-master",
+      "egan-saas",
+      "egan-web3",
+      "signal-api",
+      "docker",
+      "pm2",
+    ]) {
       services.push({ name, status: "unknown" });
     }
   }
+
+  const dev = health?.developer_signal_api;
 
   return (
     <SectionCard title="System Services" glow="cyan">
@@ -575,6 +755,34 @@ function SystemHealthBar({ health }: { health: HealthResponse | null }) {
           </div>
         ))}
       </div>
+      {dev && (
+        <p className="mt-3 border-t border-[var(--border-dim)] pt-3 text-[10px] text-[var(--text-muted)]">
+          <span className="font-semibold text-[var(--text-tertiary)]">Developer signal API </span>
+          {dev.public_url ? (
+            <a
+              href={dev.public_url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-cyan-400/90 hover:underline"
+            >
+              {dev.public_url}
+            </a>
+          ) : null}
+          <span className="mx-1.5">·</span>
+          local <code className="text-[var(--text-secondary)]">/v1/health</code>{" "}
+          {dev.health_http_local === 200 ? (
+            <span className="text-emerald-400">200</span>
+          ) : (
+            <span className="text-amber-400">{dev.health_http_local ?? "—"}</span>
+          )}
+          {dev.systemd ? (
+            <>
+              <span className="mx-1.5">·</span>
+              systemd <span className="text-[var(--text-secondary)]">{dev.systemd}</span>
+            </>
+          ) : null}
+        </p>
+      )}
     </SectionCard>
   );
 }
@@ -622,6 +830,7 @@ export default function Dashboard() {
     health,
     financials,
     activityEvents,
+    predictionMetrics,
     loading,
     error,
     lastUpdate,
@@ -684,6 +893,11 @@ export default function Dashboard() {
       {/* 2. Revenue Progress */}
       <div className="mb-6">
         <RevenueProgressBar empire={e} />
+      </div>
+
+      {/* 2b. Prediction guard telemetry */}
+      <div className="mb-6">
+        <PredictionGuardPanel data={predictionMetrics} />
       </div>
 
       {/* 3. Revenue Swarm Cards (top row) */}

@@ -48,38 +48,45 @@ src/
 
 ## API Routes (proxy to VPS)
 
-| Route                      | VPS Endpoint                           | Cache | Purpose                                                      |
-| -------------------------- | -------------------------------------- | ----- | ------------------------------------------------------------ |
-| `/api/health`              | `/api/health`                          | 5s    | System health                                                |
-| `/api/status`              | `/api/status`                          | 10s   | Swarm + empire overview                                      |
-| `/api/financials`          | `/api/financials`                      | 30s   | P&L, MRR, per-swarm metrics                                  |
-| `/api/assets`              | `/api/assets`                          | 30s   | Wallet balances, DeFi positions                              |
-| `/api/costs`               | `/api/costs`                           | 60s   | API costs, budget tracking                                   |
-| `/api/web3`                | `/api/web3`                            | 30s   | On-chain assets, gas                                         |
-| `/api/proposals`           | `/api/proposals`                       | 5s    | AI optimization proposals                                    |
-| `/api/proposals/action`    | POST `/api/proposals/action`           | —     | Approve/reject/defer                                         |
-| `/api/scorecard`           | `/api/scorecard`                       | 30s   | Signal win rates + treasury (CORS-enabled for eganforge.com) |
-| `/api/scorecards`          | `/api/scorecards`                      | 30s   | Agent performance scorecards (ratings, pillars, PDP)         |
-| `/api/pdps`                | `/api/pdps`                            | 30s   | Active professional development plans with targets & actions |
-| `/api/talent`              | `/api/talent`                          | 60s   | Agent talent/roster data                                     |
-| `/api/activity`            | `/api/activity`                        | 10s   | Live event stream (filterable by swarm/agent/limit)          |
-| `/api/executive-briefing`  | `/api/executive-briefing`              | 10s   | Executive briefing (empire snapshot, decision log)           |
-| `/api/revenue-attribution` | `/api/revenue-attribution`             | 30s   | Per-agent and per-department P&L attribution                 |
-| `/api/organization`        | _(local `src/data/organization.yaml`)_ | 1h    | Parsed org chart JSON for Constellation                      |
-| `/api/product-catalog`     | `/api/product-catalog`                 | 60s   | ProductClaws digital product registry (JSON)                 |
-| `/api/reflection-summary`  | `/api/reflection-summary`              | 60s   | Last ReflectionSynthesizer cycle digest                      |
-| `/api/telegram/webhook`    | POST `/api/telegram/webhook`           | —     | Telegram forwarder                                           |
+| Route                      | VPS Endpoint                           | Cache | Purpose                                                            |
+| -------------------------- | -------------------------------------- | ----- | ------------------------------------------------------------------ |
+| `/api/health`              | `/api/health`                          | 5s    | System health                                                      |
+| `/api/status`              | `/api/status`                          | 10s   | Swarm + empire overview                                            |
+| `/api/financials`          | `/api/financials`                      | 30s   | P&L, MRR, per-swarm metrics                                        |
+| `/api/assets`              | `/api/assets`                          | 30s   | Wallet balances, DeFi positions                                    |
+| `/api/costs`               | `/api/costs`                           | 60s   | API costs, budget tracking                                         |
+| `/api/web3`                | `/api/web3`                            | 30s   | On-chain assets, gas                                               |
+| `/api/proposals`           | `/api/proposals`                       | 5s    | AI optimization proposals                                          |
+| `/api/proposals/action`    | POST `/api/proposals/action`           | —     | Approve/reject/defer                                               |
+| `/api/scorecard`           | `/api/scorecard`                       | 30s   | Signal win rates + treasury (CORS-enabled for eganforge.com)       |
+| `/api/scorecards`          | `/api/scorecards`                      | 30s   | Agent performance scorecards (ratings, pillars, PDP)               |
+| `/api/pdps`                | `/api/pdps`                            | 30s   | Active professional development plans with targets & actions       |
+| `/api/talent`              | `/api/talent`                          | 60s   | Agent talent/roster data                                           |
+| `/api/activity`            | `/api/activity`                        | 10s   | Live event stream (filterable by swarm/agent/limit)                |
+| `/api/executive-briefing`  | `/api/executive-briefing`              | 10s   | Executive briefing (empire snapshot, decision log)                 |
+| `/api/revenue-attribution` | `/api/revenue-attribution`             | 30s   | Per-agent and per-department P&L attribution                       |
+| `/api/organization`        | _(local `src/data/organization.yaml`)_ | 1h    | Parsed org chart JSON for Constellation                            |
+| `/api/product-catalog`     | `/api/product-catalog`                 | 60s   | ProductClaws digital product registry (JSON)                       |
+| `/api/reflection-summary`  | `/api/reflection-summary`              | 60s   | Last ReflectionSynthesizer cycle digest                            |
+| `/api/prediction-metrics`  | `/api/prediction-metrics`              | 30s   | Prediction guard (Polymarket scan, drought/API streaks, signals)   |
+| `/api/telemetry`           | `/api/telemetry`                       | 30s   | Unified observability (costs, tools, prediction_guard, analytics)  |
+| `/api/developer-signal/*`  | `DEVELOPER_SIGNAL_API_URL` + path      | 0s    | Proxy to paid/free developer REST API (`signal_api_public`, :3201) |
+| `/api/telegram/webhook`    | POST `/api/telegram/webhook`           | —     | Telegram forwarder                                                 |
 
 ## Environment Variables (.env.local)
 
 ```
 HETZNER_API_URL=http://89.167.82.184:8080
 SIGNAL_API_URL=http://89.167.82.184:8402
+DEVELOPER_SIGNAL_API_URL=https://api.eganforge.com
+# (until DNS + certbot: http://89.167.82.184:3201 — see forge-core/deploy/nginx-developer-signal-api.conf)
 ```
 
 **Required**: `HETZNER_API_URL` must be set — API routes call `getHetznerApi()` from `lib/api-config.ts` which throws at request time if missing (no hardcoded fallback).
 
 **Signal API proxy**: `SIGNAL_API_URL` is the base URL for forge-web3 `signal_api_server` (PM2 on the VPS). Enables `/api/forge-signal/*` routes used by eganforge.com public API (HTTPS gateway, no raw IP in the marketing repo).
+
+**Developer Signal API proxy** (optional): `DEVELOPER_SIGNAL_API_URL` is the base URL for `forge-core` `tools.signal_api_public` (systemd `signal-api.service`, port **3201** on the VPS). Enables `/api/developer-signal/*` (e.g. `/api/developer-signal/v1/health`) without exposing the raw IP in client-side code.
 
 ## Dev Commands
 

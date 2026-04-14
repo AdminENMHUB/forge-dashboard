@@ -62,6 +62,12 @@ export interface HealthResponse {
   services?: Record<string, { status: string; uptime?: string }>;
   docker?: Record<string, { status: string }>;
   pm2?: Record<string, { status: string }>;
+  developer_signal_api?: {
+    public_url?: string;
+    health_http_local?: number;
+    systemd?: string;
+    truth_snapshot?: Record<string, unknown> | null;
+  };
 }
 
 /** Parsed organization.yaml (subset). */
