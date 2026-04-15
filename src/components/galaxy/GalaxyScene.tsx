@@ -2,15 +2,25 @@
 
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Preload } from "@react-three/drei";
-import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
+import {
+  EffectComposer,
+  Bloom,
+  Vignette,
+  ChromaticAberration,
+  ToneMapping,
+} from "@react-three/postprocessing";
+import { ToneMappingMode, BlendFunction } from "postprocessing";
 import { Suspense, useCallback, useMemo, useState } from "react";
+import * as THREE from "three";
 
 import { useGalaxyData } from "./useGalaxyData";
 import { computeSystemPositions } from "./layout";
 import { GalacticCore } from "./GalacticCore";
 import { AmbientStarField } from "./AmbientStarField";
+import { OrbitalGrid } from "./OrbitalGrid";
 import { SwarmSystem } from "./SwarmSystem";
 import { SignalStreams } from "./SignalStreams";
+import { LiveEventFlash } from "./LiveEventFlash";
 import { HUD } from "./HUD";
 import { SystemPanel } from "./SystemPanel";
 import { AgentInspector } from "./AgentInspector";
@@ -78,16 +88,22 @@ export default function GalaxyScene() {
   return (
     <div className="galaxy-container relative h-screen w-full overflow-hidden bg-[#020408]">
       <Canvas
-        camera={{ position: [0, 22, 28], fov: 50, near: 0.1, far: 500 }}
+        camera={{ position: [0, 22, 32], fov: 50, near: 0.1, far: 500 }}
         dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+        gl={{
+          antialias: true,
+          alpha: false,
+          powerPreference: "high-performance",
+          toneMapping: THREE.ACESFilmicToneMapping,
+        }}
       >
         <color attach="background" args={["#020408"]} />
-        <fog attach="fog" args={["#020408", 60, 120]} />
-        <ambientLight intensity={0.08} />
+        <fog attach="fog" args={["#020408", 70, 140]} />
+        <ambientLight intensity={0.06} />
 
         <Suspense fallback={null}>
           <AmbientStarField />
+          <OrbitalGrid zoomLevel={zoomLevel} />
 
           <GalacticCore health={data.health} empire={data.status?.empire ?? null} />
 
@@ -102,7 +118,8 @@ export default function GalaxyScene() {
                 position={[pos.x, pos.y, pos.z]}
                 size={pos.size}
                 swarmData={swarmData ?? null}
-                agents={swarmAgents}
+                agents={isSelected ? swarmAgents : []}
+                activity={data.activity}
                 isSelected={isSelected}
                 zoomLevel={zoomLevel}
                 onSelect={handleSelectSystem}
@@ -112,7 +129,18 @@ export default function GalaxyScene() {
             );
           })}
 
-          <SignalStreams bus={data.bus} systemPositions={systemPositions} zoomLevel={zoomLevel} />
+          <SignalStreams
+            bus={data.bus}
+            financials={data.financials}
+            systemPositions={systemPositions}
+            zoomLevel={zoomLevel}
+          />
+
+          <LiveEventFlash
+            events={data.activity?.events}
+            systemPositions={systemPositions}
+            zoomLevel={zoomLevel}
+          />
 
           <Preload all />
         </Suspense>
@@ -121,10 +149,17 @@ export default function GalaxyScene() {
           <Bloom
             intensity={bloomCfg.intensity}
             luminanceThreshold={bloomCfg.luminanceThreshold}
-            luminanceSmoothing={0.9}
+            luminanceSmoothing={0.95}
             mipmapBlur
           />
-          <Vignette eskil={false} offset={0.15} darkness={0.7} />
+          <ChromaticAberration
+            blendFunction={BlendFunction.NORMAL}
+            offset={new THREE.Vector2(0.0003, 0.0003)}
+            radialModulation={false}
+            modulationOffset={0}
+          />
+          <Vignette eskil={false} offset={0.12} darkness={0.75} />
+          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         </EffectComposer>
 
         <CameraRig
@@ -138,7 +173,7 @@ export default function GalaxyScene() {
           enableZoom={true}
           enableRotate={true}
           minDistance={3}
-          maxDistance={80}
+          maxDistance={100}
           maxPolarAngle={Math.PI * 0.85}
           zoomSpeed={0.8}
           rotateSpeed={0.5}
@@ -165,6 +200,8 @@ export default function GalaxyScene() {
           agents={swarmAgents}
           activity={data.activity}
           financials={data.financials}
+          telemetry={data.telemetry}
+          orchestrator={data.orchestrator}
           onSelectAgent={handleSelectAgent}
           onClose={() => {
             setSelectedSystem(null);
@@ -176,6 +213,8 @@ export default function GalaxyScene() {
       {zoomLevel === "agent" && selectedAgentData && (
         <AgentInspector
           agent={selectedAgentData}
+          activity={data.activity}
+          telemetry={data.telemetry}
           onClose={() => {
             setSelectedAgent(null);
             setZoomLevel("system");

@@ -43,6 +43,7 @@ const categoryIcon: Record<string, string> = {
   architecture: "\u{1F3D7}\uFE0F",
   efficiency: "\u{26A1}",
   feature: "\u{2728}",
+  innovation: "\u{1F680}",
 };
 
 const statusColor: Record<string, string> = {
@@ -107,11 +108,31 @@ function ProposalCard({
         <span>Impact: {proposal.expected_impact.slice(0, 80)}</span>
       </div>
 
-      {/* Resolution notes */}
+      {/* Resolution notes with execution status */}
       {proposal.resolution_notes && (
-        <p className="mb-3 text-xs text-[var(--text-tertiary)] italic">
-          {proposal.resolution_notes}
-        </p>
+        <div className="mb-3">
+          {proposal.resolution_notes.includes("FAILED") ||
+          proposal.resolution_notes.includes("failed") ? (
+            <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-2">
+              <p className="text-xs text-red-400">{proposal.resolution_notes}</p>
+            </div>
+          ) : proposal.resolution_notes.includes("implement") ||
+            proposal.resolution_notes.includes("Implementation") ||
+            proposal.resolution_notes.includes("dispatched") ? (
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-2">
+              <p className="text-xs text-emerald-400">{proposal.resolution_notes}</p>
+            </div>
+          ) : proposal.resolution_notes.includes("no automated action") ||
+            proposal.resolution_notes.includes("acknowledged") ? (
+            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-2">
+              <p className="text-xs text-amber-400">{proposal.resolution_notes}</p>
+            </div>
+          ) : (
+            <p className="text-xs text-[var(--text-tertiary)] italic">
+              {proposal.resolution_notes}
+            </p>
+          )}
+        </div>
       )}
 
       {/* Action buttons */}
@@ -184,9 +205,15 @@ export default function ProposalsPage() {
         throw new Error(err.error || `Failed: ${res.status}`);
       }
       const result = await res.json();
-      const execNote = result.executed ? " (executed)" : "";
+      const statusEmoji =
+        result.new_status === "completed"
+          ? "\u2705"
+          : result.new_status === "failed"
+            ? "\u274C"
+            : "\u{1F4CB}";
+      const execNote = result.executed ? ` \u2014 ${result.new_status}` : "";
       setToast(
-        `${action.charAt(0).toUpperCase() + action.slice(1)}d${execNote}: ${result.message || result.proposal_id}`,
+        `${statusEmoji} ${action.charAt(0).toUpperCase() + action.slice(1)}d${execNote}: ${result.message?.slice(0, 120) || result.proposal_id}`,
       );
       setTimeout(() => setToast(""), 3000);
       // Refresh

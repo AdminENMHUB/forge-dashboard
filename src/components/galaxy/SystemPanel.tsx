@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { formatUSD, timeAgo } from "@/lib/formatters";
 import { StatusBadge, PnlText } from "@/components/ui";
 import type { SwarmData } from "@/types/empire";
 import type { SwarmMeta } from "./constants";
-import type { AgentScorecard, ActivityData, FinancialsData } from "./useGalaxyData";
+import type { AgentScorecard, ActivityData, FinancialsData, TelemetryData } from "./useGalaxyData";
+import type { OrchestratorSummary } from "@/types/empire";
 
 interface Props {
   systemKey: string;
@@ -13,8 +15,34 @@ interface Props {
   agents: AgentScorecard[];
   activity: ActivityData | null;
   financials: FinancialsData | null;
+  telemetry: TelemetryData | null;
+  orchestrator: OrchestratorSummary | null;
   onSelectAgent: (name: string) => void;
   onClose: () => void;
+}
+
+function MiniSparkline({ values, color }: { values: number[]; color: string }) {
+  if (values.length < 2) return null;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const w = 60;
+  const h = 20;
+  const points = values
+    .map((v, i) => `${(i / (values.length - 1)) * w},${h - ((v - min) / range) * h}`)
+    .join(" ");
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="inline-block">
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
 export function SystemPanel({
@@ -24,11 +52,19 @@ export function SystemPanel({
   agents,
   activity,
   financials,
+  telemetry,
+  orchestrator,
   onSelectAgent,
   onClose,
 }: Props) {
   const accentColor = meta?.color.getStyle() ?? "#22d3ee";
   const swarmFinancials = financials?.swarms?.[systemKey];
+  const extended = swarmData as Record<string, unknown> | null;
+
+  const topPerformer = useMemo(() => {
+    if (agents.length === 0) return null;
+    return agents.reduce((best, a) => ((a.rating ?? 0) > (best.rating ?? 0) ? a : best), agents[0]);
+  }, [agents]);
 
   const recentEvents = (activity?.events ?? [])
     .filter((e) => {
@@ -37,6 +73,22 @@ export function SystemPanel({
       return swarmHint.includes(keyLower) || keyLower.includes(swarmHint);
     })
     .slice(0, 8);
+
+  const riskInfo = useMemo(() => {
+    if (!extended) return null;
+    const isTrading = systemKey === "EganTradeBot" || systemKey === "EchoSwarm";
+    if (!isTrading) return null;
+    return {
+      circuitBreaker: !!extended.circuit_breaker,
+      regime: extended.regime as string | undefined,
+      consecutiveLosses: extended.consecutive_losses as number | undefined,
+      dailyLoss: extended.daily_loss as number | undefined,
+      dailyLossLimit: extended.daily_loss_limit as number | undefined,
+      weeklyDrawdown: extended.weekly_drawdown as number | undefined,
+    };
+  }, [extended, systemKey]);
+
+  const dailyCost = telemetry?.costs?.total_daily ?? 0;
 
   return (
     <div className="animate-in absolute top-14 right-0 bottom-0 z-20 w-80 overflow-hidden border-l border-white/[0.06] lg:w-96">
@@ -97,12 +149,62 @@ export function SystemPanel({
             {swarmData?.mrr !== undefined && swarmData.mrr > 0 && (
               <MiniMetric label="MRR" value={formatUSD(swarmData.mrr)} />
             )}
-            {swarmData?.circuit_breaker && (
-              <div className="col-span-3 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2">
-                <p className="text-[10px] font-semibold text-red-400">CIRCUIT BREAKER ACTIVE</p>
-              </div>
-            )}
+            {dailyCost > 0 && <MiniMetric label="LLM Cost" value={`$${dailyCost.toFixed(2)}/d`} />}
           </div>
+
+          {/* Risk summary (TradeBot / EchoSwarm) */}
+          {riskInfo && (
+            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+              <p className="mb-2 text-[10px] tracking-wider text-white/30 uppercase">Risk Engine</p>
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                {riskInfo.regime && (
+                  <div>
+                    <p className="text-white/30">Regime</p>
+                    <p
+                      className={`font-semibold ${riskInfo.regime.toLowerCase().includes("bull") ? "text-emerald-400" : riskInfo.regime.toLowerCase().includes("bear") ? "text-red-400" : "text-blue-400"}`}
+                    >
+                      {riskInfo.regime.toUpperCase()}
+                    </p>
+                  </div>
+                )}
+                {riskInfo.consecutiveLosses !== undefined && (
+                  <div>
+                    <p className="text-white/30">Consec. Losses</p>
+                    <p
+                      className={`font-semibold ${riskInfo.consecutiveLosses >= 3 ? "text-red-400" : "text-white"}`}
+                    >
+                      {riskInfo.consecutiveLosses}
+                    </p>
+                  </div>
+                )}
+                {riskInfo.dailyLoss !== undefined && riskInfo.dailyLossLimit !== undefined && (
+                  <div className="col-span-2">
+                    <p className="text-white/30">
+                      Daily Loss: {formatUSD(riskInfo.dailyLoss)} /{" "}
+                      {formatUSD(riskInfo.dailyLossLimit)}
+                    </p>
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${Math.min((riskInfo.dailyLoss / riskInfo.dailyLossLimit) * 100, 100)}%`,
+                          backgroundColor:
+                            riskInfo.dailyLoss / riskInfo.dailyLossLimit > 0.75
+                              ? "#ef4444"
+                              : "#f59e0b",
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {riskInfo.circuitBreaker && (
+                  <div className="col-span-2 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2">
+                    <p className="text-[10px] font-semibold text-red-400">CIRCUIT BREAKER ACTIVE</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Financials */}
           {swarmFinancials && (
@@ -129,11 +231,33 @@ export function SystemPanel({
             </div>
           )}
 
+          {/* Orchestrator data */}
+          {orchestrator?.orchestrator && (
+            <div className="grid grid-cols-3 gap-2">
+              <MiniMetric
+                label="Teams"
+                value={String(orchestrator.orchestrator.active_teams ?? 0)}
+              />
+              <MiniMetric label="Queue" value={String(orchestrator.pool?.queued ?? 0)} />
+              <MiniMetric
+                label="Success"
+                value={`${((orchestrator.orchestrator.recent_success_rate ?? 0) * 100).toFixed(0)}%`}
+              />
+            </div>
+          )}
+
           {/* Agent roster */}
           <div>
-            <p className="mb-2 text-[10px] tracking-wider text-white/30 uppercase">
-              Agents ({agents.length})
-            </p>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[10px] tracking-wider text-white/30 uppercase">
+                Agents ({agents.length})
+              </p>
+              {topPerformer && topPerformer.rating && topPerformer.rating >= 4 && (
+                <span className="text-[9px] text-emerald-400">
+                  Top: {topPerformer.name.replace(/_/g, " ")} ({topPerformer.rating.toFixed(1)})
+                </span>
+              )}
+            </div>
             <div className="space-y-1">
               {agents.slice(0, 15).map((a) => (
                 <button
@@ -143,6 +267,11 @@ export function SystemPanel({
                 >
                   <span className="text-xs text-white/80">{a.name.replace(/_/g, " ")}</span>
                   <div className="flex items-center gap-2">
+                    {a.error_rate !== undefined && a.error_rate > 0.05 && (
+                      <span className="text-[9px] text-red-400">
+                        {(a.error_rate * 100).toFixed(0)}% err
+                      </span>
+                    )}
                     {a.rating && (
                       <span
                         className={`text-[10px] font-bold ${

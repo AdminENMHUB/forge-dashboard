@@ -11,28 +11,37 @@ const NAV_ITEMS = [
   { href: "/", label: "Command Center", icon: "⚡", section: "core" },
   { href: "/constellation", label: "Galaxy Map", icon: "✦", section: "core" },
   { href: "/orchestrator", label: "Orchestrator", icon: "⬡", section: "core" },
+  { href: "/goals", label: "Goal Cascade", icon: "◈", section: "core" },
   { href: "/financials", label: "Financials", icon: "◈", section: "money" },
   { href: "/revenue", label: "Revenue Intel", icon: "◆", section: "money" },
+  { href: "/subscribers", label: "Subscribers", icon: "★", section: "money" },
+  { href: "/acquisition", label: "Acquisition", icon: "▸", section: "money" },
   { href: "/agents", label: "Agent Roster", icon: "◎", section: "ops" },
   { href: "/teams", label: "Teams", icon: "⬢", section: "ops" },
   { href: "/executive-log", label: "Exec Log", icon: "◇", section: "ops" },
   { href: "/proposals", label: "Proposals", icon: "▷", section: "ops" },
   { href: "/activity", label: "Activity Feed", icon: "◌", section: "ops" },
+  { href: "/marketing", label: "Marketing", icon: "✧", section: "ops" },
+  { href: "/products", label: "Products", icon: "▦", section: "ops" },
+  { href: "/audit", label: "Audit Ledger", icon: "⚖", section: "ops" },
   { href: "/seo", label: "SEO Hub", icon: "✧", section: "ops" },
   { href: "/ip-empire", label: "Forge IP Empire", icon: "⚖", section: "ops" },
   { href: "/ip-marketplace", label: "IP Marketplace", icon: "▦", section: "ops" },
+  { href: "/tradebot", label: "TradeBot", icon: "◍", section: "swarms" },
+  { href: "/echoswarm", label: "EchoSwarm", icon: "◉", section: "swarms" },
   { href: "/assets", label: "Assets", icon: "◍", section: "web3" },
   { href: "/web3", label: "Web3 & DeFi", icon: "◉", section: "web3" },
 ] as const;
 
 const SECTION_LABELS: Record<string, string> = {
   core: "OVERVIEW",
-  money: "FINANCIALS",
+  money: "REVENUE",
   ops: "OPERATIONS",
+  swarms: "SWARMS",
   web3: "ON-CHAIN",
 };
 
-const SECTION_ORDER = ["core", "money", "ops", "web3"];
+const SECTION_ORDER = ["core", "money", "ops", "swarms", "web3"];
 
 /* ═══════════════════════════════════════════════════════════════════
    SIDEBAR NAV — full sidebar for desktop, horizontal for mobile

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { formatUSD } from "@/lib/formatters";
 import type { SwarmMeta, ZoomLevel } from "./constants";
 import type { GalaxyData, AgentScorecard } from "./useGalaxyData";
@@ -12,6 +13,38 @@ interface Props {
   onBack: () => void;
   onHome: () => void;
   proposalCount: number;
+}
+
+function PnlSparkline({ history }: { history: Array<{ date: string; pnl: number }> }) {
+  if (!history || history.length < 2) return null;
+  const values = history.slice(-7).map((h) => h.pnl);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const w = 36;
+  const h = 16;
+  const points = values
+    .map((v, i) => {
+      const x = (i / (values.length - 1)) * w;
+      const y = h - ((v - min) / range) * h;
+      return `${x},${y}`;
+    })
+    .join(" ");
+  const lastPnl = values[values.length - 1];
+  const color = lastPnl >= 0 ? "#10b981" : "#ef4444";
+
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="ml-1 inline-block align-middle">
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
 export function HUD({
@@ -27,19 +60,48 @@ export function HUD({
   const swarmCount = data.status?.swarms ? Object.keys(data.status.swarms).length : 0;
   const agentCount = data.scorecards?.agents?.length ?? 0;
 
+  const healthPct = useMemo(() => {
+    if (!data.health?.services) return 100;
+    const entries = Object.values(data.health.services);
+    if (entries.length === 0) return 100;
+    const up = entries.filter(
+      (s) => s.status === "running" || s.status === "healthy" || s.status === "online",
+    ).length;
+    return Math.round((up / entries.length) * 100);
+  }, [data.health]);
+
+  const tradebot = data.status?.swarms?.EganTradeBot as Record<string, unknown> | undefined;
+  const regime = tradebot?.regime as string | undefined;
+  const regimeColor = regime?.toLowerCase().includes("bull")
+    ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/10"
+    : regime?.toLowerCase().includes("bear")
+      ? "text-red-400 border-red-500/30 bg-red-500/10"
+      : "text-blue-400 border-blue-500/30 bg-blue-500/10";
+
+  const pnlHistory = (data.financials as Record<string, unknown>)?.daily_pnl_history as
+    | Array<{ date: string; pnl: number }>
+    | undefined;
+
   return (
     <>
       {/* Top KPI bar */}
       <div className="pointer-events-none absolute top-0 right-0 left-0 z-20">
-        <div className="pointer-events-auto mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-          {/* Logo */}
+        <div className="pointer-events-auto mx-auto flex max-w-7xl items-center gap-2.5 px-4 py-3">
+          {/* Logo + Health */}
           <div className="mr-2 flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-500/30 bg-cyan-500/10">
               <span className="text-sm font-black text-cyan-400">EF</span>
             </div>
             <div className="hidden sm:block">
               <p className="text-xs font-bold text-white">Galaxy Map</p>
-              <p className="text-[9px] text-cyan-400/60">EGAN FORGE</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[9px] text-cyan-400/60">EGAN FORGE</p>
+                <span
+                  className={`text-[9px] font-semibold ${healthPct >= 90 ? "text-emerald-400" : healthPct >= 60 ? "text-amber-400" : "text-red-400"}`}
+                >
+                  {healthPct}%
+                </span>
+              </div>
             </div>
           </div>
 
@@ -49,14 +111,27 @@ export function HUD({
               value={formatUSD(empire?.combined_portfolio_value ?? 0)}
               color="cyan"
             />
-            <KPIChip
-              label="Daily P&L"
-              value={formatUSD(empire?.combined_daily_pnl ?? 0)}
-              color={(empire?.combined_daily_pnl ?? 0) >= 0 ? "emerald" : "red"}
-            />
+            <div className="flex items-center">
+              <KPIChip
+                label="Daily P&L"
+                value={formatUSD(empire?.combined_daily_pnl ?? 0)}
+                color={(empire?.combined_daily_pnl ?? 0) >= 0 ? "emerald" : "red"}
+              />
+              {pnlHistory && pnlHistory.length > 1 && <PnlSparkline history={pnlHistory} />}
+            </div>
             <KPIChip label="MRR" value={formatUSD(empire?.combined_mrr ?? 0)} color="blue" />
             <KPIChip label="Swarms" value={String(swarmCount)} color="purple" />
             <KPIChip label="Agents" value={String(agentCount)} color="amber" />
+
+            {/* Regime badge */}
+            {regime && (
+              <div
+                className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase ${regimeColor}`}
+              >
+                {regime}
+              </div>
+            )}
+
             {proposalCount > 0 && (
               <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1">
                 <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-amber-400" />
@@ -67,7 +142,6 @@ export function HUD({
             )}
           </div>
 
-          {/* Update indicator */}
           {data.lastUpdate && (
             <span className="hidden text-[9px] text-white/30 lg:block">{data.lastUpdate}</span>
           )}

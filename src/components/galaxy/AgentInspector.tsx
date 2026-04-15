@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
-import type { AgentScorecard } from "./useGalaxyData";
+import { useMemo, useState, useEffect } from "react";
+import { timeAgo } from "@/lib/formatters";
+import type { AgentScorecard, ActivityData, TelemetryData } from "./useGalaxyData";
 
 interface Props {
   agent: AgentScorecard;
+  activity: ActivityData | null;
+  telemetry: TelemetryData | null;
   onClose: () => void;
 }
 
@@ -28,30 +31,58 @@ const PILLAR_COLORS: Record<string, string> = {
   quality: "#06b6d4",
 };
 
-export function AgentInspector({ agent, onClose }: Props) {
+export function AgentInspector({ agent, activity, telemetry, onClose }: Props) {
   const pillars = agent.pillars ?? {};
   const pillarEntries = Object.entries(pillars);
+  const [animScale, setAnimScale] = useState(0);
+
+  useEffect(() => {
+    setAnimScale(0);
+    const raf = requestAnimationFrame(() => {
+      const start = performance.now();
+      const dur = 500;
+      function step() {
+        const t = Math.min((performance.now() - start) / dur, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        setAnimScale(ease);
+        if (t < 1) requestAnimationFrame(step);
+      }
+      step();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [agent.name]);
 
   const radarPoints = useMemo(() => {
     if (pillarEntries.length === 0) return "";
-    const cx = 100;
-    const cy = 100;
-    const r = 75;
     return pillarEntries
       .map(([, val], i) => {
         const angle = (i / pillarEntries.length) * Math.PI * 2 - Math.PI / 2;
-        const normalized = (val as number) / 5;
-        const x = cx + Math.cos(angle) * r * normalized;
-        const y = cy + Math.sin(angle) * r * normalized;
+        const normalized = ((val as number) / 5) * animScale;
+        const x = 100 + Math.cos(angle) * 75 * normalized;
+        const y = 100 + Math.sin(angle) * 75 * normalized;
         return `${x},${y}`;
       })
       .join(" ");
-  }, [pillarEntries]);
+  }, [pillarEntries, animScale]);
 
   const gridRings = [0.2, 0.4, 0.6, 0.8, 1.0];
 
+  const recentActions = useMemo(() => {
+    if (!activity?.events) return [];
+    const agentLower = agent.name.toLowerCase();
+    return activity.events
+      .filter(
+        (e) =>
+          e.agent?.toLowerCase().includes(agentLower) ||
+          e.message?.toLowerCase().includes(agentLower),
+      )
+      .slice(0, 5);
+  }, [activity, agent.name]);
+
+  const toolStats = telemetry?.tools;
+
   return (
-    <div className="animate-in absolute right-4 bottom-16 z-20 w-80 lg:w-[400px]">
+    <div className="animate-in absolute right-4 bottom-16 z-20 w-80 lg:w-[420px]">
       <div className="rounded-2xl border border-white/[0.08] bg-[#06080f]/90 shadow-2xl backdrop-blur-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
@@ -82,12 +113,11 @@ export function AgentInspector({ agent, onClose }: Props) {
           </div>
         </div>
 
-        <div className="space-y-4 p-4">
-          {/* Radar chart */}
+        <div className="max-h-[70vh] space-y-4 overflow-y-auto p-4">
+          {/* Animated radar chart */}
           {pillarEntries.length > 0 && (
             <div className="flex justify-center">
               <svg viewBox="0 0 200 200" width={200} height={200}>
-                {/* Grid rings */}
                 {gridRings.map((scale) => (
                   <polygon
                     key={scale}
@@ -105,7 +135,6 @@ export function AgentInspector({ agent, onClose }: Props) {
                   />
                 ))}
 
-                {/* Axis lines */}
                 {pillarEntries.map((_: [string, number], i: number) => {
                   const angle = (i / pillarEntries.length) * Math.PI * 2 - Math.PI / 2;
                   const x = 100 + Math.cos(angle) * 75;
@@ -123,25 +152,23 @@ export function AgentInspector({ agent, onClose }: Props) {
                   );
                 })}
 
-                {/* Data polygon */}
                 <polygon
                   points={radarPoints}
                   fill="rgba(34, 211, 238, 0.15)"
                   stroke="#22d3ee"
                   strokeWidth={1.5}
+                  style={{ transition: "none" }}
                 />
 
-                {/* Data points */}
                 {pillarEntries.map(([key, val]: [string, number], i: number) => {
                   const angle = (i / pillarEntries.length) * Math.PI * 2 - Math.PI / 2;
-                  const normalized = val / 5;
+                  const normalized = (val / 5) * animScale;
                   const x = 100 + Math.cos(angle) * 75 * normalized;
                   const y = 100 + Math.sin(angle) * 75 * normalized;
                   const color = PILLAR_COLORS[key] ?? "#22d3ee";
                   return <circle key={key} cx={x} cy={y} r={3} fill={color} />;
                 })}
 
-                {/* Labels */}
                 {pillarEntries.map(([key]: [string, number], i: number) => {
                   const angle = (i / pillarEntries.length) * Math.PI * 2 - Math.PI / 2;
                   const x = 100 + Math.cos(angle) * 95;
@@ -183,8 +210,8 @@ export function AgentInspector({ agent, onClose }: Props) {
                   </div>
                   <div className="h-1 overflow-hidden rounded-full bg-white/[0.06]">
                     <div
-                      className="h-full rounded-full"
-                      style={{ width: `${pct}%`, backgroundColor: color }}
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${pct * animScale}%`, backgroundColor: color }}
                     />
                   </div>
                 </div>
@@ -193,7 +220,7 @@ export function AgentInspector({ agent, onClose }: Props) {
           </div>
 
           {/* Meta info */}
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
+          <div className="grid grid-cols-3 gap-2 text-[11px]">
             {agent.autonomy_level && (
               <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2">
                 <p className="text-white/30">Autonomy</p>
@@ -217,6 +244,44 @@ export function AgentInspector({ agent, onClose }: Props) {
               </div>
             )}
           </div>
+
+          {/* Tool usage */}
+          {toolStats && (
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2">
+                <p className="text-white/30">Tool Calls</p>
+                <p className="font-semibold text-white">{toolStats.total_calls ?? 0}</p>
+              </div>
+              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2">
+                <p className="text-white/30">Tool Error Rate</p>
+                <p
+                  className={`font-semibold ${(toolStats.error_rate ?? 0) > 0.05 ? "text-red-400" : "text-emerald-400"}`}
+                >
+                  {((toolStats.error_rate ?? 0) * 100).toFixed(1)}%
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Recent Actions timeline */}
+          {recentActions.length > 0 && (
+            <div>
+              <p className="mb-2 text-[10px] tracking-wider text-white/30 uppercase">
+                Recent Actions
+              </p>
+              <div className="space-y-1.5">
+                {recentActions.map((evt, i) => (
+                  <div key={evt.id ?? i} className="flex items-start gap-2 text-[11px]">
+                    <div className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/5 text-[8px] text-cyan-400">
+                      {i + 1}
+                    </div>
+                    <p className="flex-1 text-white/60">{evt.message ?? evt.type}</p>
+                    {evt.ts && <span className="shrink-0 text-white/20">{timeAgo(evt.ts)}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* PDP status */}
           {agent.pdp?.active && (

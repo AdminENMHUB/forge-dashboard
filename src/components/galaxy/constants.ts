@@ -72,7 +72,7 @@ export const SWARM_REGISTRY: SwarmMeta[] = [
 
 export const TIER_RADIUS: Record<number, number> = {
   1: 6,
-  2: 14,
+  2: 18,
 };
 
 export const HEALTH_COLORS = {
@@ -82,22 +82,47 @@ export const HEALTH_COLORS = {
   unknown: new THREE.Color("#525d73"),
 };
 
+export const NEBULA_COLORS: THREE.Color[] = [
+  new THREE.Color("#22d3ee"),
+  new THREE.Color("#a855f7"),
+  new THREE.Color("#3b82f6"),
+  new THREE.Color("#10b981"),
+  new THREE.Color("#ec4899"),
+  new THREE.Color("#f59e0b"),
+  new THREE.Color("#06b6d4"),
+];
+
+export const EVENT_FLASH_COLORS: Record<string, THREE.Color> = {
+  trade: new THREE.Color("#10b981"),
+  signal: new THREE.Color("#22d3ee"),
+  proposal: new THREE.Color("#f59e0b"),
+  error: new THREE.Color("#ef4444"),
+};
+
+export const REGIME_COLORS: Record<string, THREE.Color> = {
+  bull: new THREE.Color("#10b981"),
+  bear: new THREE.Color("#ef4444"),
+  range: new THREE.Color("#3b82f6"),
+};
+
+export const REVENUE_COLOR = new THREE.Color("#f59e0b");
+
 export const AGENT_SIZE_SCALE = { min: 0.15, max: 0.5 };
 export const SYSTEM_SIZE_SCALE = { min: 0.6, max: 1.8 };
 
 export const CAMERA_POSITIONS = {
   galaxy: {
-    position: [0, 22, 28] as [number, number, number],
+    position: [0, 22, 32] as [number, number, number],
     target: [0, 0, 0] as [number, number, number],
   },
-  systemOffset: { y: 6, z: 10 },
+  systemOffset: { y: 6, z: 12 },
   agentOffset: { y: 2, z: 3 },
 };
 
 export const BLOOM_PARAMS = {
-  galaxy: { intensity: 1.2, luminanceThreshold: 0.2 },
-  system: { intensity: 0.8, luminanceThreshold: 0.3 },
-  agent: { intensity: 0.4, luminanceThreshold: 0.4 },
+  galaxy: { intensity: 1.4, luminanceThreshold: 0.15 },
+  system: { intensity: 0.9, luminanceThreshold: 0.25 },
+  agent: { intensity: 0.5, luminanceThreshold: 0.35 },
 };
 
 export const POLL_INTERVALS = {
