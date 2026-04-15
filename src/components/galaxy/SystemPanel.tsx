@@ -5,7 +5,13 @@ import { formatUSD, timeAgo } from "@/lib/formatters";
 import { StatusBadge, PnlText } from "@/components/ui";
 import type { SwarmData } from "@/types/empire";
 import type { SwarmMeta } from "./constants";
-import type { AgentScorecard, ActivityData, FinancialsData, TelemetryData } from "./useGalaxyData";
+import {
+  agentDisplayName,
+  type AgentScorecard,
+  type ActivityData,
+  type FinancialsData,
+  type TelemetryData,
+} from "./useGalaxyData";
 import type { OrchestratorSummary } from "@/types/empire";
 
 interface Props {
@@ -373,18 +379,21 @@ export function SystemPanel({
               </p>
               {topPerformer && topPerformer.rating && topPerformer.rating >= 4 && (
                 <span className="text-[9px] text-emerald-400">
-                  Top: {topPerformer.name.replace(/_/g, " ")} ({topPerformer.rating.toFixed(1)})
+                  Top: {agentDisplayName(topPerformer).replace(/_/g, " ")} (
+                  {topPerformer.rating.toFixed(1)})
                 </span>
               )}
             </div>
             <div className="space-y-1">
               {agents.slice(0, 15).map((a) => (
                 <button
-                  key={a.name}
-                  onClick={() => onSelectAgent(a.name)}
+                  key={agentDisplayName(a)}
+                  onClick={() => onSelectAgent(agentDisplayName(a))}
                   className="flex w-full items-center justify-between rounded-lg border border-transparent px-3 py-2 text-left transition hover:border-white/10 hover:bg-white/[0.03]"
                 >
-                  <span className="text-xs text-white/80">{a.name.replace(/_/g, " ")}</span>
+                  <span className="text-xs text-white/80">
+                    {agentDisplayName(a).replace(/_/g, " ")}
+                  </span>
                   <div className="flex items-center gap-2">
                     {a.error_rate !== undefined && a.error_rate > 0.05 && (
                       <span className="text-[9px] text-red-400">

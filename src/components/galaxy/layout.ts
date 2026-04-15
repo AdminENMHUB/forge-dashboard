@@ -49,7 +49,7 @@ export function computeSystemPositions(
 
 export function computeAgentPositions(
   systemKey: string,
-  agents: Array<{ name: string; rating?: number }>,
+  agents: Array<{ name?: string; agent?: string; rating?: number }>,
 ): AgentPosition[] {
   const count = agents.length;
   if (count === 0) return [];
@@ -66,13 +66,14 @@ export function computeAgentPositions(
     const phase = (posInRing / ringCount) * Math.PI * 2;
     const rating = agent.rating ?? 3;
     const size = mapRange(rating, 1, 5, AGENT_SIZE_SCALE.min, AGENT_SIZE_SCALE.max);
-    const speed = 0.12 + (hashCode(agent.name) % 100) / 600;
+    const displayName = ((agent.name ?? agent.agent) || "agent").trim() || "agent";
+    const speed = 0.12 + (hashCode(displayName) % 100) / 600;
 
     const ratingNormalized = mapRange(rating, 1, 5, -0.4, 0.6);
     const yPos = ratingNormalized + Math.sin(phase * 2.3) * 0.2;
 
     return {
-      name: agent.name,
+      name: displayName,
       x: Math.cos(phase) * orbitRadius,
       y: yPos,
       z: Math.sin(phase) * orbitRadius,

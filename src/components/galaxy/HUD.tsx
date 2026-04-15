@@ -3,7 +3,12 @@
 import { useMemo } from "react";
 import { formatUSD } from "@/lib/formatters";
 import type { SwarmMeta, ZoomLevel } from "./constants";
-import type { GalaxyData, AgentScorecard } from "./useGalaxyData";
+import {
+  agentDisplayName,
+  normalizeScorecardAgents,
+  type AgentScorecard,
+  type GalaxyData,
+} from "./useGalaxyData";
 
 interface Props {
   data: GalaxyData;
@@ -58,7 +63,7 @@ export function HUD({
 }: Props) {
   const empire = data.status?.empire;
   const swarmCount = data.status?.swarms ? Object.keys(data.status.swarms).length : 0;
-  const agentCount = data.scorecards?.agents?.length ?? 0;
+  const agentCount = normalizeScorecardAgents(data.scorecards ?? null).length;
 
   const healthPct = useMemo(() => {
     if (!data.health?.services) return 100;
@@ -184,7 +189,7 @@ export function HUD({
                 </button>
                 <span className="text-white/20">/</span>
                 <span className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur">
-                  {selectedAgent.name.replace(/_/g, " ")}
+                  {agentDisplayName(selectedAgent).replace(/_/g, " ")}
                 </span>
               </>
             )}

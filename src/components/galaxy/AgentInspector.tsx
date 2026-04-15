@@ -2,7 +2,12 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { timeAgo } from "@/lib/formatters";
-import type { AgentScorecard, ActivityData, TelemetryData } from "./useGalaxyData";
+import {
+  agentDisplayName,
+  type AgentScorecard,
+  type ActivityData,
+  type TelemetryData,
+} from "./useGalaxyData";
 
 interface Props {
   agent: AgentScorecard;
@@ -32,6 +37,7 @@ const PILLAR_COLORS: Record<string, string> = {
 };
 
 export function AgentInspector({ agent, activity, telemetry, onClose }: Props) {
+  const agentId = agentDisplayName(agent);
   const pillars = agent.pillars ?? {};
   const pillarEntries = Object.entries(pillars);
   const [animScale, setAnimScale] = useState(0);
@@ -50,7 +56,7 @@ export function AgentInspector({ agent, activity, telemetry, onClose }: Props) {
       step();
     });
     return () => cancelAnimationFrame(raf);
-  }, [agent.name]);
+  }, [agentId]);
 
   const radarPoints = useMemo(() => {
     if (pillarEntries.length === 0) return "";
@@ -69,7 +75,7 @@ export function AgentInspector({ agent, activity, telemetry, onClose }: Props) {
 
   const recentActions = useMemo(() => {
     if (!activity?.events) return [];
-    const agentLower = agent.name.toLowerCase();
+    const agentLower = agentId.toLowerCase();
     return activity.events
       .filter(
         (e) =>
@@ -77,7 +83,7 @@ export function AgentInspector({ agent, activity, telemetry, onClose }: Props) {
           e.message?.toLowerCase().includes(agentLower),
       )
       .slice(0, 5);
-  }, [activity, agent.name]);
+  }, [activity, agentId]);
 
   const toolStats = telemetry?.tools;
 
@@ -87,7 +93,7 @@ export function AgentInspector({ agent, activity, telemetry, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
           <div>
-            <h3 className="text-sm font-bold text-white">{agent.name.replace(/_/g, " ")}</h3>
+            <h3 className="text-sm font-bold text-white">{agentId.replace(/_/g, " ")}</h3>
             <p className="text-[10px] text-white/40">{agent.department ?? agent.swarm ?? "—"}</p>
           </div>
           <div className="flex items-center gap-2">

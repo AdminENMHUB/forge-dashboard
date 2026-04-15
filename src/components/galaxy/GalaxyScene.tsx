@@ -13,7 +13,7 @@ import { ToneMappingMode, BlendFunction } from "postprocessing";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import * as THREE from "three";
 
-import { useGalaxyData } from "./useGalaxyData";
+import { normalizeScorecardAgents, useGalaxyData } from "./useGalaxyData";
 import { computeSystemPositions } from "./layout";
 import { GalacticCore } from "./GalacticCore";
 import { AmbientStarField } from "./AmbientStarField";
@@ -73,15 +73,18 @@ export default function GalaxyScene() {
     [selectedSystem],
   );
 
-  const allAgents = data.scorecards?.agents;
+  const allAgents = useMemo(
+    () => normalizeScorecardAgents(data.scorecards ?? null),
+    [data.scorecards],
+  );
 
   const swarmAgents = useMemo(() => {
-    if (!selectedSystem || !allAgents) return [];
+    if (!selectedSystem || allAgents.length === 0) return [];
     return allAgents.filter((a) => a.swarm === selectedSystem || a.department === selectedSystem);
   }, [selectedSystem, allAgents]);
 
   const selectedAgentData = useMemo(
-    () => allAgents?.find((a) => a.name === selectedAgent) ?? null,
+    () => allAgents.find((a) => (a.name ?? a.agent) === selectedAgent) ?? null,
     [selectedAgent, allAgents],
   );
 

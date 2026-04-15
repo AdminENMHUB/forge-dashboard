@@ -4,7 +4,7 @@ import { useRef, useMemo, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Text, Html, Edges } from "@react-three/drei";
 import * as THREE from "three";
-import type { AgentScorecard, ActivityData } from "./useGalaxyData";
+import { agentDisplayName, type AgentScorecard, type ActivityData } from "./useGalaxyData";
 import type { AgentPosition } from "./layout";
 
 interface Props {
@@ -70,16 +70,17 @@ export function AgentPlanet({ agent, activity, position, isSelected, onSelect }:
   const hasHighError = (agent.error_rate ?? 0) > 0.05;
   const errorIntensity = Math.min((agent.error_rate ?? 0) / 0.15, 1);
   const hasPdp = agent.pdp?.active ?? false;
+  const agentId = agentDisplayName(agent);
 
   const isRecentlyActive = useMemo(() => {
     if (!activity?.events) return false;
-    const agentLower = agent.name.toLowerCase();
+    const agentLower = agentId.toLowerCase();
     return activity.events.some(
       (e) =>
         e.agent?.toLowerCase().includes(agentLower) ||
         e.message?.toLowerCase().includes(agentLower),
     );
-  }, [activity, agent.name]);
+  }, [activity, agentId]);
 
   const ringThickness = useMemo(() => {
     const cost = agent.cost_daily ?? 0.05;
@@ -91,7 +92,7 @@ export function AgentPlanet({ agent, activity, position, isSelected, onSelect }:
 
   const lastAction = useMemo(() => {
     if (!activity?.events) return null;
-    const agentLower = agent.name.toLowerCase();
+    const agentLower = agentId.toLowerCase();
     return (
       activity.events.find(
         (e) =>
@@ -99,7 +100,7 @@ export function AgentPlanet({ agent, activity, position, isSelected, onSelect }:
           e.message?.toLowerCase().includes(agentLower),
       ) ?? null
     );
-  }, [activity, agent.name]);
+  }, [activity, agentId]);
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
@@ -142,7 +143,7 @@ export function AgentPlanet({ agent, activity, position, isSelected, onSelect }:
 
   const handleClick = (e: THREE.Event & { stopPropagation: () => void }) => {
     e.stopPropagation();
-    onSelect(agent.name);
+    onSelect(agentId);
   };
 
   return (
@@ -222,7 +223,7 @@ export function AgentPlanet({ agent, activity, position, isSelected, onSelect }:
         maxWidth={3.5}
         characters="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_- .&$"
       >
-        {agent.name.replace(/_/g, " ")}
+        {agentId.replace(/_/g, " ")}
       </Text>
 
       <pointLight
@@ -241,7 +242,7 @@ export function AgentPlanet({ agent, activity, position, isSelected, onSelect }:
           style={{ pointerEvents: "none" }}
         >
           <div className="w-44 rounded-xl border border-white/10 bg-[#0a0e1a]/95 px-3 py-2.5 shadow-xl backdrop-blur-md">
-            <p className="text-[11px] font-bold text-white">{agent.name.replace(/_/g, " ")}</p>
+            <p className="text-[11px] font-bold text-white">{agentId.replace(/_/g, " ")}</p>
             <div className="mt-1.5 flex items-center gap-2 text-[10px]">
               {agent.rating && (
                 <span

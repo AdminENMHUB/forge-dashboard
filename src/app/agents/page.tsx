@@ -15,6 +15,8 @@ interface PillarScores {
 
 interface Scorecard {
   agent: string;
+  name?: string;
+  swarm?: string;
   department: string;
   role: string;
   rating: number;
@@ -171,11 +173,23 @@ const DEPT_LABELS: Record<string, string> = {
   governance: "Governance",
 };
 
+type ScorecardsApi =
+  | { agents?: Scorecard[]; by_agent?: Record<string, Scorecard>; error?: string }
+  | Record<string, Scorecard>;
+
+function scorecardRows(raw: ScorecardsApi | null): Scorecard[] {
+  if (!raw) return [];
+  if (Array.isArray((raw as { agents?: Scorecard[] }).agents)) {
+    return (raw as { agents: Scorecard[] }).agents;
+  }
+  const skip = new Set(["agents", "by_agent", "error", "timestamp"]);
+  return Object.entries(raw as Record<string, unknown>)
+    .filter(([k]) => !skip.has(k))
+    .map(([, v]) => v as Scorecard);
+}
+
 export default function AgentsPage() {
-  const { data: scorecards, loading } = useApiPoller<Record<string, Scorecard>>(
-    "/api/scorecards",
-    30000,
-  );
+  const { data: scorecards, loading } = useApiPoller<ScorecardsApi>("/api/scorecards", 30000);
   const { data: pdps } = useApiPoller<PDPData[]>("/api/pdps", 30000);
   const { data: talent } = useApiPoller<{
     pipeline: Record<string, string>[] | Record<string, unknown>;
@@ -196,7 +210,7 @@ export default function AgentsPage() {
     );
   }
 
-  const cards = scorecards ? Object.values(scorecards) : [];
+  const cards = scorecardRows(scorecards);
   const filtered = deptFilter === "all" ? cards : cards.filter((c) => c.department === deptFilter);
   const sorted = [...filtered].sort(
     (a, b) => b.rating - a.rating || b.pnl_attributed - a.pnl_attributed,

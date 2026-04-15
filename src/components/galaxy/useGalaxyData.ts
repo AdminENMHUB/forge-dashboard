@@ -49,7 +49,9 @@ export interface ActivityData {
 }
 
 export interface AgentScorecard {
-  name: string;
+  /** Display name (normalized from API); legacy rows may only have `agent`. */
+  name?: string;
+  agent?: string;
   department?: string;
   swarm?: string;
   rating?: number;
@@ -63,7 +65,27 @@ export interface AgentScorecard {
 
 export interface ScorecardsData {
   agents?: AgentScorecard[];
+  by_agent?: Record<string, AgentScorecard>;
   error?: string;
+  [key: string]: unknown;
+}
+
+const _SCORECARD_META_KEYS = new Set(["agents", "by_agent", "error", "timestamp"]);
+
+/** Flatten /api/scorecards (agents[] or legacy map) into a list for galaxy and HUD. */
+export function normalizeScorecardAgents(
+  scorecards: ScorecardsData | null | undefined,
+): AgentScorecard[] {
+  if (!scorecards) return [];
+  if (Array.isArray(scorecards.agents)) return scorecards.agents;
+  return Object.entries(scorecards)
+    .filter(([k]) => !_SCORECARD_META_KEYS.has(k))
+    .map(([, v]) => v)
+    .filter((v): v is AgentScorecard => typeof v === "object" && v !== null && !Array.isArray(v));
+}
+
+export function agentDisplayName(a: AgentScorecard): string {
+  return (a.name ?? a.agent ?? "").trim() || "unknown";
 }
 
 export interface TelemetryData {
