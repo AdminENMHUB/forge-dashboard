@@ -2,7 +2,17 @@
  * Shared empire / API shapes for dashboard pages (status, constellation, revenue).
  */
 
+export type SwarmType =
+  | "trading"
+  | "prediction_market"
+  | "saas"
+  | "signals"
+  | "growth"
+  | "defi"
+  | "monitoring";
+
 export interface SwarmData {
+  swarm_type: SwarmType;
   status: string;
   daily_pnl: number;
   total_pnl: number;
@@ -15,6 +25,7 @@ export interface SwarmData {
   sampled_at?: string;
   agents?: number;
   active_agents?: number;
+  config_notes?: Record<string, unknown>;
 }
 
 export interface EmpireData {

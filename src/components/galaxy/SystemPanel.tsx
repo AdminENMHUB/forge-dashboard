@@ -60,6 +60,10 @@ export function SystemPanel({
   const accentColor = meta?.color.getStyle() ?? "#22d3ee";
   const swarmFinancials = financials?.swarms?.[systemKey];
   const extended = swarmData as Record<string, unknown> | null;
+  const swarmType = swarmData?.swarm_type ?? "trading";
+  const isTrading =
+    swarmType === "trading" || swarmType === "prediction_market" || swarmType === "defi";
+  const cn = swarmData?.config_notes as Record<string, unknown> | undefined;
 
   const topPerformer = useMemo(() => {
     if (agents.length === 0) return null;
@@ -75,9 +79,7 @@ export function SystemPanel({
     .slice(0, 8);
 
   const riskInfo = useMemo(() => {
-    if (!extended) return null;
-    const isTrading = systemKey === "EganTradeBot" || systemKey === "EchoSwarm";
-    if (!isTrading) return null;
+    if (!extended || !isTrading) return null;
     return {
       circuitBreaker: !!extended.circuit_breaker,
       regime: extended.regime as string | undefined,
@@ -86,7 +88,7 @@ export function SystemPanel({
       dailyLossLimit: extended.daily_loss_limit as number | undefined,
       weeklyDrawdown: extended.weekly_drawdown as number | undefined,
     };
-  }, [extended, systemKey]);
+  }, [extended, isTrading]);
 
   const dailyCost = telemetry?.costs?.total_daily ?? 0;
 
@@ -114,40 +116,157 @@ export function SystemPanel({
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
-          {/* Status + P&L */}
+          {/* Status — universal */}
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
               <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">Status</p>
               <StatusBadge status={swarmData?.status ?? "unknown"} />
             </div>
-            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
-              <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">Daily P&L</p>
-              <PnlText value={swarmData?.daily_pnl ?? 0} />
-            </div>
-            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
-              <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">Portfolio</p>
-              <p className="text-sm font-bold text-white">
-                {formatUSD(swarmData?.portfolio_value ?? 0)}
-              </p>
-            </div>
-            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
-              <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">Win Rate</p>
-              <p className="text-sm font-bold text-white">
-                {((swarmData?.win_rate ?? 0) * 100).toFixed(1)}%
-              </p>
-            </div>
+
+            {/* Trading swarms: P&L, Portfolio, Win Rate */}
+            {isTrading && (
+              <>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">
+                    Daily P&L
+                  </p>
+                  <PnlText value={swarmData?.daily_pnl ?? 0} />
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">
+                    Portfolio
+                  </p>
+                  <p className="text-sm font-bold text-white">
+                    {formatUSD(swarmData?.portfolio_value ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">
+                    Win Rate
+                  </p>
+                  <p className="text-sm font-bold text-white">
+                    {((swarmData?.win_rate ?? 0) * 100).toFixed(1)}%
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* SaaS swarms: MRR, Products, ARR */}
+            {swarmType === "saas" && (
+              <>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">MRR</p>
+                  <p className="text-sm font-bold text-emerald-400">
+                    {formatUSD(swarmData?.mrr ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">
+                    Products
+                  </p>
+                  <p className="text-sm font-bold text-white">{String(cn?.total_products ?? 0)}</p>
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">ARR</p>
+                  <p className="text-sm font-bold text-white">
+                    {formatUSD(Number(cn?.total_arr ?? 0))}
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Signals swarm: MRR, Subscribers, Yield */}
+            {swarmType === "signals" && (
+              <>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">MRR</p>
+                  <p className="text-sm font-bold text-emerald-400">
+                    {formatUSD(swarmData?.mrr ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">
+                    Subscribers
+                  </p>
+                  <p className="text-sm font-bold text-white">
+                    {String(cn?.active_subscribers ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">
+                    AAVE Yield
+                  </p>
+                  <p className="text-sm font-bold text-white">
+                    {formatUSD(Number(cn?.total_yield_earned ?? 0))}
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Growth swarm: MRR, Live Products, Launch Rate */}
+            {swarmType === "growth" && (
+              <>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">MRR</p>
+                  <p className="text-sm font-bold text-emerald-400">
+                    {formatUSD(swarmData?.mrr ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">
+                    Live Products
+                  </p>
+                  <p className="text-sm font-bold text-white">{String(cn?.live_products ?? 0)}</p>
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">Queue</p>
+                  <p className="text-sm font-bold text-white">
+                    {String(cn?.opportunity_queue ?? 0)}
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Monitoring swarm: Apps status */}
+            {swarmType === "monitoring" && (
+              <>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">
+                    Healthy Apps
+                  </p>
+                  <p className="text-sm font-bold text-emerald-400">
+                    {String(cn?.apps_healthy ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">Down</p>
+                  <p className="text-sm font-bold text-red-400">{String(cn?.apps_down ?? 0)}</p>
+                </div>
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="mb-1 text-[10px] tracking-wider text-white/30 uppercase">
+                    Degraded
+                  </p>
+                  <p className="text-sm font-bold text-amber-400">
+                    {String(cn?.apps_degraded ?? 0)}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Extended metrics */}
+          {/* Extended metrics — trading swarms only */}
           <div className="grid grid-cols-3 gap-2">
-            {swarmData?.open_positions !== undefined && (
-              <MiniMetric label="Positions" value={String(swarmData.open_positions)} />
+            {isTrading && (swarmData?.open_positions ?? 0) > 0 && (
+              <MiniMetric label="Positions" value={String(swarmData?.open_positions)} />
             )}
-            {swarmData?.trades_today !== undefined && (
-              <MiniMetric label="Trades Today" value={String(swarmData.trades_today)} />
+            {isTrading && (swarmData?.trades_today ?? 0) > 0 && (
+              <MiniMetric label="Trades Today" value={String(swarmData?.trades_today)} />
             )}
-            {swarmData?.mrr !== undefined && swarmData.mrr > 0 && (
-              <MiniMetric label="MRR" value={formatUSD(swarmData.mrr)} />
+            {swarmType === "signals" && Number(cn?.signals_delivered ?? 0) > 0 && (
+              <MiniMetric label="Signals Sent" value={String(cn?.signals_delivered)} />
+            )}
+            {swarmType === "saas" && Number(cn?.campaigns_sent ?? 0) > 0 && (
+              <MiniMetric label="Campaigns" value={String(cn?.campaigns_sent)} />
             )}
             {dailyCost > 0 && <MiniMetric label="LLM Cost" value={`$${dailyCost.toFixed(2)}/d`} />}
           </div>

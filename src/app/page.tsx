@@ -20,6 +20,7 @@ import {
 // ---------------------------------------------------------------------------
 
 interface SwarmData {
+  swarm_type: string;
   status: string;
   daily_pnl: number;
   total_pnl: number;
@@ -30,6 +31,7 @@ interface SwarmData {
   win_rate: number;
   circuit_breaker: boolean;
   sampled_at: string;
+  config_notes?: Record<string, unknown>;
 }
 
 interface EmpireData {
@@ -973,10 +975,31 @@ export default function Dashboard() {
                 value: <span className="text-blue-400">{formatUSD(web3Swarm.mrr)}</span>,
               },
               { label: "Portfolio", value: formatUSD(web3Swarm.portfolio_value) },
-              { label: "Total Revenue", value: <PnlValue value={web3Swarm.total_pnl} /> },
-              { label: "Subscribers", value: web3Swarm.open_positions },
-              { label: "Signals Sent", value: web3Swarm.trades_today },
-              { label: "Daily P&L", value: <PnlValue value={web3Swarm.daily_pnl} /> },
+              {
+                label: "Total Revenue",
+                value: (
+                  <PnlValue
+                    value={Number(
+                      (web3Swarm.config_notes as Record<string, unknown> | undefined)
+                        ?.total_usdc_received ?? 0,
+                    )}
+                  />
+                ),
+              },
+              {
+                label: "Subscribers",
+                value: Number(
+                  (web3Swarm.config_notes as Record<string, unknown> | undefined)
+                    ?.active_subscribers ?? 0,
+                ),
+              },
+              {
+                label: "Signals Sent",
+                value: Number(
+                  (web3Swarm.config_notes as Record<string, unknown> | undefined)
+                    ?.signals_delivered ?? 0,
+                ),
+              },
             ]}
           />
         )}
@@ -1001,33 +1024,28 @@ export default function Dashboard() {
           ]}
         />
 
-        {growthSwarm && (
-          <SwarmCard
-            title="Marketing & Growth"
-            status={
-              growthSwarm.trades_today === 0 && growthSwarm.total_pnl === 0
-                ? "degraded"
-                : growthSwarm.status
-            }
-            metrics={[
-              { label: "X Posts", value: growthSwarm.trades_today },
-              { label: "Dir. Submissions", value: growthSwarm.open_positions },
-              {
-                label: "Last Active",
-                value: growthSwarm.sampled_at ? timeAgo(growthSwarm.sampled_at) : "\u2014",
-              },
-            ]}
-            footer={
-              growthSwarm.trades_today === 0 && growthSwarm.total_pnl === 0 ? (
-                <div className="mt-3 rounded-md border border-amber-500/15 bg-amber-500/5 px-3 py-2">
-                  <p className="text-[11px] text-amber-400">
-                    Growth engine appears stale — no recent marketing activity
-                  </p>
-                </div>
-              ) : undefined
-            }
-          />
-        )}
+        {growthSwarm &&
+          (() => {
+            const gcn = growthSwarm.config_notes as Record<string, unknown> | undefined;
+            return (
+              <SwarmCard
+                title="Marketing & Growth"
+                status={growthSwarm.status}
+                metrics={[
+                  { label: "Live Products", value: Number(gcn?.live_products ?? 0) },
+                  { label: "Opportunity Queue", value: Number(gcn?.opportunity_queue ?? 0) },
+                  {
+                    label: "Launch Rate",
+                    value: `${(Number(gcn?.launch_success_rate ?? 0) * 100).toFixed(0)}%`,
+                  },
+                  {
+                    label: "Last Active",
+                    value: growthSwarm.sampled_at ? timeAgo(growthSwarm.sampled_at) : "\u2014",
+                  },
+                ]}
+              />
+            );
+          })()}
 
         {forgeDefiSwarm && (
           <SwarmCard
