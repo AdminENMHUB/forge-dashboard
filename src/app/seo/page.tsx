@@ -1,8 +1,9 @@
 "use client";
 
 import { useApiPoller } from "@/lib/hooks";
+import { timeAgo } from "@/lib/formatters";
 import { PageShell } from "@/components/nav";
-import { MetricCard, StatusBadge } from "@/components/ui";
+import { MetricCard, StatusBadge, SectionCard, Skeleton } from "@/components/ui";
 
 const SITE = "https://eganforge.com";
 
@@ -14,56 +15,55 @@ interface SeoData {
   comparison_pages: number;
   sitemap_urls: number;
   structured_data_types: string[];
-  top_keywords: Array<{ keyword: string; position: number; clicks: number }>;
   crawl_errors: number;
   last_crawl: string;
 }
 
-const FALLBACK: SeoData = {
-  available: false,
-  pages_indexed: 36,
-  blog_posts: 51,
-  product_pages: 16,
-  comparison_pages: 8,
-  sitemap_urls: 85,
-  structured_data_types: [
-    "Organization",
-    "WebSite",
-    "Article",
-    "BreadcrumbList",
-    "WebPage",
-    "Product",
-  ],
-  top_keywords: [
-    { keyword: "AI trading bot", position: 42, clicks: 12 },
-    { keyword: "crypto signals telegram", position: 28, clicks: 8 },
-    { keyword: "caption generator AI", position: 15, clicks: 22 },
-    { keyword: "egan forge", position: 1, clicks: 45 },
-    { keyword: "AI SaaS tools", position: 31, clicks: 6 },
-  ],
-  crawl_errors: 0,
-  last_crawl: "",
-};
-
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="glass rounded-xl p-5">
-      <h3 className="mb-3 text-sm font-semibold tracking-wide text-white uppercase">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
 export default function SeoHubPage() {
-  const { data } = useApiPoller<SeoData>("/api/seo", 60000);
-  const seo = data ?? FALLBACK;
+  const { data, loading, lastUpdate, error } = useApiPoller<SeoData>("/api/seo", 60000);
+
+  if (loading) {
+    return (
+      <PageShell title="SEO Hub" subtitle="Search engine optimization — live sitemap analysis">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="glass rounded-xl p-4">
+              <Skeleton className="mb-2 h-3 w-20" />
+              <Skeleton className="h-7 w-28" />
+            </div>
+          ))}
+        </div>
+      </PageShell>
+    );
+  }
+
+  const seo = data;
+  if (!seo) {
+    return (
+      <PageShell
+        title="SEO Hub"
+        subtitle="Search engine optimization — live sitemap analysis"
+        error={error}
+      >
+        <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-8 text-center text-sm text-red-300">
+          Unable to reach VPS — SEO data unavailable. Check that the dashboard API is running on
+          Hetzner.
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
-    <PageShell title="SEO Hub" subtitle="Search engine optimization metrics and content indexing">
+    <PageShell
+      title="SEO Hub"
+      subtitle="Search engine optimization — live sitemap analysis"
+      lastUpdate={lastUpdate}
+      error={error}
+    >
       <div className="space-y-6 pb-12">
         {!seo.available && (
           <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-2 text-xs text-amber-300">
-            Showing cached data — VPS endpoint unreachable
+            Sitemap crawl failed — showing last known data
           </div>
         )}
 
@@ -76,44 +76,9 @@ export default function SeoHubPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <SectionCard title="Keyword Rankings">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-white/5 text-[10px] tracking-wider text-[var(--text-tertiary)] uppercase">
-                    <th className="pb-2">Keyword</th>
-                    <th className="pb-2 text-right">Position</th>
-                    <th className="pb-2 text-right">Clicks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {seo.top_keywords.map((kw) => (
-                    <tr key={kw.keyword} className="border-b border-white/[0.03]">
-                      <td className="py-2 text-[var(--text-secondary)]">{kw.keyword}</td>
-                      <td className="py-2 text-right">
-                        <span
-                          className={
-                            kw.position <= 10
-                              ? "font-semibold text-emerald-400"
-                              : kw.position <= 30
-                                ? "text-amber-400"
-                                : "text-[var(--text-tertiary)]"
-                          }
-                        >
-                          #{kw.position}
-                        </span>
-                      </td>
-                      <td className="py-2 text-right text-[var(--text-secondary)]">{kw.clicks}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </SectionCard>
-
           <SectionCard title="Structured Data">
             <div className="mb-4 flex flex-wrap gap-2">
-              {seo.structured_data_types.map((t) => (
+              {(seo.structured_data_types || []).map((t) => (
                 <span
                   key={t}
                   className="rounded-full border border-cyan-500/20 bg-cyan-500/5 px-3 py-1 text-xs text-cyan-400"
@@ -127,9 +92,7 @@ export default function SeoHubPage() {
               <code className="rounded bg-white/10 px-1.5">eganforge-site/lib/seo-jsonld.ts</code>
             </p>
           </SectionCard>
-        </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
           <SectionCard title="Crawl Health">
             <div className="flex items-center justify-between">
               <div>
@@ -138,6 +101,11 @@ export default function SeoHubPage() {
               </div>
               <StatusBadge status={seo.crawl_errors === 0 ? "healthy" : "degraded"} />
             </div>
+            {seo.last_crawl && (
+              <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                Last crawl: {timeAgo(seo.last_crawl)}
+              </p>
+            )}
             <div className="mt-4 space-y-2 text-sm text-[var(--text-secondary)]">
               <a
                 href={`${SITE}/sitemap.xml`}
@@ -157,33 +125,35 @@ export default function SeoHubPage() {
               </a>
             </div>
           </SectionCard>
-
-          <SectionCard title="Content Clusters">
-            <div className="space-y-2">
-              {[
-                { label: "Products hub", href: `${SITE}/products`, count: seo.product_pages },
-                { label: "Blog", href: `${SITE}/blog`, count: seo.blog_posts },
-                { label: "Signals", href: `${SITE}/signals`, count: 3 },
-                {
-                  label: "Comparisons",
-                  href: `${SITE}/compare/captioncraft-vs-jasper`,
-                  count: seo.comparison_pages,
-                },
-              ].map((c) => (
-                <a
-                  key={c.label}
-                  href={c.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between rounded-lg bg-white/[0.02] px-3 py-2 text-sm transition hover:bg-white/[0.05]"
-                >
-                  <span className="text-cyan-400">{c.label}</span>
-                  <span className="text-[var(--text-tertiary)]">{c.count} pages</span>
-                </a>
-              ))}
-            </div>
-          </SectionCard>
         </div>
+
+        <SectionCard title="Content Clusters">
+          <div className="grid gap-2 sm:grid-cols-2">
+            {[
+              { label: "Products hub", href: `${SITE}/products`, count: seo.product_pages },
+              { label: "Blog", href: `${SITE}/blog`, count: seo.blog_posts },
+              { label: "Signals", href: `${SITE}/signals`, count: null },
+              {
+                label: "Comparisons",
+                href: `${SITE}/compare/captioncraft-vs-jasper`,
+                count: seo.comparison_pages,
+              },
+            ].map((c) => (
+              <a
+                key={c.label}
+                href={c.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-lg bg-white/[0.02] px-3 py-2 text-sm transition hover:bg-white/[0.05]"
+              >
+                <span className="text-cyan-400">{c.label}</span>
+                {c.count !== null && (
+                  <span className="text-[var(--text-tertiary)]">{c.count} pages</span>
+                )}
+              </a>
+            ))}
+          </div>
+        </SectionCard>
 
         <SectionCard title="Quick Actions">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

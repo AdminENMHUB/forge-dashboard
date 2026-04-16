@@ -5,7 +5,7 @@ const FALLBACK = {
   chain_valid: true,
   total_entries: 0,
   entries: [],
-  event_types: ["trade", "proposal", "capital_move", "deploy", "escalation", "config_change"],
+  event_types: [],
 };
 
 export async function GET(request: Request) {

@@ -24,12 +24,14 @@ interface AuditData {
 }
 
 const eventTypeColor: Record<string, { bg: string; text: string; dot: string }> = {
-  trade: { bg: "border-emerald-500/20", text: "text-emerald-400", dot: "bg-emerald-400" },
-  proposal: { bg: "border-amber-500/20", text: "text-amber-400", dot: "bg-amber-400" },
-  capital_move: { bg: "border-purple-500/20", text: "text-purple-400", dot: "bg-purple-400" },
-  deploy: { bg: "border-blue-500/20", text: "text-blue-400", dot: "bg-blue-400" },
-  escalation: { bg: "border-red-500/20", text: "text-red-400", dot: "bg-red-400" },
-  config_change: { bg: "border-cyan-500/20", text: "text-cyan-400", dot: "bg-cyan-400" },
+  decision: { bg: "border-cyan-500/20", text: "text-cyan-400", dot: "bg-cyan-400" },
+  approval: { bg: "border-emerald-500/20", text: "text-emerald-400", dot: "bg-emerald-400" },
+  override: { bg: "border-amber-500/20", text: "text-amber-400", dot: "bg-amber-400" },
+  error: { bg: "border-red-500/20", text: "text-red-400", dot: "bg-red-400" },
+  cost: { bg: "border-purple-500/20", text: "text-purple-400", dot: "bg-purple-400" },
+  heartbeat: { bg: "border-blue-500/20", text: "text-blue-400", dot: "bg-blue-400" },
+  escalation: { bg: "border-orange-500/20", text: "text-orange-400", dot: "bg-orange-400" },
+  governance: { bg: "border-indigo-500/20", text: "text-indigo-400", dot: "bg-indigo-400" },
 };
 
 const DEFAULT_STYLE = { bg: "border-gray-700", text: "text-gray-400", dot: "bg-gray-400" };

@@ -2,20 +2,21 @@ import { NextResponse } from "next/server";
 import { getHetznerApi } from "@/lib/api-config";
 
 const FALLBACK = {
-  x_posts: 199,
-  blog_posts: 51,
+  available: false,
+  x_posts: 0,
+  blog_posts: 0,
   newsletter_subscribers: 0,
   directory_submissions: 0,
   channels: {
-    x_twitter: { posts: 199, impressions: 0, clicks: 0, followers: 0 },
-    blog: { posts: 51, views: 0, avg_read_time: "0m" },
+    x_twitter: { posts: 0, impressions: 0, clicks: 0, followers: 0 },
+    blog: { posts: 0, views: 0, avg_read_time: "0m" },
     newsletter: { subscribers: 0, sent: 0, open_rate: 0 },
     telegram: { members: 0, messages: 0 },
     directories: { submitted: 0, approved: 0, pending: 0 },
   },
   recent_posts: [],
   growth: { weekly_posts: 0, weekly_impressions: 0, trend: "flat" },
-  fallback: true,
+  source: "fallback",
 };
 
 export async function GET() {
