@@ -3,7 +3,7 @@
 import { useApiPoller } from "@/lib/hooks";
 import { formatUSD } from "@/lib/formatters";
 import { PageShell } from "@/components/nav";
-import { MetricCard, StatusBadge, SectionCard, Skeleton } from "@/components/ui";
+import { MetricCard, SectionCard, Skeleton } from "@/components/ui";
 
 interface RevenueTarget {
   target: number;

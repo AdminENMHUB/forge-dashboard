@@ -43,8 +43,10 @@ export function AgentInspector({ agent, activity, telemetry, onClose }: Props) {
   const [animScale, setAnimScale] = useState(0);
 
   useEffect(() => {
-    setAnimScale(0);
+    // Reset + animate inside the rAF callback so the effect body itself
+    // does not synchronously call setState (react-hooks/set-state-in-effect).
     const raf = requestAnimationFrame(() => {
+      setAnimScale(0);
       const start = performance.now();
       const dur = 500;
       function step() {

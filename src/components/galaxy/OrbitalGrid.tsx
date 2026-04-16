@@ -21,22 +21,6 @@ function createRingPoints(radius: number, segments: number = 128): Float32Array 
   return pts;
 }
 
-function createSpokePoints(innerR: number, outerR: number, count: number): Float32Array {
-  const pts = new Float32Array(count * 6);
-  for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2;
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    pts[i * 6] = cos * innerR;
-    pts[i * 6 + 1] = 0;
-    pts[i * 6 + 2] = sin * innerR;
-    pts[i * 6 + 3] = cos * outerR;
-    pts[i * 6 + 4] = 0;
-    pts[i * 6 + 5] = sin * outerR;
-  }
-  return pts;
-}
-
 export function OrbitalGrid({ zoomLevel }: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
@@ -44,7 +28,6 @@ export function OrbitalGrid({ zoomLevel }: Props) {
   const tier1Ring = useMemo(() => createRingPoints(TIER_RADIUS[1]), []);
   const tier2Ring = useMemo(() => createRingPoints(TIER_RADIUS[2]), []);
   const midRing = useMemo(() => createRingPoints((TIER_RADIUS[1] + TIER_RADIUS[2]) / 2, 96), []);
-  const spokes = useMemo(() => createSpokePoints(0.5, TIER_RADIUS[2] + 2, 12), []);
 
   useFrame(() => {
     if (!groupRef.current) return;
@@ -61,11 +44,14 @@ export function OrbitalGrid({ zoomLevel }: Props) {
     }
   });
 
-  const makeLine = (positions: Float32Array, opacity: number, color: string = "#22d3ee") => {
-    const geom = new THREE.BufferGeometry();
-    geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const makeLine = (
+    key: string | number,
+    positions: Float32Array,
+    opacity: number,
+    color: string = "#22d3ee",
+  ) => {
     return (
-      <line key={Math.random()} ref={undefined}>
+      <line key={key} ref={undefined}>
         <bufferGeometry attach="geometry">
           <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         </bufferGeometry>
@@ -83,9 +69,9 @@ export function OrbitalGrid({ zoomLevel }: Props) {
 
   return (
     <group ref={groupRef} rotation={[0, 0, 0]}>
-      {makeLine(tier1Ring, 0.08, "#22d3ee")}
-      {makeLine(tier2Ring, 0.06, "#22d3ee")}
-      {makeLine(midRing, 0.03, "#3b82f6")}
+      {makeLine("tier1", tier1Ring, 0.08, "#22d3ee")}
+      {makeLine("tier2", tier2Ring, 0.06, "#22d3ee")}
+      {makeLine("mid", midRing, 0.03, "#3b82f6")}
       {/* Radial spokes as individual segments */}
       {Array.from({ length: 12 }).map((_, i) => {
         const angle = (i / 12) * Math.PI * 2;
@@ -99,7 +85,7 @@ export function OrbitalGrid({ zoomLevel }: Props) {
           0,
           sin * (TIER_RADIUS[2] + 2),
         ]);
-        return makeLine(pts, 0.025, "#525d73");
+        return makeLine(`spoke-${i}`, pts, 0.025, "#525d73");
       })}
     </group>
   );

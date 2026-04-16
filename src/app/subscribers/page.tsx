@@ -156,9 +156,13 @@ export default function SubscribersPage() {
     1,
   );
 
+  // Use the server sample time as the reference "now" so the render is a
+  // pure function of props/state (satisfies react-hooks/purity).
+  const nowMs = d.sampled_at ? new Date(d.sampled_at).getTime() : 0;
+
   const expiringCount = d.subscribers.filter((s) => {
     if (s.status !== "active") return false;
-    const daysLeft = (new Date(s.expiry).getTime() - Date.now()) / 86_400_000;
+    const daysLeft = (new Date(s.expiry).getTime() - nowMs) / 86_400_000;
     return daysLeft <= 30;
   }).length;
 
@@ -226,7 +230,7 @@ export default function SubscribersPage() {
             </thead>
             <tbody>
               {d.subscribers.map((sub) => {
-                const daysLeft = (new Date(sub.expiry).getTime() - Date.now()) / 86_400_000;
+                const daysLeft = (new Date(sub.expiry).getTime() - nowMs) / 86_400_000;
                 const effectiveStatus =
                   sub.status === "active" && daysLeft <= 30 ? "expiring" : sub.status;
 
