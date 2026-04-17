@@ -3,6 +3,36 @@
 import { useEffect, useState } from "react";
 import { PageShell } from "@/components/nav";
 
+interface SwarmInventory {
+  count: number;
+  registered?: number;
+  active?: number;
+  souls?: number;
+  unregistered?: string[];
+  agents?: string[];
+  active_agents?: string[];
+  heartbeat?: {
+    path?: string;
+    exists?: boolean;
+    updated_at?: string;
+    age_seconds?: number;
+    fresh?: boolean;
+    error?: string;
+  };
+  source?: string;
+}
+
+interface EmpireAgentInventory {
+  tier1_registered?: number;
+  master_agents_on_disk?: number;
+  master_unregistered?: string[];
+  empire_total_on_disk?: number;
+  empire_total_active?: number;
+  by_swarm?: Record<string, SwarmInventory>;
+  computed_at?: string;
+  error?: string;
+}
+
 interface OrchestratorData {
   orchestrator?: {
     registered_agents: number;
@@ -35,6 +65,7 @@ interface OrchestratorData {
     calls_by_category: Record<string, number>;
     top_tools: { name: string; calls: number; avg_ms: number }[];
   };
+  agents?: EmpireAgentInventory;
   error?: string;
 }
 
@@ -101,6 +132,8 @@ export default function OrchestratorPage() {
   const o = data?.orchestrator;
   const p = data?.pool;
   const t = data?.tools || tools?.stats;
+  const inv = data?.agents;
+  const swarms = inv?.by_swarm ?? {};
 
   return (
     <PageShell title="Orchestrator" subtitle="OpenMultiAgent Architecture" lastUpdate={ts}>
@@ -109,17 +142,124 @@ export default function OrchestratorPage() {
       {bus?.error && <p className="text-sm text-red-400">Bus: {bus.error}</p>}
 
       {/* ── KPI Row ─────────────────────────────────────────────── */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Kpi label="Registered Agents" value={o?.registered_agents ?? "—"} />
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <Kpi
+          label="Tier-1 Registered"
+          value={inv?.tier1_registered ?? o?.registered_agents ?? "—"}
+        />
+        <Kpi label="Empire Agents" value={inv?.empire_total_on_disk ?? "—"} color="text-cyan-400" />
+        <Kpi
+          label="Empire Active"
+          value={inv?.empire_total_active ?? "—"}
+          color="text-emerald-400"
+        />
         <Kpi label="Active Teams" value={o?.active_teams ?? 0} />
         <Kpi
           label="Success Rate"
           value={o ? `${(o.recent_success_rate * 100).toFixed(0)}%` : "—"}
           color={o && o.recent_success_rate >= 0.9 ? "text-emerald-400" : "text-amber-400"}
         />
-        <Kpi label="Total Tools" value={t?.total_tools ?? "—"} />
         <Kpi label="A2A Msgs" value={bus?.total_messages ?? "—"} color="text-violet-400" />
       </div>
+
+      {/* ── Empire Agent Inventory ──────────────────────────────── */}
+      {Object.keys(swarms).length > 0 && (
+        <div className="glass-card mb-6 p-4">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="text-sm font-semibold tracking-wide text-white uppercase">
+              Empire Agent Inventory
+            </h2>
+            <span className="text-[10px] text-[var(--text-muted)]">
+              {inv?.empire_total_on_disk ?? "—"} on disk · {inv?.empire_total_active ?? "—"} active
+              across {Object.keys(swarms).length} swarms
+            </span>
+          </div>
+          {inv?.master_unregistered && inv.master_unregistered.length > 0 && (
+            <p className="mb-3 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">
+              ⚠ {inv.master_unregistered.length} master agent(s) on disk but not wired:{" "}
+              <span className="font-mono">{inv.master_unregistered.join(", ")}</span>
+            </p>
+          )}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+            {Object.entries(swarms).map(([name, s]) => {
+              const total = s.count ?? 0;
+              const active = s.active ?? s.registered ?? 0;
+              const fresh = s.heartbeat?.fresh;
+              const hbExists = s.heartbeat?.exists;
+              const ageMin =
+                typeof s.heartbeat?.age_seconds === "number"
+                  ? Math.round(s.heartbeat.age_seconds / 60)
+                  : null;
+              return (
+                <div
+                  key={name}
+                  className="rounded-lg border border-white/5 bg-white/[0.02] p-3 text-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-white">{name}</span>
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                        hbExists
+                          ? fresh
+                            ? "bg-emerald-500/15 text-emerald-400"
+                            : "bg-amber-500/15 text-amber-400"
+                          : "bg-white/5 text-[var(--text-muted)]"
+                      }`}
+                    >
+                      {hbExists
+                        ? fresh
+                          ? `fresh${ageMin !== null ? ` · ${ageMin}m` : ""}`
+                          : `stale${ageMin !== null ? ` · ${ageMin}m` : ""}`
+                        : "no heartbeat"}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-1.5">
+                    <span className="text-2xl font-bold text-white">{active}</span>
+                    <span className="text-[var(--text-muted)]">active</span>
+                    {total !== active && (
+                      <span className="ml-auto text-[10px] text-[var(--text-muted)]">
+                        {total} total
+                      </span>
+                    )}
+                  </div>
+                  {typeof s.souls === "number" && s.souls > 0 && (
+                    <p className="mt-1 text-[10px] text-violet-300/80">{s.souls} SOUL profiles</p>
+                  )}
+                  {s.agents && s.agents.length > 0 && (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-[10px] text-[var(--text-muted)]">
+                        agents ({s.agents.length})
+                      </summary>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {s.agents.map((a) => {
+                          const isActive = s.active_agents ? s.active_agents.includes(a) : true;
+                          return (
+                            <span
+                              key={a}
+                              className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${
+                                isActive
+                                  ? "bg-cyan-500/10 text-cyan-300"
+                                  : "bg-white/[0.03] text-[var(--text-muted)] line-through"
+                              }`}
+                            >
+                              {a}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {inv?.computed_at && (
+            <p className="mt-3 text-[10px] text-[var(--text-muted)]">
+              Inventory computed {new Date(inv.computed_at).toLocaleString()}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* ── Agent Pool ──────────────────────────────────────────── */}
       <div className="glass-card mb-6 p-4">
