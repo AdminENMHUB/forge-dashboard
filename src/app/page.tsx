@@ -101,7 +101,15 @@ interface PredictionMetricsResponse {
   signals_dispatched_total?: number;
   last_actionable_markets?: number;
   last_scanned_markets?: number;
-  last_top_actionable?: string[];
+  last_top_actionable?: (
+    | string
+    | {
+        market_id?: string;
+        question?: string;
+        edge_pct?: number;
+        yes_price?: number;
+      }
+  )[];
   consecutive_no_opportunity_runs?: number;
   last_nonzero_actionable_at?: string | null;
   consecutive_api_failures?: number;
@@ -582,11 +590,37 @@ function PredictionGuardPanel({ data }: { data: PredictionMetricsResponse | null
             Top actionable (snapshot)
           </p>
           <ul className="space-y-1 text-[11px] text-[var(--text-secondary)]">
-            {data.last_top_actionable.slice(0, 3).map((line, i) => (
-              <li key={i} className="truncate font-mono">
-                {line}
-              </li>
-            ))}
+            {data.last_top_actionable.slice(0, 3).map((item, i) => {
+              // Backend may emit either a pre-formatted string or a row object
+              // `{market_id, question, edge_pct, yes_price}` — render both safely so
+              // we never hand React a raw object (which throws error #31).
+              if (typeof item === "string") {
+                return (
+                  <li key={i} className="truncate font-mono">
+                    {item}
+                  </li>
+                );
+              }
+              if (item && typeof item === "object") {
+                const q = item.question ?? item.market_id ?? "—";
+                const edge =
+                  typeof item.edge_pct === "number" ? `${item.edge_pct.toFixed(1)}% edge` : null;
+                const yes =
+                  typeof item.yes_price === "number"
+                    ? `YES ${(item.yes_price * 100).toFixed(0)}¢`
+                    : null;
+                const meta = [edge, yes].filter(Boolean).join(" · ");
+                return (
+                  <li key={i} className="flex items-center justify-between gap-2 font-mono">
+                    <span className="truncate">{q}</span>
+                    {meta && (
+                      <span className="shrink-0 text-[10px] text-[var(--text-muted)]">{meta}</span>
+                    )}
+                  </li>
+                );
+              }
+              return null;
+            })}
           </ul>
         </div>
       )}

@@ -1,7 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+
+function SignOutButton({ compact = false }: { compact?: boolean }) {
+  const router = useRouter();
+  async function signOut() {
+    try {
+      await fetch("/api/logout", { method: "POST" });
+    } catch {
+      // Best-effort — cookie is httpOnly and cleared server-side on success;
+      // if the request fails we still want to navigate the user to /login.
+    }
+    router.replace("/login");
+  }
+  return (
+    <button
+      type="button"
+      onClick={signOut}
+      className={
+        compact
+          ? "rounded-md border border-[var(--border-dim)] bg-white/[0.02] px-2.5 py-1.5 text-[11px] font-medium text-[var(--text-secondary)] transition hover:border-red-500/40 hover:text-red-400"
+          : "mt-2 w-full rounded-md border border-[var(--border-dim)] bg-white/[0.02] px-2.5 py-1.5 text-[11px] font-medium text-[var(--text-secondary)] transition hover:border-red-500/40 hover:text-red-400"
+      }
+      title="Sign out of the CEO dashboard"
+    >
+      Sign out
+    </button>
+  );
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    NAV ITEMS — all pages in the empire dashboard
@@ -104,6 +131,7 @@ export function DashboardSidebar() {
       <div className="border-t border-[var(--border-dim)] px-4 py-3">
         <p className="text-[10px] text-[var(--text-muted)]">Egan Forge v3.0</p>
         <p className="text-[10px] text-[var(--text-muted)]">4-Model Consensus</p>
+        <SignOutButton />
       </div>
     </aside>
   );
@@ -175,9 +203,10 @@ export function PageShell({
                 </p>
               )}
             </div>
-            {/* Mobile nav */}
-            <div className="lg:hidden">
+            {/* Mobile nav + sign out */}
+            <div className="flex items-center gap-2 lg:hidden">
               <DashboardNav />
+              <SignOutButton compact />
             </div>
           </header>
 
